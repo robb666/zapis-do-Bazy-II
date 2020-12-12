@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from regon_api import get_regon_data
 
 path = os.getcwd()
-pdf = r'C:\Users\Robert\Desktop\python\excel\zapis w Bazie\polisy\all.pdf'
+pdf = r'C:\Users\Robert\Desktop\python\excel\zapis w Bazie\polisy\axa.pdf'
 
 # pdf = input('Podaj polisę w formacie .pdf do rejestracji: ')
 
@@ -137,16 +137,43 @@ def data_wystawienia():
     return today
 
 
-# def numer_polisy():
+def TU(): pass
 
 
+def numer_polisy(page_1):
+    # print(page_1)
+    # lines = page_1.split('\n')
+    # print(lines[1])
+    nr_polisy = ''
+    if 'Allianz' in page_1 and (nr_polisy := re.search('Polisa nr (\d+)', page_1)):
+        return nr_polisy.group(1)
+    if 'AXA' in page_1 and (nr_polisy := re.search('Numer polisy (\d{4}-\d+)', page_1)):
+        return nr_polisy.group(1)
+    if 'Compensa' in page_1 and (nr_polisy := re.search('typ polisy: *\s*(\d+),numer: *\s*(\d+)', page_1)):
+        return nr_polisy.group(1) + nr_polisy.group(2)
+    if 'Generali' in page_1 and (nr_polisy := re.search('POLISA NR\s*(\d+)', page_1, re.I)):
+        return nr_polisy.group(1)
+    if 'Hestia' in page_1 and (nr_polisy := re.search('Polisa\s.*\s(\d+)', page_1, re.I)):
+        return nr_polisy.group(1)
+    if 'LINK4' in page_1 and (nr_polisy := re.search('Numer\s(\w\d+)', page_1, re.I)):
+        return nr_polisy.group(1)
+    if 'PZU' in page_1 and (nr_polisy := re.search('Nr *(\d+)', page_1)):
+        return nr_polisy.group(1)
+    if 'TUW' in page_1 and (nr_polisy := re.search('Wniosko-Polisa\snr\s*(\d+)', page_1)):
+        return nr_polisy.group(1)
+    if 'TUZ' in page_1 and (nr_polisy := re.search('WNIOSEK seria (\w+) nr (\d+)', page_1)):
+        return nr_polisy.group(1) + nr_polisy.group(2)
+    if 'WARTA' in page_1 and (nr_polisy := re.search('POLISA NR: *(\d+)', page_1)):
+        return nr_polisy.group(1)
+    if 'Wiener' in page_1 and (nr_polisy := re.search('Seria i numer (\w+\d+)', page_1)):
+        return nr_polisy.group(1)
 
 
 
 print()
 page_1, page_1_tok = polisa(pdf)[0], polisa(pdf)[1]
 page_1_box = polisa_box(pdf)
-print(page_1_tok)
+# print(page_1)
 # print(page_1_box)
 # d = dict(enumerate(page_1))
 # print(d)
@@ -157,7 +184,7 @@ print(page_1_tok)
 # print(kod_pocztowy(page_1))
 # print(pesel_checksum('84082305378'))
 # print(data_wystawienia())
-
+print(numer_polisy(page_1))
 
 
 
