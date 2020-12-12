@@ -5,11 +5,15 @@ import win32com.client
 from win32com.client import Dispatch
 from datetime import datetime, timedelta
 from regon_api import get_regon_data
+import time
+
 
 path = os.getcwd()
-pdf = r'C:\Users\Robert\Desktop\python\excel\zapis w Bazie\polisy\tuz1.pdf'
+# pdf = r'C:\Users\Robert\Desktop\python\excel\zapis w Bazie\polisy\link.pdf'
 
 # pdf = input('Podaj polisę w formacie .pdf do rejestracji: ')
+
+
 
 
 def words_separately(text):
@@ -73,9 +77,9 @@ def pesel_checksum(p):
     l = int(p[10])
     suma = ((1*int(p[0])) + 3*int(p[1]) + (7*int(p[2])) + (9*int(p[3])) + (1*int(p[4])) + (3*int(p[5])) +
             (7*int(p[6])) + (9*int(p[7])) + (1*int(p[8])) + (3*int(p[9])))
-    lm = (suma%10) # dzielenie wyniku modulo 10
-    kontrola=(10-lm) # sprawdzenie ostatniej liczby kontrolnej
-    if kontrola == 10 or l == kontrola: # w przypadku liczby kontrolnej 10 i 0 sa jednoznaczne a 0 moze byc wynikiem odejmowania
+    lm = (suma % 10)  # dzielenie wyniku modulo 10
+    kontrola=(10 - lm)  # sprawdzenie ostatniej liczby kontrolnej
+    if kontrola == 10 or l == kontrola:  # w przypadku liczby kontrolnej 10 i 0 sa jednoznaczne a 0 moze byc wynikiem odejmowania
         return 1
     else:
         # print('Niepoprawny pesel!')
@@ -122,15 +126,21 @@ def regon(pesel_regon):
 
 def driving_license(): pass
 
+
 def address():
     """Tylko w przypadku regon (API)."""
     pass
 
-def kod_pocztowy(data):
-    dystans = [data[data.index(adres) - 7: data.index(adres) + 17] for adres in data if 'adres' in adres.lower()
-               or adres.lower() == 'kontaktowe'][0]
+
+def kod_pocztowy(page_1):
+    data = page_1.split()
+    # print(data)
+    # re.search('adres[owe:]', adres)
+    dystans = [data[data.index(adres) - 10: data.index(adres) + 17] for adres in data
+               if re.search('adres?\w+', adres, re.I) or re.search('kontakt?\w+', adres, re.I)
+               or adres.lower() == 'pocztowy'][0]
     # print(dystans)
-    kod_pocztowy = [kod for kod in dystans if len(kod) == 6 and re.search('\d{2}-\d{3}', kod)][0]
+    kod_pocztowy = [kod for kod in dystans if re.search('\d{2}[-|\xad]\d{3}', kod)][0]
     return kod_pocztowy
 
 
@@ -173,30 +183,49 @@ def numer_polisy(page_1):
 
 
 
-print()
-page_1, page_1_tok = polisa(pdf)[0], polisa(pdf)[1]
-d = dict(enumerate(page_1_tok))
-page_1_box = polisa_box(pdf)
-tow_ub = numer_polisy(page_1)[0]
-nr_polisy = numer_polisy(page_1)[1]
 
-nazwa_firmy, ulica_f, nr_ulicy_f, nr_lok, kod_poczt_f, miasto_f, tel, email = regon(pesel_regon(d)[1:])
-ulica_f_edit = f'{ulica_f} {nr_ulicy_f}' if not nr_lok else f'{ulica_f} {nr_ulicy_f} m {nr_lok}'
-kod_poczt_f_edit = f'{kod_poczt_f[:2]}-{kod_poczt_f[2:]}' if '-' not in kod_poczt_f else kod_poczt_f
+directory = os.fsencode(r'C:\Users\Robert\Desktop\python\excel\zapis w Bazie\polisy')
+# print(directory)
+
+# print(os.listdir(r'C:\Users\Robert\Desktop\python\excel\zapis w Bazie\polisy'))
+# for file in os.listdir(r'C:\Users\Robert\Desktop\python\excel\zapis w Bazie\polisy'):
+#     print(file)
+
+for pdf in os.listdir(r'C:\Users\Robert\Desktop\python\excel\zapis w Bazie\polisy'):
+    if pdf.endswith('pdf'):
+        print(pdf)
+        # pdf = os.fsdecode(file)
+        pdf = r'C:\Users\Robert\Desktop\python\excel\zapis w Bazie\polisy\\' + pdf
+        # print(pdf)
+        # if pdf.endswith(".pdf"):
+        print()
+        page_1, page_1_tok = polisa(pdf)[0], polisa(pdf)[1]
+
+        # print(page_1.split())
+        d = dict(enumerate(page_1_tok))
+        page_1_box = polisa_box(pdf)
+        tow_ub = numer_polisy(page_1)[0]
+        nr_polisy = numer_polisy(page_1)[1]
+
+        nazwa_firmy, ulica_f, nr_ulicy_f, nr_lok, kod_poczt_f, miasto_f, tel, email = regon(pesel_regon(d)[1:])
+        ulica_f_edit = f'{ulica_f} {nr_ulicy_f}' if not nr_lok else f'{ulica_f} {nr_ulicy_f} m {nr_lok}'
+        kod_poczt_f_edit = f'{kod_poczt_f[:2]}-{kod_poczt_f[2:]}' if '-' not in kod_poczt_f else kod_poczt_f
+
+        print(nazwa_firmy)
+        print(nazwisko_imie(d))
+        print(pesel_regon(d))
+        print(ulica_f_edit)
+        print(kod_pocztowy(page_1))
+        # print(kod_poczt_f_edit if nazwa_firmy else '')
+        # print(kod_poczt_f_edit)
+        print(miasto_f)
+        print(tel)
+        print(email)
+        print(data_wystawienia())
+        print(tow_ub)
+        print(nr_polisy)
 
 
-print(nazwa_firmy)
-print(nazwisko_imie(d))
-print(pesel_regon(d))
-print(ulica_f_edit)
-print(kod_poczt_f_edit if not kod_pocztowy(page_1_tok) else kod_pocztowy(page_1_tok))
-# print(kod_poczt_f_edit if nazwa_firmy else '')
-print(miasto_f)
-print(tel)
-print(email)
-print(data_wystawienia())
-print(tow_ub)
-print(nr_polisy)
 
 
 
