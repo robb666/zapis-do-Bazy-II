@@ -10,12 +10,15 @@ path = os.getcwd()
 
 ########################################################
 
-pdf = r'C:\Users\Robert\Desktop\python\excel\zapis w Bazie\polisy\gen.pdf'
+pdf = r'C:\Users\Robert\Desktop\python\excel\zapis w Bazie\polisy\all.pdf'
 
+
+bounding_box = (0, 0, 200, 150)
 with pdfplumber.open(pdf) as policy:
-    data = policy.pages[0].extract_text()
-    words_separatly = re.compile(r"((?:(?<!'|\w)(?:\w-?'?)+(?<!-))|(?:(?<='|\w)(?:\w-?'?)+(?=')))")
-    data = words_separatly.findall(data.lower())
+    data = policy.pages[0].within_bbox(bounding_box, relative=True)
+    print(data.extract_text())
+    # words_separatly = re.compile(r"((?:(?<!'|\w)(?:\w-?'?)+(?<!-))|(?:(?<='|\w)(?:\w-?'?)+(?=')))")
+    # data = words_separatly.findall(data.lower())
 
 
 def names_list(d):
@@ -28,11 +31,11 @@ def names_list(d):
 
 # print(text_ocr)
 print()
-d = dict(enumerate(data))
+# d = dict(enumerate(data))
 print()
 # print(d)
 
-print(names_list(d))
+# print(names_list(d))
 
 
 
