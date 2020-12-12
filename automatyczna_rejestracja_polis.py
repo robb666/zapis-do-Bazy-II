@@ -12,38 +12,42 @@ pdf = r'C:\Users\Robert\Desktop\python\excel\zapis w Bazie\polisy\all.pdf'
 # pdf = input('Podaj polisę w formacie .pdf do rejestracji: ')
 
 
-def polisa(pdf):
+def words_separately(text):
     """Tokenizuje tekst całej polisy."""
+    make_tokens = re.compile(r"((?:(?<!'|\w)(?:\w-?'?)+(?<!-))|(?:(?<='|\w)(?:\w-?'?)+(?=')))")
+    return make_tokens.findall(text)
+
+
+def polisa(pdf):
+    """Tekst całej polisy."""
     with pdfplumber.open(pdf) as policy:
-        page_1 = policy.pages[0].extract_text() # Tyko pierwsza strona !
-        words_separately = re.compile(r"((?:(?<!'|\w)(?:\w-?'?)+(?<!-))|(?:(?<='|\w)(?:\w-?'?)+(?=')))")
-    return words_separately.findall(page_1.lower())
+        page_1 = policy.pages[0].extract_text()  # Tylko pierwsza strona
+    return page_1, words_separately(page_1.lower())
 
 
 def polisa_box(pdf):
-    """Tokenizuje tekst fragmentu polisy."""
+    """Tekst wybranego fragmentu polisy."""
     with pdfplumber.open(pdf) as policy:
         width = policy.pages[0].width
+        height = policy.pages[0].height
         box_left = (0, 0, 150, 140)
-        box_center = (200, 0, 400, 140)
+        box_center = (width - 400, 0, width - 200, 140)
         box_right = (150, 0, width, 140)
-        page_1_box = policy.pages[0].crop(box_left, relative=True).extract_text()
-        words_separately = re.compile(r"((?:(?<!'|\w)(?:\w-?'?)+(?<!-))|(?:(?<='|\w)(?:\w-?'?)+(?=')))")
-    return words_separately.findall(page_1_box.lower())
+        page_1_box = policy.pages[0].crop(box_center, relative=True).extract_text()
+    return words_separately(page_1_box.lower())
 
 
+"""Funkcje odpowiadają kolumnom w bazie."""
 def nazwisko_imie(d):
     """Zwraca imię i nazwisko Klienta."""
     with open(path + '\\imiona.txt') as content:
         all_names = content.read().split('\n')
-
         if 'tuz' in d.values():
             name = [f'{d[k + 1].title()} {v.title()}' for k, v in d.items() if k > 10 and v.title() in all_names]
         elif 'warta' in d.values():
             name = [f'{d[k - 1].title()} {v.title()}' for k, v in d.items() if v.title() in all_names]
         else:
             name = [f'{d[k + 1].title()} {v.title()}' for k, v in d.items() if v.title() in all_names]
-
     if name:
         return ''.join(name[0])
 
@@ -140,8 +144,9 @@ def data_wystawienia():
 
 
 print()
-page_1 = polisa(pdf)
+page_1, page_1_tok = polisa(pdf)[0], polisa(pdf)[1]
 page_1_box = polisa_box(pdf)
+print(page_1_tok)
 # print(page_1_box)
 # d = dict(enumerate(page_1))
 # print(d)
