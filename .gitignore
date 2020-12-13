@@ -1,3 +1,15 @@
 
 *.xlsx
 __pycache__/regon_api.cpython-39.pyc
+build/automatyczna_rejestracja_polis/EXE-00.toc
+*.pyc
+*.spec
+*.zip
+*.manifest
+*.toc
+*.pkg
+build/automatyczna_rejestracja_polis/warn-automatyczna_rejestracja_polis.txt
+*.pyz
+*.html
+*.exe
+dist/imiona.txt
