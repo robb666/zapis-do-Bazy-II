@@ -181,6 +181,16 @@ def numer_polisy(page_1):
         return 'Nie rozpoznałem polisy!'
 
 
+def tacka_na_polisy(obj):
+    if obj.endswith('.pdf'):
+        yield from rozpoznanie_danych(obj)
+    else:
+        for file in os.listdir(obj):
+            if file.endswith('.pdf'):
+                pdf = obj + '\\' + file
+                yield from rozpoznanie_danych(pdf)
+
+
 def rozpoznanie_danych(pdf):
     page_1, page_1_tok = polisa(pdf)[0], polisa(pdf)[1]
     page_1_box = polisa_box(pdf)
@@ -196,32 +206,19 @@ def rozpoznanie_danych(pdf):
     tow_ub = numer_polisy(page_1)[0]
     nr_polisy = numer_polisy(page_1)[1]
 
-
-    print(nazwa_firmy)
-    print(nazwisko)
-    print(imie)
-    print(p_lub_r)
-    print(ulica_f_edit)
-    print(kod_poczt)
-    print(miasto_f)
-    print(tel)
-    print(email)
-    print(data_wyst)
-    print(tow_ub)
-    print(nr_polisy)
+    return nazwa_firmy, nazwisko, imie, p_lub_r, ulica_f_edit, kod_poczt, miasto_f, tel, email, data_wyst, \
+           tow_ub, nr_polisy
 
 
-def tacka_na_polisy(obj):
-    if obj.endswith('.pdf'):
-        rozpoznanie_danych(obj)
-    else:
-        for file in os.listdir(obj):
-            if file.endswith('.pdf'):
-                pdf = obj + '\\' + file
-                rozpoznanie_danych(pdf)
+for i in tacka_na_polisy(obj):
+    if i != '' and i != ' ':
+        print(i)
+print()
+
+nazwa_firmy, nazwisko, imie, p_lub_r, ulica_f_edit, kod_poczt, miasto_f, tel, email, data_wyst, tow_ub, nr_polisy \
+    = rozpoznanie_danych(obj)
 
 
-tacka_na_polisy(obj)
 
 
 
