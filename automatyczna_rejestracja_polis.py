@@ -9,7 +9,7 @@ import time
 
 
 path = os.getcwd()
-obj = input(r'Podaj polis(ę/y) w formacie .pdf do rejestracji: ')# + '\\'
+obj = input(r'Podaj polis(ę/y) w formacie .pdf do rejestracji: ')
 
 # directory = r'C:\Users\Robert\Desktop\python\excel\zapis w Bazie\polisy\\'
 
