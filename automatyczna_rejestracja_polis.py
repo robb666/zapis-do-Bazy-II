@@ -225,7 +225,7 @@ def tacka_na_polisy(obj):
 #     ExcelApp = Dispatch("Excel.Application")
 #     wb = ExcelApp.Workbooks.Open(path + "\\TESTY.xlsx")
 #     ws = wb.Worksheets("Arkusz1")
-
+"""Zainstaluj python3.9 i zapisz wszystkie pakiety!"""
 
 """Jesienne Bazie"""
 for dane_polisy in tacka_na_polisy(obj):
