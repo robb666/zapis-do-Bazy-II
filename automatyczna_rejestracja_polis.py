@@ -1,19 +1,17 @@
 import os
 import re
 import pdfplumber
+from datetime import datetime, timedelta
 import win32com.client
 from win32com.client import Dispatch
-from datetime import datetime, timedelta
 from regon_api import get_regon_data
 import time
 
 
 path = os.getcwd()
-# pdf = r'C:\Users\Robert\Desktop\python\excel\zapis w Bazie\polisy\link.pdf'
+obj = input(r'Podaj polis(ę/y) w formacie .pdf do rejestracji: ')# + '\\'
 
-# pdf = input('Podaj polisę w formacie .pdf do rejestracji: ')
-
-
+# directory = r'C:\Users\Robert\Desktop\python\excel\zapis w Bazie\polisy\\'
 
 
 def words_separately(text):
@@ -39,37 +37,6 @@ def polisa_box(pdf):
         box_right = (150, 0, width, 140)
         page_1_box = policy.pages[0].crop(box_center, relative=True).extract_text()
     return words_separately(page_1_box.lower())
-
-
-"""Funkcje odpowiadają kolumnom w bazie."""
-def nazwisko_imie(d):
-    """Zwraca imię i nazwisko Klienta."""
-    with open(path + '\\imiona.txt') as content:
-        all_names = content.read().split('\n')
-        if 'tuz' in d.values():
-            name = [f'{d[k + 1].title()} {v.title()}' for k, v in d.items() if k > 10 and v.title() in all_names]
-        elif 'warta' in d.values():
-            name = [f'{d[k - 1].title()} {v.title()}' for k, v in d.items() if v.title() in all_names]
-        else:
-            name = [f'{d[k + 1].title()} {v.title()}' for k, v in d.items() if v.title() in all_names]
-    if name:
-        return ''.join(name[0])
-    else:
-        return ''
-
-
-def pesel_regon(d):
-    """Zapisuje pesel/regon."""
-    pesel = [pesel for k, pesel in d.items() if k < 200 and len(pesel) == 11 and re.search('\d{11}', pesel) and
-                                                                                                  pesel_checksum(pesel)]
-    regon = [regon for k, regon in d.items() if k < 150 and len(regon) == 9 and re.search('\d{9}', regon) and
-                                                                                                  regon_checksum(regon)]
-    if pesel:
-        return 'p' + pesel[0]
-    elif regon:
-        return 'r' + regon[0]
-    else:
-        return ''
 
 
 def pesel_checksum(p):
@@ -98,6 +65,7 @@ def regon_checksum(r: int):
 
 
 def regon(pesel_regon):
+    """API Regon"""
     if len(pesel_regon) == 9:
         print('\nCzekam na dane z bazy REGON...')
 
@@ -124,10 +92,41 @@ def regon(pesel_regon):
         return '', '', '', '', '', '', '', ''
 
 
-def driving_license(): pass
+"""Funkcje odpowiadają kolumnom w bazie."""
+def nazwisko_imie(d):
+    """Zwraca imię i nazwisko Klienta."""
+    with open(path + '\\imiona.txt') as content:
+        all_names = content.read().split('\n')
+        if 'tuz' in d.values():
+            name = [f'{d[k + 1].title()} {v.title()}' for k, v in d.items() if k > 10 and v.title() in all_names]
+        elif 'warta' in d.values():
+            name = [f'{d[k - 1].title()} {v.title()}' for k, v in d.items() if v.title() in all_names]
+        else:
+            name = [f'{d[k + 1].title()} {v.title()}' for k, v in d.items() if v.title() in all_names]
+    if name:
+        return name[0].split()[0], name[0].split()[1]
+    else:
+        return '', ''
 
 
-def address():
+def pesel_regon(d):
+    """Zapisuje pesel/regon."""
+    pesel = [pesel for k, pesel in d.items() if k < 200 and len(pesel) == 11 and re.search('\d{11}', pesel) and
+                                                                                                  pesel_checksum(pesel)]
+    regon = [regon for k, regon in d.items() if k < 150 and len(regon) == 9 and re.search('\d{9}', regon) and
+                                                                                                  regon_checksum(regon)]
+    if pesel:
+        return 'p' + pesel[0]
+    elif regon:
+        return 'r' + regon[0]
+    else:
+        return ''
+
+
+def prawo_jazdy(): pass
+
+
+def adres():
     """Tylko w przypadku regon (API)."""
     pass
 
@@ -135,7 +134,6 @@ def address():
 def kod_pocztowy(page_1):
     data = page_1.split()
     # print(data)
-    # re.search('adres[owe:]', adres)
     dystans = [data[data.index(adres) - 10: data.index(adres) + 17] for adres in data
                if re.search('adres?\w+', adres, re.I) or re.search('kontakt?\w+', adres, re.I)
                or adres.lower() == 'pocztowy'][0]
@@ -146,17 +144,16 @@ def kod_pocztowy(page_1):
 
 def data_wystawienia():
     one_day = timedelta(1)
-    today = datetime.strptime(datetime.now().strftime('%y-%m-%d'), '%y-%m-%d') + one_day
+    today = datetime.strptime(datetime.now().strftime('%y-%m-%d'), '%y-%m-%d')# + one_day
     return today
 
 
-def TU(): pass
+def TU():
+    """W funkcji numer_polisy(page_1)"""
+    pass
 
 
 def numer_polisy(page_1):
-    # print(page_1)
-    # lines = page_1.split('\n')
-    # print(lines[1])
     nr_polisy = ''
     if 'Allianz' in page_1 and (nr_polisy := re.search('Polisa nr (\d+)', page_1)):
         return 'ALL', nr_polisy.group(1)
@@ -180,59 +177,51 @@ def numer_polisy(page_1):
         return 'WAR', nr_polisy.group(1)
     if 'Wiener' in page_1 and (nr_polisy := re.search('Seria i numer (\w+\d+)', page_1)):
         return 'WIE', nr_polisy.group(1)
+    else:
+        return 'Nie rozpoznałem polisy!'
 
 
+def rozpoznanie_danych(pdf):
+    page_1, page_1_tok = polisa(pdf)[0], polisa(pdf)[1]
+    page_1_box = polisa_box(pdf)
+    d = dict(enumerate(page_1_tok))
+
+    nazwisko, imie = nazwisko_imie(d)
+    p_lub_r = pesel_regon(d)
+    nazwa_firmy, ulica_f, nr_ulicy_f, nr_lok, kod_poczt_f, miasto_f, tel, email = regon(p_lub_r[1:])
+    ulica_f_edit = f'{ulica_f} {nr_ulicy_f}' if not nr_lok else f'{ulica_f} {nr_ulicy_f} m {nr_lok}'
+    kod_poczt_f_edit = f'{kod_poczt_f[:2]}-{kod_poczt_f[2:]}' if '-' not in kod_poczt_f else kod_poczt_f
+    kod_poczt = kod_pocztowy(page_1)
+    data_wyst = data_wystawienia()
+    tow_ub = numer_polisy(page_1)[0]
+    nr_polisy = numer_polisy(page_1)[1]
 
 
-directory = os.fsencode(r'C:\Users\Robert\Desktop\python\excel\zapis w Bazie\polisy')
-# print(directory)
-
-# print(os.listdir(r'C:\Users\Robert\Desktop\python\excel\zapis w Bazie\polisy'))
-# for file in os.listdir(r'C:\Users\Robert\Desktop\python\excel\zapis w Bazie\polisy'):
-#     print(file)
-
-for pdf in os.listdir(r'C:\Users\Robert\Desktop\python\excel\zapis w Bazie\polisy'):
-    if pdf.endswith('pdf'):
-        print(pdf)
-        # pdf = os.fsdecode(file)
-        pdf = r'C:\Users\Robert\Desktop\python\excel\zapis w Bazie\polisy\\' + pdf
-        # print(pdf)
-        # if pdf.endswith(".pdf"):
-        print()
-        page_1, page_1_tok = polisa(pdf)[0], polisa(pdf)[1]
-
-        # print(page_1.split())
-        d = dict(enumerate(page_1_tok))
-        page_1_box = polisa_box(pdf)
-        tow_ub = numer_polisy(page_1)[0]
-        nr_polisy = numer_polisy(page_1)[1]
-
-        nazwa_firmy, ulica_f, nr_ulicy_f, nr_lok, kod_poczt_f, miasto_f, tel, email = regon(pesel_regon(d)[1:])
-        ulica_f_edit = f'{ulica_f} {nr_ulicy_f}' if not nr_lok else f'{ulica_f} {nr_ulicy_f} m {nr_lok}'
-        kod_poczt_f_edit = f'{kod_poczt_f[:2]}-{kod_poczt_f[2:]}' if '-' not in kod_poczt_f else kod_poczt_f
-
-        print(nazwa_firmy)
-        print(nazwisko_imie(d))
-        print(pesel_regon(d))
-        print(ulica_f_edit)
-        print(kod_pocztowy(page_1))
-        # print(kod_poczt_f_edit if nazwa_firmy else '')
-        # print(kod_poczt_f_edit)
-        print(miasto_f)
-        print(tel)
-        print(email)
-        print(data_wystawienia())
-        print(tow_ub)
-        print(nr_polisy)
+    print(nazwa_firmy)
+    print(nazwisko)
+    print(imie)
+    print(p_lub_r)
+    print(ulica_f_edit)
+    print(kod_poczt)
+    print(miasto_f)
+    print(tel)
+    print(email)
+    print(data_wyst)
+    print(tow_ub)
+    print(nr_polisy)
 
 
+def tacka_na_polisy(obj):
+    if obj.endswith('.pdf'):
+        rozpoznanie_danych(obj)
+    else:
+        for file in os.listdir(obj):
+            if file.endswith('.pdf'):
+                pdf = obj + '\\' + file
+                rozpoznanie_danych(pdf)
 
 
-
-
-
-
-
+tacka_na_polisy(obj)
 
 
 
