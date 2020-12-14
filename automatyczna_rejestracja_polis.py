@@ -8,8 +8,10 @@ from regon_api import get_regon_data
 import time
 
 
+
+
 path = os.getcwd()
-obj = input('Podaj polis(ę/y) w formacie .pdf do rejestracji: ')
+obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
 
 # directory = r'C:\Users\Robert\Desktop\python\excel\zapis w Bazie\polisy\\'
 
@@ -213,21 +215,24 @@ def tacka_na_polisy(obj):
                 yield rozpoznanie_danych(pdf)
 
 
-# """Sprawdza czy arkusz jest otwarty."""
-# """Jeżeli arkusz jest zamknięty, otwiera go."""
-# try:
-#     ExcelApp = win32com.client.GetActiveObject('Excel.Application')
-#     wb = ExcelApp.Workbooks("DTESTY.xlsx")
-#     ws = wb.Worksheets("Arkusz1")
-#     # workbook = ExcelApp.Workbooks("Baza.xlsx")
-#
-# except:
-#     ExcelApp = Dispatch("Excel.Application")
-#     wb = ExcelApp.Workbooks.Open(path + "\\TESTY.xlsx")
-#     ws = wb.Worksheets("Arkusz1")
-"""Zainstaluj python3.9 i zapisz wszystkie pakiety!"""
+"""Sprawdza czy arkusz jest otwarty."""
+"""Jeżeli arkusz jest zamknięty, otwiera go."""
 
+try:
+    ExcelApp = win32com.client.GetActiveObject('Excel.Application')
+    wb = ExcelApp.Workbooks("DTESTY.xlsx")
+    ws = wb.Worksheets("Arkusz1")
+    # workbook = ExcelApp.Workbooks("Baza.xlsx")
+
+except:
+    ExcelApp = Dispatch("Excel.Application")
+    wb = ExcelApp.Workbooks.Open(path + "\\TESTY.xlsx")
+    ws = wb.Worksheets("Arkusz1")
+
+
+"""Zainstaluj python3.9 i zapisz wszystkie pakiety!"""
 """Jesienne Bazie"""
+
 for dane_polisy in tacka_na_polisy(obj):
     nazwa_firmy, nazwisko, imie, p_lub_r, ulica_f_edit, kod_poczt, miasto_f, tel, email, data_wyst, \
     tow_ub, nr_polisy = dane_polisy
