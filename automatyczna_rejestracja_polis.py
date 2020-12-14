@@ -8,12 +8,10 @@ from regon_api import get_regon_data
 import time
 
 
-
-
 path = os.getcwd()
 obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
 
-# directory = r'C:\Users\Robert\Desktop\python\excel\zapis w Bazie\polisy\\'
+# obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\gen1.pdf'
 
 
 def words_separately(text):
@@ -146,8 +144,8 @@ def kod_pocztowy(page_1):
 
 def data_wystawienia():
     one_day = timedelta(1)
-    today = datetime.strptime(datetime.now().strftime('%y-%m-%d'), '%y-%m-%d')# + one_day
-    return datetime.today().date().strftime('%y-%m-%d')
+    today = datetime.strptime(datetime.now().strftime('%y-%m-%d'), '%y-%m-%d') + one_day
+    return today # datetime.today().date().strftime('%y-%m-%d')
 
 
 def TU():
@@ -226,119 +224,118 @@ try:
 
 except:
     ExcelApp = Dispatch("Excel.Application")
-    wb = ExcelApp.Workbooks.Open(path + "\\TESTY.xlsx")
+    wb = ExcelApp.Workbooks.Open(path + "\\DTESTY.xlsx")
     ws = wb.Worksheets("Arkusz1")
 
 
-"""Zainstaluj python3.9 i zapisz wszystkie pakiety!"""
 """Jesienne Bazie"""
 
 for dane_polisy in tacka_na_polisy(obj):
     nazwa_firmy, nazwisko, imie, p_lub_r, ulica_f_edit, kod_poczt, miasto_f, tel, email, data_wyst, \
     tow_ub, nr_polisy = dane_polisy
-    print(data_wyst)
+    print(dane_polisy)
 
-    # """Rozpoznaje kolejny wiersz, który może zapisać."""
-    # row_to_write = wb.Worksheets(1).Cells(wb.Worksheets(1).Rows.Count, 30).End(-4162).Row + 1
+    """Rozpoznaje kolejny wiersz, który może zapisać."""
+    row_to_write = wb.Worksheets(1).Cells(wb.Worksheets(1).Rows.Count, 30).End(-4162).Row + 1
+
+    # Rok_przypisu = ExcelApp.Cells(row_to_write, 1).Value = data_wyst[:2] # Komórka tylko do testów
+    Rozlicz = ExcelApp.Cells(row_to_write, 7).Value = 'Robert'
+    Podpis = ExcelApp.Cells(row_to_write, 10).Value = 'Grzelak'
+    FIRMA = ExcelApp.Cells(row_to_write, 11).Value = nazwa_firmy
+    Nazwisko = ExcelApp.Cells(row_to_write, 12).Value = nazwisko
+    Imie = ExcelApp.Cells(row_to_write, 13).Value = imie
+    Pesel_Regon = ExcelApp.Cells(row_to_write, 14).Value = p_lub_r
+    # ExcelApp.Cells(row_to_write, 15).Value = data_pr_j
+    ExcelApp.Cells(row_to_write, 16).Value = ulica_f_edit # f'{ulica_f} {nr_ulicy_f}' if not nr_lok else f'{ulica_f} {nr_ulicy_f} m {nr_lok}'
+    ExcelApp.Cells(row_to_write, 17).Value = kod_poczt # kod_pocztowy(page_1) if not kod_poczt_f else kod_poczt_f_edit
+    ExcelApp.Cells(row_to_write, 18).Value = miasto_f
+    ExcelApp.Cells(row_to_write, 19).Value = tel
+    ExcelApp.Cells(row_to_write, 20).Value = email
+    # ExcelApp.Cells(row_to_write, 23).Value = marka
+    # ExcelApp.Cells(row_to_write, 24).Value = model
+    # ExcelApp.Cells(row_to_write, 25).Value = nr_rej
+    # ExcelApp.Cells(row_to_write, 26).Value = rok_prod
+    # ExcelApp.Cells(row_to_write, 29).Value = int(ile_dni) + 1
+
+    # ExcelApp.Cells(row_to_write, 30).NumberFormat = 'yy-mm-dd'
+    ExcelApp.Cells(row_to_write, 30).Value = data_wyst
+    # ExcelApp.Cells(row_to_write, 31).Value = data_pocz
+    # ExcelApp.Cells(row_to_write, 32).Value = data_konca
+    ExcelApp.Cells(row_to_write, 36).Value = 'SPÓŁKA'
+    tor = ExcelApp.Cells(row_to_write, 37).Value = tow_ub
+    ExcelApp.Cells(row_to_write, 38).Value = tow_ub
+    # ExcelApp.Cells(row_to_write, 39).Value = rodzaj
+    ExcelApp.Cells(row_to_write, 40).Value = nr_polisy
+    # ExcelApp.Cells(row_to_write, 41).Value = nowa_wzn
+    # ExcelApp.Cells(row_to_write, 42).Value = nr_wzn
+    # if wzn_idx:
+    #     ExcelApp.Cells(row_to_write, 41).Value = 'W'
+    #     ExcelApp.Cells(row_to_write, 42).Value = nowa_wzn
+    # else:
+    #     ExcelApp.Cells(row_to_write, 41).Value = 'N'
+    #     ExcelApp.Cells(row_to_write, 42).Value = ''
+
+    # ryzyko = ExcelApp.Cells(row_to_write, 46).Value = 'b/d'
+    # ExcelApp.Cells(row_to_write, 48).Value = przypis
+    # ExcelApp.Cells(row_to_write, 49).Value = ter_platnosci
+    # if I_rata_data:
+    #     ExcelApp.Cells(row_to_write, 49).Value = I_rata_data
+    # ExcelApp.Cells(row_to_write, 50).Value = przypis
+    # if I_rata_data:
+    #     ExcelApp.Cells(row_to_write, 50).Value = I_rata_wart
+    # ExcelApp.Cells(row_to_write, 51).Value = f_platnosci
     #
-    # # ExcelApp.Cells(row_to_write, 1).Value = data_wystawienia()[:2] # Komórka tylko do testów
-    # ExcelApp.Cells(row_to_write, 7).Value = 'Robert'
-    # ExcelApp.Cells(row_to_write, 10).Value = 'Grzelak'
-    # ExcelApp.Cells(row_to_write, 11).Value = nazwa_firmy
-    # ExcelApp.Cells(row_to_write, 12).Value = nazwisko_imie(d).split()[0] if nazwisko_imie(d) else ''
-    # ExcelApp.Cells(row_to_write, 13).Value = nazwisko_imie(d).split()[1] if nazwisko_imie(d) else ''
-    # ExcelApp.Cells(row_to_write, 14).Value = pesel_regon(d)
-    # # ExcelApp.Cells(row_to_write, 15).Value = data_pr_j
-    # ExcelApp.Cells(row_to_write, 16).Value = f'{ulica_f} {nr_ulicy_f}' if not nr_lok else f'{ulica_f} {nr_ulicy_f} m {nr_lok}'
-    # ExcelApp.Cells(row_to_write, 17).Value = kod_pocztowy(page_1) if not kod_poczt_f else kod_poczt_f_edit
-    # ExcelApp.Cells(row_to_write, 18).Value = miasto_f
-    # ExcelApp.Cells(row_to_write, 19).Value = tel
-    # ExcelApp.Cells(row_to_write, 20).Value = email
-    # # ExcelApp.Cells(row_to_write, 23).Value = marka
-    # # ExcelApp.Cells(row_to_write, 24).Value = model
-    # # ExcelApp.Cells(row_to_write, 25).Value = nr_rej
-    # # ExcelApp.Cells(row_to_write, 26).Value = rok_prod
-    # # ExcelApp.Cells(row_to_write, 29).Value = int(ile_dni) + 1
-    #
-    # # ExcelApp.Cells(row_to_write, 30).NumberFormat = 'yy-mm-dd'
-    # ExcelApp.Cells(row_to_write, 30).Value = data_wystawienia()
-    # # ExcelApp.Cells(row_to_write, 31).Value = data_pocz
-    # # ExcelApp.Cells(row_to_write, 32).Value = data_konca
-    # # ExcelApp.Cells(row_to_write, 36).Value = 'SPÓŁKA'
-    # # tor = ExcelApp.Cells(row_to_write, 37).Value = tow
-    # # ExcelApp.Cells(row_to_write, 38).Value = tow
-    # # ExcelApp.Cells(row_to_write, 39).Value = rodzaj
-    # # ExcelApp.Cells(row_to_write, 40).Value = nr_polisy
-    # # ExcelApp.Cells(row_to_write, 41).Value = nowa_wzn
-    # # ExcelApp.Cells(row_to_write, 42).Value = nr_wzn
-    # # if wzn_idx:
-    # #     ExcelApp.Cells(row_to_write, 41).Value = 'W'
-    # #     ExcelApp.Cells(row_to_write, 42).Value = nowa_wzn
-    # # else:
-    # #     ExcelApp.Cells(row_to_write, 41).Value = 'N'
-    # #     ExcelApp.Cells(row_to_write, 42).Value = ''
-    #
-    # # ryzyko = ExcelApp.Cells(row_to_write, 46).Value = 'b/d'
-    # # ExcelApp.Cells(row_to_write, 48).Value = przypis
-    # # ExcelApp.Cells(row_to_write, 49).Value = ter_platnosci
-    # # if I_rata_data:
-    # #     ExcelApp.Cells(row_to_write, 49).Value = I_rata_data
-    # # ExcelApp.Cells(row_to_write, 50).Value = przypis
-    # # if I_rata_data:
-    # #     ExcelApp.Cells(row_to_write, 50).Value = I_rata_wart
-    # # ExcelApp.Cells(row_to_write, 51).Value = f_platnosci
-    # #
-    # # ExcelApp.Cells(row_to_write, 52).Value = ilosc_rat
-    # # ExcelApp.Cells(row_to_write, 53).Value = ilosc_rat
-    # # data_inkasa = ExcelApp.Cells(row_to_write, 54).Value = ter_platnosci
-    # # ExcelApp.Cells(row_to_write, 55).Value = przypis
-    # # ExcelApp.Cells(row_to_write, 59).Value = tow
-    #
-    #
-    # # if II_rata_data:
-    # #     owca = ExcelApp.Cells(row_to_write + 1, 7).Value = 'Robert'
-    # #     podpis = ExcelApp.Cells(row_to_write + 1, 10).Value = 'Grzelak'
-    # #     ExcelApp.Cells(row_to_write + 1, 13).Value = imie
-    # #     ExcelApp.Cells(row_to_write + 1, 12).Value = nazwisko
-    # #     ExcelApp.Cells(row_to_write + 1, 14).Value = 'p' + pesel
-    # #     ExcelApp.Cells(row_to_write + 1, 15).Value = data_pr_j
-    # #     ExcelApp.Cells(row_to_write + 1, 16).Value = ulica
-    # #     ExcelApp.Cells(row_to_write + 1, 17).Value = kod_poczt
-    # #     ExcelApp.Cells(row_to_write + 1, 18).Value = miasto
-    # #     # tel = ExcelApp.Cells(row_to_write, 19).Value = int('5001900')
-    # #     # email = ExcelApp.Cells(row_to_write, 20).Value = 'malpa@gmail.pl'
-    # #     ExcelApp.Cells(row_to_write + 1, 23).Value = marka
-    # #     ExcelApp.Cells(row_to_write + 1, 24).Value = model
-    # #     ExcelApp.Cells(row_to_write + 1, 25).Value = nr_rej
-    # #     ExcelApp.Cells(row_to_write + 1, 26).Value = rok_prod
-    # #     # data_podpi = ExcelApp.Cells(row_to_write, 30).Value = '18.02.2019'
-    # #     ExcelApp.Cells(row_to_write + 1, 31).Value = data_pocz
-    # #     ExcelApp.Cells(row_to_write + 1, 32).Value = data_konca
-    # #     firma = ExcelApp.Cells(row_to_write, 36).Value = 'SPÓŁKA'
-    # #     # tor = ExcelApp.Cells(row_to_write, 37).Value = 'GEN'
-    # #     # tow = ExcelApp.Cells(row_to_write, 38).Value = 'GEN'
-    # #     # rodz = ExcelApp.Cells(row_to_write, 39).Value = 'kom'
-    # #     ExcelApp.Cells(row_to_write + 1, 40).Value = nr_polisy
-    # #     # nowa_wzn = ExcelApp.Cells(row_to_write, 41).Value = 'N'
-    # #     # nr_wzn = ExcelApp.Cells(row_to_write, 42).Value = '908568823555'
-    # #     # ryzyko = ExcelApp.Cells(row_to_write, 46).Value = 'b/d'
-    # #     ExcelApp.Cells(row_to_write + 1, 48).Value = ''
-    # #     ExcelApp.Cells(row_to_write + 1, 49).Value = ter_platnosci
-    # #     # ExcelApp.Cells(row_to_write + 1, 49).Value = I_rata_data   ###
-    # #     ExcelApp.Cells(row_to_write + 1, 49).Value = II_rata_data
-    # #     ExcelApp.Cells(row_to_write + 1, 50).Value = II_rata_wart
-    # #     ExcelApp.Cells(row_to_write + 1, 51).Value = f_platnosci
+    # ExcelApp.Cells(row_to_write, 52).Value = ilosc_rat
+    # ExcelApp.Cells(row_to_write, 53).Value = ilosc_rat
+    # data_inkasa = ExcelApp.Cells(row_to_write, 54).Value = ter_platnosci
+    # ExcelApp.Cells(row_to_write, 55).Value = przypis
+    # ExcelApp.Cells(row_to_write, 59).Value = tow
+
+
+    # if II_rata_data:
+    #     owca = ExcelApp.Cells(row_to_write + 1, 7).Value = 'Robert'
+    #     podpis = ExcelApp.Cells(row_to_write + 1, 10).Value = 'Grzelak'
+    #     ExcelApp.Cells(row_to_write + 1, 13).Value = imie
+    #     ExcelApp.Cells(row_to_write + 1, 12).Value = nazwisko
+    #     ExcelApp.Cells(row_to_write + 1, 14).Value = 'p' + pesel
+    #     ExcelApp.Cells(row_to_write + 1, 15).Value = data_pr_j
+    #     ExcelApp.Cells(row_to_write + 1, 16).Value = ulica
+    #     ExcelApp.Cells(row_to_write + 1, 17).Value = kod_poczt
+    #     ExcelApp.Cells(row_to_write + 1, 18).Value = miasto
+    #     # tel = ExcelApp.Cells(row_to_write, 19).Value = int('5001900')
+    #     # email = ExcelApp.Cells(row_to_write, 20).Value = 'malpa@gmail.pl'
+    #     ExcelApp.Cells(row_to_write + 1, 23).Value = marka
+    #     ExcelApp.Cells(row_to_write + 1, 24).Value = model
+    #     ExcelApp.Cells(row_to_write + 1, 25).Value = nr_rej
+    #     ExcelApp.Cells(row_to_write + 1, 26).Value = rok_prod
+    #     # data_podpi = ExcelApp.Cells(row_to_write, 30).Value = '18.02.2019'
+    #     ExcelApp.Cells(row_to_write + 1, 31).Value = data_pocz
+    #     ExcelApp.Cells(row_to_write + 1, 32).Value = data_konca
+    #     firma = ExcelApp.Cells(row_to_write, 36).Value = 'SPÓŁKA'
+    #     # tor = ExcelApp.Cells(row_to_write, 37).Value = 'GEN'
+    #     # tow = ExcelApp.Cells(row_to_write, 38).Value = 'GEN'
+    #     # rodz = ExcelApp.Cells(row_to_write, 39).Value = 'kom'
+    #     ExcelApp.Cells(row_to_write + 1, 40).Value = nr_polisy
+    #     # nowa_wzn = ExcelApp.Cells(row_to_write, 41).Value = 'N'
+    #     # nr_wzn = ExcelApp.Cells(row_to_write, 42).Value = '908568823555'
+    #     # ryzyko = ExcelApp.Cells(row_to_write, 46).Value = 'b/d'
+    #     ExcelApp.Cells(row_to_write + 1, 48).Value = ''
+    #     ExcelApp.Cells(row_to_write + 1, 49).Value = ter_platnosci
+    #     # ExcelApp.Cells(row_to_write + 1, 49).Value = I_rata_data   ###
+    #     ExcelApp.Cells(row_to_write + 1, 49).Value = II_rata_data
+    #     ExcelApp.Cells(row_to_write + 1, 50).Value = II_rata_wart
+    #     ExcelApp.Cells(row_to_write + 1, 51).Value = f_platnosci
 
 
 
 """Opcje zapisania"""
-# # ExcelApp.DisplayAlerts = False
-# # wb.SaveAs(path + "\\TESTY.xlsx")
-# # wb.Close()
-# # ExcelApp.DisplayAlerts = True
-#
-#
-#
+ExcelApp.DisplayAlerts = False
+wb.SaveAs(path + "\\DTESTY.xlsx")
+wb.Close()
+ExcelApp.DisplayAlerts = True
+
+
+
 
 
 

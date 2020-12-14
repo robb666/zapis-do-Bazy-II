@@ -13,3 +13,4 @@ build/automatyczna_rejestracja_polis/warn-automatyczna_rejestracja_polis.txt
 *.html
 *.exe
 dist/imiona.txt
+.~lock.DTESTY.xlsx#
