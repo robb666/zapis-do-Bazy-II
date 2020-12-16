@@ -10,8 +10,9 @@ api.authenticate(key=API_KEY)
 def validate_regon(r: int):
     """Waliduje sprawdzając sumę kontrolną regon."""
     regon = list(str(r))
-    if (int(regon[0])*8 + int(regon[1])*9 + int(regon[2])*2 + int(regon[3])*3 + int(regon[4])*4 +
-        int(regon[5])*5 + int(regon[6])*6 + int(regon[7])*7) % 11 == int(regon[-1]):
+    suma = (int(regon[0])*8 + int(regon[1])*9 + int(regon[2])*2 + int(regon[3])*3 + int(regon[4])*4 +
+            int(regon[5])*5 + int(regon[6])*6 + int(regon[7])*7) % 11
+    if suma == int(regon[-1]) or suma == 10 and int(regon[-1]) == 0:
         return r
 
 
@@ -110,4 +111,4 @@ def get_regon_data(r):
         return print('\nBaza REGON\n==========\nPodany numer REGON jest błędny!\n')
 
 
-# pp.pprint(get_regon_data(365897881))
+# pp.pprint(get_regon_data(100416810))

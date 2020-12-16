@@ -9,9 +9,9 @@ import time
 
 
 path = os.getcwd()
-obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
+# obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
 
-# obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\gen1.pdf'
+obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy\polisy'
 
 
 def words_separately(text):
@@ -59,33 +59,35 @@ def regon_checksum(r: int):
     suma = (int(regon[0])*8 + int(regon[1])*9 + int(regon[2])*2 + int(regon[3])*3 + int(regon[4])*4 +
             int(regon[5])*5 + int(regon[6])*6 + int(regon[7])*7) % 11
     if suma == int(regon[-1]) or suma == 10 and int(regon[-1]) == 0:
-        return 1
+        # print(r)
+
+        return r
     else:
         return 0
 
 
-def regon(pesel_regon):
+def regon(regon_checksum):
     """API Regon"""
-    if len(pesel_regon) == 9:
+    if len(regon_checksum) == 9:
         print('\nCzekam na dane z bazy REGON...')
 
-        osoba = get_regon_data(pesel_regon)['forma']
+        osoba = get_regon_data(regon_checksum)['forma']
         imie, nazwisko = '', ''
         if osoba == 'Jednoosobowa dz.g.':
-            imie = get_regon_data(pesel_regon)['imie']
-            nazwisko = get_regon_data(pesel_regon)['nazwisko']
-        nazwa_firmy = get_regon_data(pesel_regon)['nazwa'].title()
-        nip = get_regon_data(pesel_regon)['nip']
-        ulica_f = get_regon_data(pesel_regon)['ul'].lstrip('ul. ')
-        nr_ulicy_f = get_regon_data(pesel_regon)['nr_ul']
-        nr_lok = get_regon_data(pesel_regon)['nr_lok']
-        kod_poczt_f = get_regon_data(pesel_regon)['kod_poczt']
-        miasto_f = get_regon_data(pesel_regon)['miasto']
-        pkd = get_regon_data(pesel_regon)['pkd']
-        opis_pkd = get_regon_data(pesel_regon)['opis pkd']
-        data_rozp = get_regon_data(pesel_regon)['data rozpoczęcia']
-        tel = get_regon_data(pesel_regon)['tel']
-        email = get_regon_data(pesel_regon)['email'].lower()
+            imie = get_regon_data(regon_checksum)['imie']
+            nazwisko = get_regon_data(regon_checksum)['nazwisko']
+        nazwa_firmy = get_regon_data(regon_checksum)['nazwa'].title()
+        nip = get_regon_data(regon_checksum)['nip']
+        ulica_f = get_regon_data(regon_checksum)['ul'].lstrip('ul. ')
+        nr_ulicy_f = get_regon_data(regon_checksum)['nr_ul']
+        nr_lok = get_regon_data(regon_checksum)['nr_lok']
+        kod_poczt_f = get_regon_data(regon_checksum)['kod_poczt']
+        miasto_f = get_regon_data(regon_checksum)['miasto']
+        pkd = get_regon_data(regon_checksum)['pkd']
+        opis_pkd = get_regon_data(regon_checksum)['opis pkd']
+        data_rozp = get_regon_data(regon_checksum)['data rozpoczęcia']
+        tel = get_regon_data(regon_checksum)['tel']
+        email = get_regon_data(regon_checksum)['email'].lower()
 
         return nazwa_firmy, ulica_f, nr_ulicy_f, nr_lok, kod_poczt_f, miasto_f, tel, email
     else:
@@ -132,15 +134,18 @@ def adres():
 
 
 def kod_pocztowy(page_1):
-    data = page_1.split()
-    # print(data)
-    dystans = [data[data.index(adres) - 10: data.index(adres) + 17] for adres in data
-               if re.search('adres?\w+', adres, re.I) or re.search('kontakt?\w+', adres, re.I)
-               or adres.lower() == 'pocztowy'][0]
-    # print(dystans)
-    kod_pocztowy = [kod for kod in dystans if re.search('\d{2}[-|\xad]\d{3}', kod)][0]
-    return kod_pocztowy
-
+    try:
+        data = page_1.split()
+        # print(data)
+        # re.search('adres?\w+|kontakt?\w+|pocztowy', adres, re.I)][0]
+        dystans = [data[data.index(adres) - 10: data.index(adres) + 17] for adres in data
+                   if re.search('Adres', adres, re.I) or re.search('kontakt?\w+', adres, re.I)
+                   or adres.lower() == 'pocztowy'][0]
+        # print(dystans)
+        kod_pocztowy = [kod for kod in dystans if re.search('\d{2}-|\xad\d{3}', kod)][0]
+        return kod_pocztowy
+    except IndexError:
+        return ''
 
 def data_wystawienia():
     one_day = timedelta(1)
@@ -183,7 +188,6 @@ def numer_polisy(page_1):
 
 """Koniec arkusza EXCEL"""
 
-
 def rozpoznanie_danych(tacka_na_polisy):
     pdf = tacka_na_polisy
     page_1, page_1_tok, page_1_box = polisa(pdf)[0], polisa(pdf)[1], polisa_box(pdf)
@@ -194,7 +198,7 @@ def rozpoznanie_danych(tacka_na_polisy):
     nazwa_firmy, ulica_f, nr_ulicy_f, nr_lok, kod_poczt_f, miasto_f, tel, email = regon(p_lub_r[1:])
     ulica_f_edit = f'{ulica_f} {nr_ulicy_f}' if not nr_lok else f'{ulica_f} {nr_ulicy_f} m {nr_lok}'
     kod_poczt_f_edit = f'{kod_poczt_f[:2]}-{kod_poczt_f[2:]}' if '-' not in kod_poczt_f else kod_poczt_f
-    kod_poczt = kod_pocztowy(page_1)
+    kod_poczt = kod_pocztowy(page_1) if kod_pocztowy(page_1) else kod_poczt_f_edit
     data_wyst = data_wystawienia()
     tow_ub = numer_polisy(page_1)[0]
     nr_polisy = numer_polisy(page_1)[1]
@@ -329,10 +333,10 @@ for dane_polisy in tacka_na_polisy(obj):
 
 
 """Opcje zapisania"""
-ExcelApp.DisplayAlerts = False
-wb.SaveAs(path + "\\DTESTY.xlsx")
-wb.Close()
-ExcelApp.DisplayAlerts = True
+# ExcelApp.DisplayAlerts = False
+# wb.SaveAs(path + "\\DTESTY.xlsx")
+# wb.Close()
+# ExcelApp.DisplayAlerts = True
 
 
 
