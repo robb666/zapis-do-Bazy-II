@@ -134,18 +134,29 @@ def adres():
 
 
 def kod_pocztowy(page_1):
-    try:
-        data = page_1.split()
-        # print(data)
-        # re.search('adres?\w+|kontakt?\w+|pocztowy', adres, re.I)][0]
-        dystans = [data[data.index(adres) - 10: data.index(adres) + 17] for adres in data
-                   if re.search('Adres', adres, re.I) or re.search('kontakt?\w+', adres, re.I)
-                   or adres.lower() == 'pocztowy'][0]
-        # print(dystans)
-        kod_pocztowy = [kod for kod in dystans if re.search('\d{2}-|\xad\d{3}', kod)][0]
-        return kod_pocztowy
-    except IndexError:
-        return ''
+    # try:
+    # print(page_1)
+    data = page_1.split()
+    print(data)
+    # re.search('adres?\w+|kontakt?\w+|pocztowy', adres, re.I)][0]
+
+    dystans = [data[data.index(adres) - 10: data.index(adres) + 17] for adres in data
+               if re.search('adres?\w+', adres, re.I) or re.search('kontakt?\w+', adres, re.I)
+               or adres.lower() == 'pocztowy']
+    print(dystans)
+
+
+    # dystans = []
+    # for tok in data:
+    #     if re.search('adres?\w+|kontakt?\w+|pocztowy', tok, re.I):
+    #         dystans.append(data[data.index(tok) - 10: data.index(tok) + 17][1])
+
+
+
+    kod_pocztowy = [kod for kod in dystans if re.search('\d{2}-|\xad\d{3}', kod)][0]
+    return kod_pocztowy
+    # except IndexError:
+    #     return ''
 
 def data_wystawienia():
     one_day = timedelta(1)
