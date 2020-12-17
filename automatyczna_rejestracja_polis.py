@@ -137,21 +137,19 @@ def kod_pocztowy(page_1):
     # try:
     # print(page_1)
     data = page_1.split()
-    print(data)
+    # print(data)
     # re.search('adres?\w+|kontakt?\w+|pocztowy', adres, re.I)][0]
 
     dystans = [data[data.index(adres) - 10: data.index(adres) + 17] for adres in data
-               if re.search('adres?\w+', adres, re.I) or re.search('kontakt?\w+', adres, re.I)
-               or adres.lower() == 'pocztowy']
-    print(dystans)
-
+                if re.search('(adres?\w+|kontakt?\w+|pocztowy).+', adres, re.I)][0]
+               # if re.search('adres?\w+', adres, re.I) or re.search('kontakt?\w+', adres, re.I)
+               # or adres.lower() == 'pocztowy']
+    # print(dystans)
 
     # dystans = []
     # for tok in data:
-    #     if re.search('adres?\w+|kontakt?\w+|pocztowy', tok, re.I):
-    #         dystans.append(data[data.index(tok) - 10: data.index(tok) + 17][1])
-
-
+    #     if re.search('(adres?\w+|kontakt?\w+|pocztowy).+', tok, re.I):
+    #         dystans.append(data[data.index(tok) - 10: data.index(tok) + 17])
 
     kod_pocztowy = [kod for kod in dystans if re.search('\d{2}-|\xad\d{3}', kod)][0]
     return kod_pocztowy
