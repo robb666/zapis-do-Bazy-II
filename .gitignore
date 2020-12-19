@@ -14,3 +14,4 @@ build/automatyczna_rejestracja_polis/warn-automatyczna_rejestracja_polis.txt
 *.exe
 dist/imiona.txt
 .~lock.DTESTY.xlsx#
+zrobić input z imieniem, bo wielu obcokrajowców.txt

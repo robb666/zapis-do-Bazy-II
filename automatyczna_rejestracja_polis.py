@@ -134,27 +134,26 @@ def adres():
 
 
 def kod_pocztowy(page_1):
-    # try:
-    # print(page_1)
+
+    c = re.compile('(adres|kontakt?\w+|pocztowy|ubezpieczony).+?', re.I)
+
+    if (f := c.search(page_1)):
+        adres = f.group().strip()
+        print(adres)
+
     data = page_1.split()
     # print(data)
-    # re.search('adres?\w+|kontakt?\w+|pocztowy', adres, re.I)][0]
+    dystans = data[data.index(adres) - 10: data.index(adres) + 17]
 
-    dystans = [data[data.index(adres) - 10: data.index(adres) + 17] for adres in data
-                if re.search('(adres?\w+|kontakt?\w+|pocztowy)', adres, re.I)][0]
+    # dystans = [data[data.index(adres) - 10: data.index(adres) + 17] for adres in page_1
+    #             if c.search(adres)][0]
                # if re.search('adres?\w+', adres, re.I) or re.search('kontakt?\w+', adres, re.I)
                # or adres.lower() == 'pocztowy']
     print(dystans)
 
-    # dystans = []
-    # for tok in data:
-    #     if re.search('(adres?\w+|kontakt?\w+|pocztowy).+', tok, re.I):
-    #         dystans.append(data[data.index(tok) - 10: data.index(tok) + 17])
-
     kod_pocztowy = [kod for kod in dystans if re.search('\d{2}-|\xad\d{3}', kod)][0]
     return kod_pocztowy
-    # except IndexError:
-    #     return ''
+
 
 def data_wystawienia():
     one_day = timedelta(1)
@@ -179,6 +178,8 @@ def numer_polisy(page_1):
         return 'GEN', nr_polisy.group(1)
     if 'Hestia' in page_1 and (nr_polisy := re.search('Polisa\s.*\s(\d+)', page_1, re.I)):
         return 'HES', nr_polisy.group(1)
+    if 'INTER' and (nr_polisy := re.search('polisa\s*seria\s*(\w*)\s*numer\s*(\d*)', page_1)):
+        return 'INT', nr_polisy.group(1) + nr_polisy.group(2)
     if 'InterRisk' in page_1 and (nr_polisy := re.search('Polisa seria?\s(.*)\snumer\s(\d+)', page_1, re.I)):
         return 'RIS', nr_polisy.group(1) + nr_polisy.group(2)
     if (nr_polisy := re.search('Numer\s(\w\d+)', page_1)):
@@ -189,6 +190,8 @@ def numer_polisy(page_1):
         return 'TUW', nr_polisy.group(1)
     if 'TUZ' in page_1 and (nr_polisy := re.search('WNIOSEK seria (\w+) nr (\d+)', page_1)):
         return 'TUZ', nr_polisy.group(1) + nr_polisy.group(2)
+    if 'UNIQA' in page_1 and (nr_polisy := re.search('Nr (\d{6,})', page_1)):
+        return 'UNI', nr_polisy.group(1)
     if 'WARTA' in page_1 and (nr_polisy := re.search('POLISA NR\s?: *(\d+)', page_1)):
         return 'WAR', nr_polisy.group(1)
     if 'Wiener' in page_1 and (nr_polisy := re.search('Seria i numer (\w+\d+)', page_1)):
@@ -204,8 +207,10 @@ def rozpoznanie_danych(tacka_na_polisy):
     page_1, page_1_tok, page_1_box = polisa(pdf)[0], polisa(pdf)[1], polisa_box(pdf)
     d = dict(enumerate(page_1_tok))
     # print(d)
-    nazwisko, imie = nazwisko_imie(d)
     p_lub_r = pesel_regon(d)
+    # nazwisko, imie = '', '' if regon_checksum(p_lub_r[1:]) else nazwisko_imie(d)
+    nazwisko = '' if regon_checksum(p_lub_r[1:]) else nazwisko_imie(d)[0]
+    imie = '' if regon_checksum(p_lub_r[1:]) else nazwisko_imie(d)[1]
     nazwa_firmy, ulica_f, nr_ulicy_f, nr_lok, kod_poczt_f, miasto_f, tel, email = regon(p_lub_r[1:])
     ulica_f_edit = f'{ulica_f} {nr_ulicy_f}' if not nr_lok else f'{ulica_f} {nr_ulicy_f} m {nr_lok}'
     kod_poczt_f_edit = f'{kod_poczt_f[:2]}-{kod_poczt_f[2:]}' if '-' not in kod_poczt_f else kod_poczt_f
