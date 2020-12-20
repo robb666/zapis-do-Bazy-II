@@ -138,17 +138,15 @@ def kod_pocztowy(page_1):
     # print(page_1)
     c = re.compile('(adres\w*|(?<!InterRisk) kontakt\w*|pocztowy|ubezpieczony)', re.I)
     # print(c)
+
     if (f := c.search(page_1)):
         adres = f.group().strip()
         # print(adres)
 
     data = page_1.split()
     # print(data)
-
     dystans = [data[data.index(split) - 10: data.index(split) + 33] for split in data if adres in split][0]
-
     # print(dystans)
-
     kod_pocztowy = [kod for kod in dystans if re.search('\d{2}[-|\xad]\d{3}', kod)][0]
     return kod_pocztowy
 
