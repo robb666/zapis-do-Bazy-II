@@ -9,9 +9,9 @@ import time
 
 
 path = os.getcwd()
-# obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
+obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
 
-obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy\polisy\I partia'
+# obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy\polisy\I partia'
 
 
 def words_separately(text):
@@ -345,10 +345,10 @@ for dane_polisy in tacka_na_polisy(obj):
 
 
 """Opcje zapisania"""
-# ExcelApp.DisplayAlerts = False
-# wb.SaveAs(path + "\\DTESTY.xlsx")
-# wb.Close()
-# ExcelApp.DisplayAlerts = True
+ExcelApp.DisplayAlerts = False
+wb.SaveAs(path + "\\DTESTY.xlsx")
+wb.Close()
+ExcelApp.DisplayAlerts = True
 
 
 
