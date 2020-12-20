@@ -11,7 +11,7 @@ import time
 path = os.getcwd()
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
 
-obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy\polisy'
+obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy\polisy\I partia'
 
 
 def words_separately(text):
@@ -136,7 +136,7 @@ def adres():
 
 def kod_pocztowy(page_1):
     # print(page_1)
-    c = re.compile('(adres\w*|kontakt\w*(?<!InterRisk)|pocztowy|ubezpieczony)', re.I)
+    c = re.compile('(adres\w*|(?<!InterRisk) kontakt\w*|pocztowy|ubezpieczony)', re.I)
     # print(c)
     if (f := c.search(page_1)):
         adres = f.group().strip()
@@ -147,10 +147,9 @@ def kod_pocztowy(page_1):
 
     dystans = [data[data.index(split) - 10: data.index(split) + 33] for split in data if adres in split][0]
 
-    print(dystans)
+    # print(dystans)
 
     kod_pocztowy = [kod for kod in dystans if re.search('\d{2}[-|\xad]\d{3}', kod)][0]
-    print(kod_pocztowy)
     return kod_pocztowy
 
 
