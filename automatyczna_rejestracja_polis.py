@@ -56,15 +56,17 @@ def pesel_checksum(p):
 def regon_checksum(r: int):
     """Waliduje regon sprawdzając sumę kontrolną."""
     regon = list(str(r))
-    suma = (int(regon[0])*8 + int(regon[1])*9 + int(regon[2])*2 + int(regon[3])*3 + int(regon[4])*4 +
-            int(regon[5])*5 + int(regon[6])*6 + int(regon[7])*7) % 11
-    if suma == int(regon[-1]) or suma == 10 and int(regon[-1]) == 0:
-        # print(r)
+    if len(regon) == 9:
+        suma = (int(regon[0])*8 + int(regon[1])*9 + int(regon[2])*2 + int(regon[3])*3 + int(regon[4])*4 +
+                int(regon[5])*5 + int(regon[6])*6 + int(regon[7])*7) % 11
+        if suma == int(regon[-1]) or suma == 10 and int(regon[-1]) == 0:
+            # print(r)
 
-        return r
+            return r
+        else:
+            return 0
     else:
-        return 0
-
+        return ''
 
 def regon(regon_checksum):
     """API Regon"""
@@ -134,22 +136,19 @@ def adres():
 
 
 def kod_pocztowy(page_1):
-
-    c = re.compile('(adres|kontakt?\w+|pocztowy|ubezpieczony).+?', re.I)
-
+    # print(page_1)
+    c = re.compile('(adres?\w+|kontakt?\w+|pocztowy|ubezpieczony).+?', re.I)
+    # print(c)
     if (f := c.search(page_1)):
         adres = f.group().strip()
         print(adres)
 
     data = page_1.split()
     # print(data)
-    dystans = data[data.index(adres) - 10: data.index(adres) + 17]
 
-    # dystans = [data[data.index(adres) - 10: data.index(adres) + 17] for adres in page_1
-    #             if c.search(adres)][0]
-               # if re.search('adres?\w+', adres, re.I) or re.search('kontakt?\w+', adres, re.I)
-               # or adres.lower() == 'pocztowy']
-    print(dystans)
+    dystans = [data[data.index(split) - 10: data.index(split) + 33] for split in data if adres in split][0]
+
+    # print(dystans)
 
     kod_pocztowy = [kod for kod in dystans if re.search('\d{2}-|\xad\d{3}', kod)][0]
     return kod_pocztowy
