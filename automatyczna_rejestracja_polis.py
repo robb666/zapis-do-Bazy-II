@@ -45,11 +45,10 @@ def pesel_checksum(p):
     suma = ((1*int(p[0])) + 3*int(p[1]) + (7*int(p[2])) + (9*int(p[3])) + (1*int(p[4])) + (3*int(p[5])) +
             (7*int(p[6])) + (9*int(p[7])) + (1*int(p[8])) + (3*int(p[9])))
     lm = (suma % 10)  # dzielenie wyniku modulo 10
-    kontrola=(10 - lm)  # sprawdzenie ostatniej liczby kontrolnej
+    kontrola = (10 - lm)  # sprawdzenie ostatniej liczby kontrolnej
     if kontrola == 10 or l == kontrola:  # w przypadku liczby kontrolnej 10 i 0 sa jednoznaczne a 0 moze byc wynikiem odejmowania
         return 1
     else:
-        # print('Niepoprawny pesel!')
         return 0
 
 
@@ -137,20 +136,21 @@ def adres():
 
 def kod_pocztowy(page_1):
     # print(page_1)
-    c = re.compile('(adres?\w+|kontakt?\w+|pocztowy|ubezpieczony).+?', re.I)
+    c = re.compile('(adres\w*|kontakt\w*(?<!InterRisk)|pocztowy|ubezpieczony)', re.I)
     # print(c)
     if (f := c.search(page_1)):
         adres = f.group().strip()
-        print(adres)
+        # print(adres)
 
     data = page_1.split()
     # print(data)
 
     dystans = [data[data.index(split) - 10: data.index(split) + 33] for split in data if adres in split][0]
 
-    # print(dystans)
+    print(dystans)
 
-    kod_pocztowy = [kod for kod in dystans if re.search('\d{2}-|\xad\d{3}', kod)][0]
+    kod_pocztowy = [kod for kod in dystans if re.search('\d{2}[-|\xad]\d{3}', kod)][0]
+    print(kod_pocztowy)
     return kod_pocztowy
 
 
