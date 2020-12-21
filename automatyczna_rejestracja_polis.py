@@ -172,7 +172,7 @@ def numer_polisy(page_1):
         return 'COM', nr_polisy.group(1) + nr_polisy.group(2)
     if 'Generali' in page_1 and (nr_polisy := re.search('POLISA NR\s*(\d+)', page_1, re.I)):
         return 'GEN', nr_polisy.group(1)
-    if 'Hestia' in page_1 and (nr_polisy := re.search('Polisa\s.*\s(\d+)', page_1, re.I)):
+    if 'Hestia' in page_1  and not 'MTU' in page_1 and (nr_polisy := re.search('Polisa\s.*\s(\d+)', page_1, re.I)):
         return 'HES', nr_polisy.group(1)
     if 'INTER' and (nr_polisy := re.search('polisa\s*seria\s*(\w*)\s*numer\s*(\d*)', page_1)):
         return 'INT', nr_polisy.group(1) + nr_polisy.group(2)
@@ -180,6 +180,8 @@ def numer_polisy(page_1):
         return 'RIS', nr_polisy.group(1) + nr_polisy.group(2)
     if (nr_polisy := re.search('Numer\s(\w\d+)', page_1)):
         return 'LIN', nr_polisy.group(1)
+    if 'MTU' in page_1 and (nr_polisy := re.search('Polisa\s.*\s(\d+)', page_1, re.I)):
+        return 'AZ', nr_polisy.group(1)
     if 'PZU' in page_1 and (nr_polisy := re.search('Nr *(\d+)', page_1)):
         return 'PZU', nr_polisy.group(1)
     if 'TUW' in page_1 and (nr_polisy := re.search('Wniosko-Polisa\snr\s*(\d+)', page_1)):
