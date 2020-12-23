@@ -11,7 +11,7 @@ import time
 path = os.getcwd()
 obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
 
-# obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy\polisy\I partia'
+# obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy'
 
 
 def words_separately(text):
@@ -46,7 +46,7 @@ def pesel_checksum(p):
             (7*int(p[6])) + (9*int(p[7])) + (1*int(p[8])) + (3*int(p[9])))
     lm = (suma % 10)  # dzielenie wyniku modulo 10
     kontrola = (10 - lm)  # sprawdzenie ostatniej liczby kontrolnej
-    if kontrola == 10 or l == kontrola:  # w przypadku liczby kontrolnej 10 i 0 sa jednoznaczne a 0 moze byc wynikiem odejmowania
+    if (kontrola == 10 or l == kontrola) and p[2:4] != '00':  # w przypadku liczby kontrolnej 10 i 0 sa jednoznaczne a 0 moze byc wynikiem odejmowania
         return 1
     else:
         return 0
@@ -59,8 +59,6 @@ def regon_checksum(r: int):
         suma = (int(regon[0])*8 + int(regon[1])*9 + int(regon[2])*2 + int(regon[3])*3 + int(regon[4])*4 +
                 int(regon[5])*5 + int(regon[6])*6 + int(regon[7])*7) % 11
         if suma == int(regon[-1]) or suma == 10 and int(regon[-1]) == 0:
-            # print(r)
-
             return r
         else:
             return 0
@@ -100,7 +98,14 @@ def nazwisko_imie(d):
     """Zwraca imię i nazwisko Klienta."""
     with open(path + '\\imiona.txt') as content:
         all_names = content.read().split('\n')
-        if 'tuz' in d.values():
+        if 'euroins' in d.values():
+            name = []
+            for k, v in d.items():
+                if v.title() in all_names and not re.search('\d', d[k + 4]):
+                    name.append(f'{d[k + 4].title()} {v.title()}')
+                if v.title() in all_names and re.search('\d', d[k + 4]):
+                    name.append(f'{d[k + 5].title()} {v.title()}')
+        elif 'tuz' in d.values():
             name = [f'{d[k + 1].title()} {v.title()}' for k, v in d.items() if k > 10 and v.title() in all_names]
         elif 'warta' in d.values():
             name = [f'{d[k - 1].title()} {v.title()}' for k, v in d.items() if v.title() in all_names]
@@ -165,35 +170,41 @@ def TU():
 def numer_polisy(page_1):
     nr_polisy = ''
     if 'Allianz' in page_1 and (nr_polisy := re.search('Polisa nr (\d+)', page_1)):
-        return 'ALL', nr_polisy.group(1)
+        return 'ALL', 'ALL', nr_polisy.group(1)
     if 'AXA' in page_1 and (nr_polisy := re.search('(\d{4}-\d+)', page_1)):
-        return 'AXA', nr_polisy.group(1)
+        return 'AXA', 'AXA', nr_polisy.group(1)
     if 'Compensa' in page_1 and (nr_polisy := re.search('typ polisy: *\s*(\d+),numer: *\s*(\d+)', page_1)):
-        return 'COM', nr_polisy.group(1) + nr_polisy.group(2)
-    if 'Generali' in page_1 and (nr_polisy := re.search('POLISA NR\s*(\d+)', page_1, re.I)):
-        return 'GEN', nr_polisy.group(1)
+        return 'COM', 'COM', nr_polisy.group(1) + nr_polisy.group(2)
+    if 'EUROINS' in page_1 and (nr_polisy := re.search('Polisa ubezpieczenia nr: (\d+)', page_1)):
+        return 'EIN', 'EIN', nr_polisy.group(1)
+    if 'Generali' in page_1 and not 'Proama' in page_1 and (nr_polisy := re.search('POLISA NR\s*(\d+)', page_1, re.I)):
+        return 'GEN', 'GEN', nr_polisy.group(1)
+    if 'HDI' in page_1 and (nr_polisy := re.search('POLISA NR\s?: *(\d+)', page_1)):
+        return 'WAR', 'HDI', nr_polisy.group(1)
     if 'Hestia' in page_1  and not 'MTU' in page_1 and (nr_polisy := re.search('Polisa\s.*\s(\d+)', page_1, re.I)):
-        return 'HES', nr_polisy.group(1)
+        return 'HES', 'HES', nr_polisy.group(1)
     if 'INTER' and (nr_polisy := re.search('polisa\s*seria\s*(\w*)\s*numer\s*(\d*)', page_1)):
-        return 'INT', nr_polisy.group(1) + nr_polisy.group(2)
+        return 'INT', 'INT', nr_polisy.group(1) + nr_polisy.group(2)
     if 'InterRisk' in page_1 and (nr_polisy := re.search('Polisa seria?\s(.*)\snumer\s(\d+)', page_1, re.I)):
-        return 'RIS', nr_polisy.group(1) + nr_polisy.group(2)
+        return 'RIS', 'RIS', nr_polisy.group(1) + nr_polisy.group(2)
     if (nr_polisy := re.search('Numer\s(\w\d+)', page_1)):
-        return 'LIN', nr_polisy.group(1)
+        return 'LIN', 'LIN',  nr_polisy.group(1)
     if 'MTU' in page_1 and (nr_polisy := re.search('Polisa\s.*\s(\d+)', page_1, re.I)):
-        return 'AZ', nr_polisy.group(1)
+        return 'AZ', 'MTU', nr_polisy.group(1)
+    if 'Proama' in page_1 and (nr_polisy := re.search('POLISA NR\s*(\d+)', page_1, re.I)):
+        return 'GEN', 'PRO', nr_polisy.group(1)
     if 'PZU' in page_1 and (nr_polisy := re.search('Nr *(\d+)', page_1)):
-        return 'PZU', nr_polisy.group(1)
-    if 'TUW' in page_1 and (nr_polisy := re.search('Wniosko-Polisa\snr\s*(\d+)', page_1)):
-        return 'TUW', nr_polisy.group(1)
+        return 'PZU', 'PZU', nr_polisy.group(1)
+    if 'TUW' in page_1 and (nr_polisy := re.search('Wniosko-Polisa\snr\s*(\d+)', page_1, re.I)):
+        return 'TUW', 'TUW', nr_polisy.group(1)
     if 'TUZ' in page_1 and (nr_polisy := re.search('WNIOSEK seria (\w+) nr (\d+)', page_1)):
-        return 'TUZ', nr_polisy.group(1) + nr_polisy.group(2)
+        return 'TUZ', 'TUZ', nr_polisy.group(1) + nr_polisy.group(2)
     if 'UNIQA' in page_1 and (nr_polisy := re.search('Nr (\d{6,})', page_1)):
-        return 'UNI', nr_polisy.group(1)
+        return 'UNI', 'UNI', nr_polisy.group(1)
     if 'WARTA' in page_1 and (nr_polisy := re.search('POLISA NR\s?: *(\d+)', page_1)):
-        return 'WAR', nr_polisy.group(1)
+        return 'WAR', 'WAR', nr_polisy.group(1)
     if 'Wiener' in page_1 and (nr_polisy := re.search('Seria i numer (\w+\d+)', page_1)):
-        return 'WIE', nr_polisy.group(1)
+        return 'WIE', 'WIE', nr_polisy.group(1)
     else:
         return 'Nie rozpoznałem polisy!'
 
@@ -214,11 +225,12 @@ def rozpoznanie_danych(tacka_na_polisy):
     kod_poczt_f_edit = f'{kod_poczt_f[:2]}-{kod_poczt_f[2:]}' if '-' not in kod_poczt_f else kod_poczt_f
     kod_poczt = kod_pocztowy(page_1) if kod_pocztowy(page_1) else kod_poczt_f_edit
     data_wyst = data_wystawienia()
-    tow_ub = numer_polisy(page_1)[0]
-    nr_polisy = numer_polisy(page_1)[1]
+    tow_ub_tor = numer_polisy(page_1)[0]
+    tow_ub = numer_polisy(page_1)[1]
+    nr_polisy = numer_polisy(page_1)[2]
 
-    return nazwa_firmy, nazwisko, imie, p_lub_r, ulica_f_edit, kod_poczt, miasto_f, tel, email, data_wyst, tow_ub, \
-           nr_polisy
+    return nazwa_firmy, nazwisko, imie, p_lub_r, ulica_f_edit, kod_poczt, miasto_f, tel, email, data_wyst, tow_ub_tor, \
+           tow_ub, nr_polisy
 
 
 def tacka_na_polisy(obj):
@@ -250,7 +262,7 @@ except:
 
 for dane_polisy in tacka_na_polisy(obj):
     nazwa_firmy, nazwisko, imie, p_lub_r, ulica_f_edit, kod_poczt, miasto_f, tel, email, data_wyst, \
-    tow_ub, nr_polisy = dane_polisy
+    tow_ub_tor, tow_ub, nr_polisy = dane_polisy
     print(dane_polisy)
 
     """Rozpoznaje kolejny wiersz, który może zapisać."""
@@ -280,7 +292,7 @@ for dane_polisy in tacka_na_polisy(obj):
     # ExcelApp.Cells(row_to_write, 31).Value = data_pocz
     # ExcelApp.Cells(row_to_write, 32).Value = data_konca
     ExcelApp.Cells(row_to_write, 36).Value = 'SPÓŁKA'
-    tor = ExcelApp.Cells(row_to_write, 37).Value = tow_ub
+    tor = ExcelApp.Cells(row_to_write, 37).Value = tow_ub_tor
     ExcelApp.Cells(row_to_write, 38).Value = tow_ub
     # ExcelApp.Cells(row_to_write, 39).Value = rodzaj
     ExcelApp.Cells(row_to_write, 40).Value = nr_polisy
