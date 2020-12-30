@@ -9,9 +9,9 @@ import time
 
 
 path = os.getcwd()
-obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
+# obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
 
-# obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy'
+obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy\42934558.pdf'
 
 
 def words_separately(text):
@@ -46,7 +46,8 @@ def pesel_checksum(p):
             (7*int(p[6])) + (9*int(p[7])) + (1*int(p[8])) + (3*int(p[9])))
     lm = (suma % 10)  # dzielenie wyniku modulo 10
     kontrola = (10 - lm)  # sprawdzenie ostatniej liczby kontrolnej
-    if (kontrola == 10 or l == kontrola) and p[2:4] != '00':  # w przypadku liczby kontrolnej 10 i 0 sa jednoznaczne a 0 moze byc wynikiem odejmowania
+    # w przypadku liczby kontrolnej 10 i 0 sa jednoznaczne a 0 moze byc wynikiem odejmowania
+    if (kontrola == 10 or l == kontrola) and p[2:4] != '00':
         return 1
     else:
         return 0
@@ -64,6 +65,7 @@ def regon_checksum(r: int):
             return 0
     else:
         return ''
+
 
 def regon(regon_checksum):
     """API Regon"""
@@ -162,6 +164,20 @@ def data_wystawienia():
     return today # datetime.today().date().strftime('%y-%m-%d')
 
 
+def koniec_ochrony(page_1):
+    # print(d)
+    daty = re.compile('(\d{2}[-|.]\d{2}[-|.]\d{4}|\d{4}[-|.]\d{2}[-|.]\d{2})')
+    lista_dat = [re.sub('[^0-9]', '-', data) for data in daty.findall(page_1)]
+    print(lista_dat)
+    teraz = datetime.today().date()
+
+    koniec = max(datetime.strptime(data, '%d-%m-%Y').date() for data in lista_dat)
+
+    print(koniec)
+    return koniec
+
+
+
 def TU():
     """W funkcji numer_polisy(page_1)"""
     pass
@@ -209,6 +225,9 @@ def numer_polisy(page_1):
         return 'Nie rozpoznałem polisy!'
 
 
+def przypis(d):
+    return ''
+
 """Koniec arkusza EXCEL"""
 
 def rozpoznanie_danych(tacka_na_polisy):
@@ -225,12 +244,14 @@ def rozpoznanie_danych(tacka_na_polisy):
     kod_poczt_f_edit = f'{kod_poczt_f[:2]}-{kod_poczt_f[2:]}' if '-' not in kod_poczt_f else kod_poczt_f
     kod_poczt = kod_pocztowy(page_1) if kod_pocztowy(page_1) else kod_poczt_f_edit
     data_wyst = data_wystawienia()
+    data_konca = koniec_ochrony(page_1)
     tow_ub_tor = numer_polisy(page_1)[0]
     tow_ub = numer_polisy(page_1)[1]
     nr_polisy = numer_polisy(page_1)[2]
+    przypis_ = przypis(d)
 
-    return nazwa_firmy, nazwisko, imie, p_lub_r, ulica_f_edit, kod_poczt, miasto_f, tel, email, data_wyst, tow_ub_tor, \
-           tow_ub, nr_polisy
+    return nazwa_firmy, nazwisko, imie, p_lub_r, ulica_f_edit, kod_poczt, miasto_f, tel, email, data_wyst, \
+            data_konca, tow_ub_tor, tow_ub, nr_polisy, przypis_
 
 
 def tacka_na_polisy(obj):
@@ -241,6 +262,8 @@ def tacka_na_polisy(obj):
             if file.endswith('.pdf'):
                 pdf = obj + '\\' + file
                 yield rozpoznanie_danych(pdf)
+
+
 
 
 """Sprawdza czy arkusz jest otwarty."""
@@ -261,8 +284,8 @@ except:
 """Jesienne Bazie"""
 
 for dane_polisy in tacka_na_polisy(obj):
-    nazwa_firmy, nazwisko, imie, p_lub_r, ulica_f_edit, kod_poczt, miasto_f, tel, email, data_wyst, \
-    tow_ub_tor, tow_ub, nr_polisy = dane_polisy
+    nazwa_firmy, nazwisko, imie, p_lub_r, ulica_f_edit, kod_poczt, miasto_f, tel, email, data_wyst, data_konca, \
+    tow_ub_tor, tow_ub, nr_polisy, przypis = dane_polisy
     print(dane_polisy)
 
     """Rozpoznaje kolejny wiersz, który może zapisać."""
@@ -290,7 +313,7 @@ for dane_polisy in tacka_na_polisy(obj):
     # ExcelApp.Cells(row_to_write, 30).NumberFormat = 'yy-mm-dd'
     ExcelApp.Cells(row_to_write, 30).Value = data_wyst
     # ExcelApp.Cells(row_to_write, 31).Value = data_pocz
-    # ExcelApp.Cells(row_to_write, 32).Value = data_konca
+    ExcelApp.Cells(row_to_write, 32).Value = data_konca
     ExcelApp.Cells(row_to_write, 36).Value = 'SPÓŁKA'
     tor = ExcelApp.Cells(row_to_write, 37).Value = tow_ub_tor
     ExcelApp.Cells(row_to_write, 38).Value = tow_ub
@@ -359,10 +382,10 @@ for dane_polisy in tacka_na_polisy(obj):
 
 
 """Opcje zapisania"""
-ExcelApp.DisplayAlerts = False
-wb.SaveAs(path + "\\DTESTY.xlsx")
-wb.Close()
-ExcelApp.DisplayAlerts = True
+# ExcelApp.DisplayAlerts = False
+# wb.SaveAs(path + "\\DTESTY.xlsx")
+# wb.Close()
+# ExcelApp.DisplayAlerts = True
 
 
 

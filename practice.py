@@ -1,32 +1,54 @@
 import re
 import os
+import matplotlib.pyplot as plt
+import numpy as np
+from datetime import datetime
 
 
-path = os.getcwd()
+
+
+data = '2021/12/30'
+
+teraz = datetime.now().date()
+data = re.sub('[^0-9]', '-', data)
+
+
+if datetime.strptime(data, '%Y-%m-%d').date() > teraz or datetime.strptime(data, '%d-%m-%Y').date() > teraz:
+    print(data)
 
 
 
-d = {0: 'wniosek', 1: 'polisa', 2: 'ubezpieczenia', 3: 'nr', 4: '000009550795', 5: 'ubezpieczenie', 6: 'komunikacyjne',
-     7: 'euroins', 8: 'auto', 9: 'okres', 10: 'ubezpieczenia', 11: 'od', 12: '2020-11-23', 13: '15', 14: '03', 15: 'do',
-     16: '2021-11-22', 17: 'ubezpieczający', 18: 'właściciel', 19: 'grzegorz', 20: 'pesel', 21: '89040401350',
-     22: 'telefon', 23: 'diakows4ki', 24: 'adres', 25: '39-460', 26: 'nowa', 27: 'dęba', 28: 'strzelnicza', 29: '27',
-     30: 'data', 31: 'urodzenia', 32: '1989-04-04', 33: 'email', 34: 'diakowskigrzegorz', 35: 'gmail', 36: 'com',
-     37: 'rok', 38: 'wydania', 39: 'prawa', 40: 'jazdy', 41: '2017-02-23', 42: 'ubezpieczony', 43: 'właściciel',
-     44: 'grzegorz', 45: 'pesel', 46: '89040401350', 47: 'telefon', 48: 'diako4wski', 49: 'adres', 50: '39-460',
-     51: 'nowa', 52: 'dęba', 53: 'strzelnicza', 54: '27', 55: 'data', 56: 'urodzenia', 57: '1989-04-04', 58: 'email',
-     59: 'diakowskigrzegorz', 60: 'gmail', 61: 'com', 62: 'rok', 63: 'wydania'}
-
-with open(path + '\\imiona.txt') as content:
-    all_names = content.read().split('\n')
-    name = ''
-    for k, v in d.items():
-        if v.title() in all_names and not re.search('\d', d[k + 4]):
-            name = f'{d[k + 4].title()} {v.title()}'
-        if v.title() in all_names and re.search('\d', d[k + 4]):
-            name = f'{d[k + 5].title()} {v.title()}'
 
 
-    print(name)
+
+
+
+
+# path = os.getcwd()
+#
+#
+#
+# d = {0: 'wniosek', 1: 'polisa', 2: 'ubezpieczenia', 3: 'nr', 4: '000009550795', 5: 'ubezpieczenie', 6: 'komunikacyjne',
+#      7: 'euroins', 8: 'auto', 9: 'okres', 10: 'ubezpieczenia', 11: 'od', 12: '2020-11-23', 13: '15', 14: '03', 15: 'do',
+#      16: '2021-11-22', 17: 'ubezpieczający', 18: 'właściciel', 19: 'grzegorz', 20: 'pesel', 21: '89040401350',
+#      22: 'telefon', 23: 'diakows4ki', 24: 'adres', 25: '39-460', 26: 'nowa', 27: 'dęba', 28: 'strzelnicza', 29: '27',
+#      30: 'data', 31: 'urodzenia', 32: '1989-04-04', 33: 'email', 34: 'diakowskigrzegorz', 35: 'gmail', 36: 'com',
+#      37: 'rok', 38: 'wydania', 39: 'prawa', 40: 'jazdy', 41: '2017-02-23', 42: 'ubezpieczony', 43: 'właściciel',
+#      44: 'grzegorz', 45: 'pesel', 46: '89040401350', 47: 'telefon', 48: 'diako4wski', 49: 'adres', 50: '39-460',
+#      51: 'nowa', 52: 'dęba', 53: 'strzelnicza', 54: '27', 55: 'data', 56: 'urodzenia', 57: '1989-04-04', 58: 'email',
+#      59: 'diakowskigrzegorz', 60: 'gmail', 61: 'com', 62: 'rok', 63: 'wydania'}
+#
+# with open(path + '\\imiona.txt') as content:
+#     all_names = content.read().split('\n')
+#     name = ''
+#     for k, v in d.items():
+#         if v.title() in all_names and not re.search('\d', d[k + 4]):
+#             name = f'{d[k + 4].title()} {v.title()}'
+#         if v.title() in all_names and re.search('\d', d[k + 4]):
+#             name = f'{d[k + 5].title()} {v.title()}'
+#
+#
+#     print(name)
 
 
 
