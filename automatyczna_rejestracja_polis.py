@@ -11,7 +11,7 @@ import time
 path = os.getcwd()
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
 
-obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy\42934558.pdf'
+obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy\II partia'
 
 
 def words_separately(text):
@@ -165,17 +165,16 @@ def data_wystawienia():
 
 
 def koniec_ochrony(page_1):
-    # print(d)
-    daty = re.compile('(\d{2}[-|.]\d{2}[-|.]\d{4}|\d{4}[-|.]\d{2}[-|.]\d{2})')
+    one_day = timedelta(1)
+    daty = re.compile('(\d{2}[-|.|/]\d{2}[-|.|/]\d{4}|\d{4}[-|.|/]\d{2}[-|.|/]\d{2})')
     lista_dat = [re.sub('[^0-9]', '-', data) for data in daty.findall(page_1)]
-    print(lista_dat)
-    teraz = datetime.today().date()
-
-    koniec = max(datetime.strptime(data, '%d-%m-%Y').date() for data in lista_dat)
-
-    print(koniec)
-    return koniec
-
+    jeden_format = [re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', date) for date in lista_dat]
+    koniec = max(datetime.strptime(data, '%Y-%m-%d') for data in jeden_format)
+    koniec_absolutny = datetime.strptime(datetime.strftime(koniec, '%y-%m-%d'), '%y-%m-%d') + one_day
+    if koniec_absolutny:
+        return koniec_absolutny
+    else:
+        return ''
 
 
 def TU():
@@ -228,8 +227,8 @@ def numer_polisy(page_1):
 def przypis(d):
     return ''
 
-"""Koniec arkusza EXCEL"""
 
+"""Koniec arkusza EXCEL"""
 def rozpoznanie_danych(tacka_na_polisy):
     pdf = tacka_na_polisy
     page_1, page_1_tok, page_1_box = polisa(pdf)[0], polisa(pdf)[1], polisa_box(pdf)
@@ -248,10 +247,10 @@ def rozpoznanie_danych(tacka_na_polisy):
     tow_ub_tor = numer_polisy(page_1)[0]
     tow_ub = numer_polisy(page_1)[1]
     nr_polisy = numer_polisy(page_1)[2]
-    przypis_ = przypis(d)
+    # przypis_ = przypis(d)
 
     return nazwa_firmy, nazwisko, imie, p_lub_r, ulica_f_edit, kod_poczt, miasto_f, tel, email, data_wyst, \
-            data_konca, tow_ub_tor, tow_ub, nr_polisy, przypis_
+            data_konca, tow_ub_tor, tow_ub, nr_polisy#, przypis_
 
 
 def tacka_na_polisy(obj):
@@ -285,7 +284,7 @@ except:
 
 for dane_polisy in tacka_na_polisy(obj):
     nazwa_firmy, nazwisko, imie, p_lub_r, ulica_f_edit, kod_poczt, miasto_f, tel, email, data_wyst, data_konca, \
-    tow_ub_tor, tow_ub, nr_polisy, przypis = dane_polisy
+    tow_ub_tor, tow_ub, nr_polisy = dane_polisy
     print(dane_polisy)
 
     """Rozpoznaje kolejny wiersz, który może zapisać."""
