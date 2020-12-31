@@ -224,10 +224,19 @@ def numer_polisy(page_1):
         return 'Nie rozpoznałem polisy!'
 
 
-def przypis(pdf):
-    # if 'TUW'
-    total = polisa_box(pdf, 0, 400, 300, 550)
-    return total
+def przypis(pdf, page_1):
+    print(pdf)
+
+    if 'TUW' in page_1:
+        box = polisa_box(pdf, 0, 400, 300, 550)
+        print(box)
+        (total := re.search(r'Składka łączna: (\d*\s?\d+) PLN', box, re.I))
+        total = int(re.sub(r'\xa0', '', total.group(1)))
+
+        (termin := re.search(r'Termin płatności (30-12-2020)', box, re.I))
+        termin = re.sub('[^0-9]', '-', termin.group(1))
+        termin = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin)
+    return total, termin
 
 
 """Koniec arkusza EXCEL"""
@@ -249,10 +258,11 @@ def rozpoznanie_danych(tacka_na_polisy):
     tow_ub_tor = numer_polisy(page_1)[0]
     tow_ub = numer_polisy(page_1)[1]
     nr_polisy = numer_polisy(page_1)[2]
-    przypis_ = przypis(pdf)
-    print(przypis_)
+    przypis_ = przypis(pdf, page_1)[0]
+    ter_platnosci = przypis(pdf, page_1)[1]
+
     return nazwa_firmy, nazwisko, imie, p_lub_r, ulica_f_edit, kod_poczt, miasto_f, tel, email, data_wyst, \
-            data_konca, tow_ub_tor, tow_ub, nr_polisy#, przypis_
+            data_konca, tow_ub_tor, tow_ub, nr_polisy, przypis_, ter_platnosci
 
 
 def tacka_na_polisy(obj):
@@ -286,7 +296,7 @@ except:
 
 for dane_polisy in tacka_na_polisy(obj):
     nazwa_firmy, nazwisko, imie, p_lub_r, ulica_f_edit, kod_poczt, miasto_f, tel, email, data_wyst, data_konca, \
-    tow_ub_tor, tow_ub, nr_polisy = dane_polisy
+    tow_ub_tor, tow_ub, nr_polisy, przypis_, ter_platnosci = dane_polisy
     print(dane_polisy)
 
     """Rozpoznaje kolejny wiersz, który może zapisać."""
@@ -330,8 +340,8 @@ for dane_polisy in tacka_na_polisy(obj):
     #     ExcelApp.Cells(row_to_write, 42).Value = ''
 
     # ryzyko = ExcelApp.Cells(row_to_write, 46).Value = 'b/d'
-    # ExcelApp.Cells(row_to_write, 48).Value = przypis
-    # ExcelApp.Cells(row_to_write, 49).Value = ter_platnosci
+    ExcelApp.Cells(row_to_write, 48).Value = przypis_
+    ExcelApp.Cells(row_to_write, 49).Value = ter_platnosci
     # if I_rata_data:
     #     ExcelApp.Cells(row_to_write, 49).Value = I_rata_data
     # ExcelApp.Cells(row_to_write, 50).Value = przypis
