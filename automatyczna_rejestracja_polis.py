@@ -11,7 +11,7 @@ import time
 path = os.getcwd()
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
 
-obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy\II partia'
+obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy\42934558.pdf'
 
 
 def words_separately(text):
@@ -27,16 +27,16 @@ def polisa(pdf):
     return page_1, words_separately(page_1.lower())
 
 
-def polisa_box(pdf):
+def polisa_box(pdf, left, top, right, bottom):
     """Tekst wybranego fragmentu polisy."""
     with pdfplumber.open(pdf) as policy:
         width = policy.pages[0].width
         height = policy.pages[0].height
         box_left = (0, 0, 150, 140)
-        box_center = (width - 400, 0, width - 200, 140)
+        box_center = (left, top, right, bottom)
         box_right = (150, 0, width, 140)
-        page_1_box = policy.pages[0].crop(box_center, relative=True).extract_text()
-    return words_separately(page_1_box.lower())
+        page_1_box = policy.pages[0].within_bbox(box_center, relative=False).extract_text()
+    return page_1_box #words_separately(page_1_box.lower())
 
 
 def pesel_checksum(p):
@@ -224,14 +224,16 @@ def numer_polisy(page_1):
         return 'Nie rozpoznałem polisy!'
 
 
-def przypis(d):
-    return ''
+def przypis(pdf):
+    # if 'TUW'
+    total = polisa_box(pdf, 0, 400, 300, 550)
+    return total
 
 
 """Koniec arkusza EXCEL"""
 def rozpoznanie_danych(tacka_na_polisy):
     pdf = tacka_na_polisy
-    page_1, page_1_tok, page_1_box = polisa(pdf)[0], polisa(pdf)[1], polisa_box(pdf)
+    page_1, page_1_tok = polisa(pdf)[0], polisa(pdf)[1]
     d = dict(enumerate(page_1_tok))
     # print(d)
     p_lub_r = pesel_regon(d)
@@ -247,8 +249,8 @@ def rozpoznanie_danych(tacka_na_polisy):
     tow_ub_tor = numer_polisy(page_1)[0]
     tow_ub = numer_polisy(page_1)[1]
     nr_polisy = numer_polisy(page_1)[2]
-    # przypis_ = przypis(d)
-
+    przypis_ = przypis(pdf)
+    print(przypis_)
     return nazwa_firmy, nazwisko, imie, p_lub_r, ulica_f_edit, kod_poczt, miasto_f, tel, email, data_wyst, \
             data_konca, tow_ub_tor, tow_ub, nr_polisy#, przypis_
 
