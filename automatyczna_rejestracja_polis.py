@@ -7,11 +7,12 @@ from win32com.client import Dispatch
 from regon_api import get_regon_data
 import time
 
+start_time = time.time()
 
 path = os.getcwd()
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
 
-obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy\42934558.pdf'
+obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy\340026163695.pdf'
 
 
 def words_separately(text):
@@ -224,9 +225,9 @@ def numer_polisy(page_1):
         return 'Nie rozpoznałem polisy!'
 
 
-def przypis(pdf, page_1):
-    print(pdf)
-
+def przypis_daty_raty(pdf, page_1):
+    # print(pdf)
+    total, termin_I, rata_I = '', '', ''
     if 'TUW' in page_1:
         box = polisa_box(pdf, 0, 400, 300, 550)
         print(box)
@@ -236,34 +237,76 @@ def przypis(pdf, page_1):
         (termin := re.search(r'Termin płatności (30-12-2020)', box, re.I))
         termin = re.sub('[^0-9]', '-', termin.group(1))
         termin = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin)
-    return total, termin
+
+        if 'JEDNORAZOWO' in box and 'PRZELEW' in box:
+            return total, termin_I, 'P', 1, 1
+
+    if 'UNIQA' in page_1:
+        box = polisa_box(pdf, 0, 300, 590, 470)
+        (total := re.search(r'Składka łączna: (\d*\xa0?\d+)', box, re.I))
+        total = int(re.sub(r'\xa0', '', total.group(1)))
+
+        print(box)
+        if 'przelewem' in box and 'w ratach' in box:
+            if 'II.' in box:
+                (rata_I := re.search(r'I. (\d+)', box, re.I).group(1))
+                (rata_II := re.search(r'II. (\d+)', box, re.I).group(1))
+
+                (termin_I := re.search(r'/(\d{2}.\d{2}.\d{4})', box, re.I))
+                termin_I = re.sub('[^0-9]', '-', termin_I.group(1))
+                termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
+
+                (termin_II := re.search(r'II. (.*)/(\d{2}.\d{2}.\d{4})', box, re.I))
+
+                return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, 2
+
+
 
 
 """Koniec arkusza EXCEL"""
 def rozpoznanie_danych(tacka_na_polisy):
     pdf = tacka_na_polisy
-    page_1, page_1_tok = polisa(pdf)[0], polisa(pdf)[1]
+
+    page_ = polisa(pdf)
+    page_1, page_1_tok = page_[0], page_[1]
+
     d = dict(enumerate(page_1_tok))
     # print(d)
     p_lub_r = pesel_regon(d)
     # nazwisko, imie = '', '' if regon_checksum(p_lub_r[1:]) else nazwisko_imie(d)
-    nazwisko = '' if regon_checksum(p_lub_r[1:]) else nazwisko_imie(d)[0]
-    imie = '' if regon_checksum(p_lub_r[1:]) else nazwisko_imie(d)[1]
-    nazwa_firmy, ulica_f, nr_ulicy_f, nr_lok, kod_poczt_f, miasto_f, tel, email = regon(p_lub_r[1:])
+
+    nazwisko_imie_ = nazwisko_imie(d)
+    nazwisko = '' if regon_checksum(p_lub_r[1:]) else nazwisko_imie_[0]
+    imie = '' if regon_checksum(p_lub_r[1:]) else nazwisko_imie_[1]
+    regon_ = regon(p_lub_r[1:])
+    nazwa_firmy, ulica_f, nr_ulicy_f, nr_lok, kod_poczt_f, miasto_f, tel, email = regon_
     ulica_f_edit = f'{ulica_f} {nr_ulicy_f}' if not nr_lok else f'{ulica_f} {nr_ulicy_f} m {nr_lok}'
     kod_poczt_f_edit = f'{kod_poczt_f[:2]}-{kod_poczt_f[2:]}' if '-' not in kod_poczt_f else kod_poczt_f
     kod_poczt = kod_pocztowy(page_1) if kod_pocztowy(page_1) else kod_poczt_f_edit
     data_wyst = data_wystawienia()
     data_konca = koniec_ochrony(page_1)
-    tow_ub_tor = numer_polisy(page_1)[0]
-    tow_ub = numer_polisy(page_1)[1]
-    nr_polisy = numer_polisy(page_1)[2]
-    przypis_ = przypis(pdf, page_1)[0]
-    ter_platnosci = przypis(pdf, page_1)[1]
+
+    numer_polisy_ = numer_polisy(page_1)
+    tow_ub_tor = numer_polisy_[0]
+    tow_ub = numer_polisy_[1]
+    nr_polisy = numer_polisy_[2]
+
+    przypis_daty_raty_ = przypis_daty_raty(pdf, page_1)
+    przypis = przypis_daty_raty_[0]
+    ter_platnosci = przypis_daty_raty_[1]
+    rata_I = przypis_daty_raty_[2]
+    f_platnosci = przypis_daty_raty_[3]
+    ilosc_rat = przypis_daty_raty_[4]
+    nr_raty = przypis_daty_raty_[5]
+
+    termin_II = przypis_daty_raty_[6]
+    rata_II = przypis_daty_raty_[7]
+
+    # print(przypis(pdf, page_1))
 
     return nazwa_firmy, nazwisko, imie, p_lub_r, ulica_f_edit, kod_poczt, miasto_f, tel, email, data_wyst, \
-            data_konca, tow_ub_tor, tow_ub, nr_polisy, przypis_, ter_platnosci
-
+            data_konca, tow_ub_tor, tow_ub, nr_polisy, przypis, ter_platnosci, rata_I, f_platnosci, ilosc_rat, nr_raty \
+            termin_II, rata_II
 
 def tacka_na_polisy(obj):
     if obj.endswith('.pdf'):
@@ -296,7 +339,8 @@ except:
 
 for dane_polisy in tacka_na_polisy(obj):
     nazwa_firmy, nazwisko, imie, p_lub_r, ulica_f_edit, kod_poczt, miasto_f, tel, email, data_wyst, data_konca, \
-    tow_ub_tor, tow_ub, nr_polisy, przypis_, ter_platnosci = dane_polisy
+    tow_ub_tor, tow_ub, nr_polisy, przypis, ter_platnosci, rata_I, f_platnosci, ilosc_rat, nr_raty, termin_II, \
+    rata_II= dane_polisy
     print(dane_polisy)
 
     """Rozpoznaje kolejny wiersz, który może zapisać."""
@@ -340,20 +384,22 @@ for dane_polisy in tacka_na_polisy(obj):
     #     ExcelApp.Cells(row_to_write, 42).Value = ''
 
     # ryzyko = ExcelApp.Cells(row_to_write, 46).Value = 'b/d'
-    ExcelApp.Cells(row_to_write, 48).Value = przypis_
+    ExcelApp.Cells(row_to_write, 48).Value = przypis
     ExcelApp.Cells(row_to_write, 49).Value = ter_platnosci
     # if I_rata_data:
     #     ExcelApp.Cells(row_to_write, 49).Value = I_rata_data
-    # ExcelApp.Cells(row_to_write, 50).Value = przypis
-    # if I_rata_data:
-    #     ExcelApp.Cells(row_to_write, 50).Value = I_rata_wart
-    # ExcelApp.Cells(row_to_write, 51).Value = f_platnosci
+    ExcelApp.Cells(row_to_write, 50).Value = przypis
+    if rata_I:
+        ExcelApp.Cells(row_to_write, 50).Value = rata_I
+    ExcelApp.Cells(row_to_write, 51).Value = f_platnosci
     #
-    # ExcelApp.Cells(row_to_write, 52).Value = ilosc_rat
-    # ExcelApp.Cells(row_to_write, 53).Value = ilosc_rat
-    # data_inkasa = ExcelApp.Cells(row_to_write, 54).Value = ter_platnosci
-    # ExcelApp.Cells(row_to_write, 55).Value = przypis
-    # ExcelApp.Cells(row_to_write, 59).Value = tow
+    ExcelApp.Cells(row_to_write, 52).Value = ilosc_rat
+    ExcelApp.Cells(row_to_write, 53).Value = nr_raty
+    data_inkasa = ExcelApp.Cells(row_to_write, 54).Value = ter_platnosci
+    ExcelApp.Cells(row_to_write, 55).Value = przypis
+    if rata_I:
+        ExcelApp.Cells(row_to_write, 55).Value = rata_I
+    ExcelApp.Cells(row_to_write, 60).Value = tow_ub_tor
 
 
     # if II_rata_data:
@@ -401,7 +447,8 @@ for dane_polisy in tacka_na_polisy(obj):
 
 
 
-
+end_time = time.time() - start_time
+print('Czas wykonania: {:.2f} sekund'.format(end_time))
 
 
 # def postal_code(data, nazwisko):
