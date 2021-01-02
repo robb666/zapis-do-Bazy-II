@@ -12,7 +12,7 @@ start_time = time.time()
 path = os.getcwd()
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
 
-obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy\340026163695.pdf'
+obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy'
 
 
 def words_separately(text):
@@ -226,37 +226,93 @@ def numer_polisy(page_1):
 
 
 def przypis_daty_raty(pdf, page_1):
-    # print(pdf)
-    total, termin_I, rata_I = '', '', ''
-    if 'TUW' in page_1:
-        box = polisa_box(pdf, 0, 400, 300, 550)
+
+    total, termin_I, rata_I, termin_II, rata_II = '', '', '', '', ''
+
+
+    if 'EUROINS' in page_1:
+        box = polisa_box(pdf, 0, 400, 590, 750)
+        (total := re.search(r'Łączna składka do zapłaty (\d+,\d*)', box, re.I))
+        total = re.sub(r',', '.', total.group(1))
+
+        (termin_I := re.search(r'1. (\d{4}-\d{2}-\d{2})', box, re.I).group(1))
+
+        if 'jednorazowo' in box and 'przelew' in box:
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, ''
+
+    if 'MTU' in page_1:
+        box = polisa_box(pdf, 0, 200, 590, 400)
         print(box)
+        (total := re.search(r'RAZEM DO ZAPŁATY (\d*\s?\d+)', box, re.I))
+        total = int(re.sub(r' ', '', total.group(1)))
+
+        if 'przelew' in box:
+            (termin := re.search(r'i kwoty płatności (\d{4}‑\d{2}‑\d{2})', box, re.I))
+            termin_I = re.sub('[^0-9]', '-', termin.group(1))
+            print(termin_I)
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, ''
+
+    if 'Proama' in page_1:
+        box = polisa_box(pdf, 0, 250, 590, 450)
+        print(box)
+        (total := re.search(r'RAZEM: (\d*\s?\d+)', box, re.I))
+        total = int(re.sub(r'\xa0', '', total.group(1)))
+
+        if 'przelewem' in box:
+            (termin := re.search(r'płatna\s?do (\d{2}.\d{2}.\d{4})', box, re.I))
+            termin_I = re.sub('[^0-9]', '-', termin.group(1))
+            termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, ''
+
+        if 'została pobrana' in box:
+            return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, ''
+
+    if 'TUW' in page_1 and not 'TUZ' in page_1:
+        box = polisa_box(pdf, 0, 400, 300, 550)
         (total := re.search(r'Składka łączna: (\d*\s?\d+) PLN', box, re.I))
         total = int(re.sub(r'\xa0', '', total.group(1)))
 
         (termin := re.search(r'Termin płatności (30-12-2020)', box, re.I))
-        termin = re.sub('[^0-9]', '-', termin.group(1))
-        termin = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin)
+        termin_I = re.sub('[^0-9]', '-', termin.group(1))
+        termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
 
         if 'JEDNORAZOWO' in box and 'PRZELEW' in box:
-            return total, termin_I, 'P', 1, 1
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, ''
+
+
+    if 'TUZ' in page_1:
+        box = polisa_box(pdf, 0, 400, 590, 750)
+        (total := re.search(r'Łączna kwota do zapłaty .* (\d*\s\d+)', box, re.I))
+        total = int(re.sub(r' ', '', total.group(1)))
+
+        if 'PÓŁROCZNA' in box and 'Przelew' in box:
+            (rata_I := re.search(r'Kwota wpłaty w zł (\d+)', box, re.I).group(1))
+            (rata_II := re.search(r'Kwota wpłaty w zł (.+) (\d*)', box, re.I).group(2))
+
+            (termin_I := re.search(r'Termin płatności (\d{4}-\d{2}-\d{2})', box, re.I).group(1))
+
+            (termin_II := re.search(r'Termin płatności (.*)(\d{4}-\d{2}-\d{2})', box, re.I).group(2))
+
+            return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, 2
+
 
     if 'UNIQA' in page_1:
         box = polisa_box(pdf, 0, 300, 590, 470)
         (total := re.search(r'Składka łączna: (\d*\xa0?\d+)', box, re.I))
         total = int(re.sub(r'\xa0', '', total.group(1)))
 
-        print(box)
         if 'przelewem' in box and 'w ratach' in box:
             if 'II.' in box:
                 (rata_I := re.search(r'I. (\d+)', box, re.I).group(1))
                 (rata_II := re.search(r'II. (\d+)', box, re.I).group(1))
 
-                (termin_I := re.search(r'/(\d{2}.\d{2}.\d{4})', box, re.I))
-                termin_I = re.sub('[^0-9]', '-', termin_I.group(1))
+                (termin := re.search(r'/(\d{2}.\d{2}.\d{4})', box, re.I))
+                termin_I = re.sub('[^0-9]', '-', termin.group(1))
                 termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
 
                 (termin_II := re.search(r'II. (.*)/(\d{2}.\d{2}.\d{4})', box, re.I))
+                termin_II = re.sub('[^0-9]', '-', termin_II.group(2))
+                termin_II = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_II)
 
                 return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, 2
 
@@ -292,21 +348,24 @@ def rozpoznanie_danych(tacka_na_polisy):
     nr_polisy = numer_polisy_[2]
 
     przypis_daty_raty_ = przypis_daty_raty(pdf, page_1)
+    print(przypis_daty_raty_)
+
     przypis = przypis_daty_raty_[0]
-    ter_platnosci = przypis_daty_raty_[1]
+    termin_I = przypis_daty_raty_[1] if przypis_daty_raty_[1] else data_wyst
     rata_I = przypis_daty_raty_[2]
     f_platnosci = przypis_daty_raty_[3]
     ilosc_rat = przypis_daty_raty_[4]
     nr_raty = przypis_daty_raty_[5]
 
+    # druga linijka
     termin_II = przypis_daty_raty_[6]
     rata_II = przypis_daty_raty_[7]
-
+    nr_raty_II = 2
     # print(przypis(pdf, page_1))
 
     return nazwa_firmy, nazwisko, imie, p_lub_r, ulica_f_edit, kod_poczt, miasto_f, tel, email, data_wyst, \
-            data_konca, tow_ub_tor, tow_ub, nr_polisy, przypis, ter_platnosci, rata_I, f_platnosci, ilosc_rat, nr_raty \
-            termin_II, rata_II
+            data_konca, tow_ub_tor, tow_ub, nr_polisy, przypis, termin_I, rata_I, f_platnosci, ilosc_rat, nr_raty, \
+            termin_II, rata_II, nr_raty_II
 
 def tacka_na_polisy(obj):
     if obj.endswith('.pdf'):
@@ -326,13 +385,13 @@ def tacka_na_polisy(obj):
 try:
     ExcelApp = win32com.client.GetActiveObject('Excel.Application')
     wb = ExcelApp.Workbooks("DTESTY.xlsx")
-    ws = wb.Worksheets("Arkusz1")
+    ws = wb.Worksheets("BAZA 2014")
     # workbook = ExcelApp.Workbooks("Baza.xlsx")
 
 except:
     ExcelApp = Dispatch("Excel.Application")
     wb = ExcelApp.Workbooks.Open(path + "\\DTESTY.xlsx")
-    ws = wb.Worksheets("Arkusz1")
+    ws = wb.Worksheets("BAZA 2014")
 
 
 """Jesienne Bazie"""
@@ -340,7 +399,7 @@ except:
 for dane_polisy in tacka_na_polisy(obj):
     nazwa_firmy, nazwisko, imie, p_lub_r, ulica_f_edit, kod_poczt, miasto_f, tel, email, data_wyst, data_konca, \
     tow_ub_tor, tow_ub, nr_polisy, przypis, ter_platnosci, rata_I, f_platnosci, ilosc_rat, nr_raty, termin_II, \
-    rata_II= dane_polisy
+    rata_II, nr_raty_II = dane_polisy
     print(dane_polisy)
 
     """Rozpoznaje kolejny wiersz, który może zapisać."""
@@ -364,7 +423,6 @@ for dane_polisy in tacka_na_polisy(obj):
     # ExcelApp.Cells(row_to_write, 25).Value = nr_rej
     # ExcelApp.Cells(row_to_write, 26).Value = rok_prod
     # ExcelApp.Cells(row_to_write, 29).Value = int(ile_dni) + 1
-
     # ExcelApp.Cells(row_to_write, 30).NumberFormat = 'yy-mm-dd'
     ExcelApp.Cells(row_to_write, 30).Value = data_wyst
     # ExcelApp.Cells(row_to_write, 31).Value = data_pocz
@@ -382,24 +440,41 @@ for dane_polisy in tacka_na_polisy(obj):
     # else:
     #     ExcelApp.Cells(row_to_write, 41).Value = 'N'
     #     ExcelApp.Cells(row_to_write, 42).Value = ''
-
     # ryzyko = ExcelApp.Cells(row_to_write, 46).Value = 'b/d'
     ExcelApp.Cells(row_to_write, 48).Value = przypis
     ExcelApp.Cells(row_to_write, 49).Value = ter_platnosci
     # if I_rata_data:
     #     ExcelApp.Cells(row_to_write, 49).Value = I_rata_data
-    ExcelApp.Cells(row_to_write, 50).Value = przypis
     if rata_I:
         ExcelApp.Cells(row_to_write, 50).Value = rata_I
+    else:
+        ExcelApp.Cells(row_to_write, 50).Value = przypis
     ExcelApp.Cells(row_to_write, 51).Value = f_platnosci
-    #
     ExcelApp.Cells(row_to_write, 52).Value = ilosc_rat
     ExcelApp.Cells(row_to_write, 53).Value = nr_raty
     data_inkasa = ExcelApp.Cells(row_to_write, 54).Value = ter_platnosci
-    ExcelApp.Cells(row_to_write, 55).Value = przypis
     if rata_I:
         ExcelApp.Cells(row_to_write, 55).Value = rata_I
+    else:
+        ExcelApp.Cells(row_to_write, 55).Value = przypis
     ExcelApp.Cells(row_to_write, 60).Value = tow_ub_tor
+
+
+    if rata_II:
+        ws.Range(f'A{row_to_write}:BH{row_to_write}').Copy()
+        ws.Range(f'A{row_to_write + 1}').PasteSpecial()
+
+        ExcelApp.Cells(row_to_write + 1, 48).Value = ''
+        ExcelApp.Cells(row_to_write + 1, 49).Value = termin_II
+        ExcelApp.Cells(row_to_write + 1, 50).Value = rata_II
+        ExcelApp.Cells(row_to_write + 1, 53).Value = 2
+        data_inkasa = ExcelApp.Cells(row_to_write + 1, 54).Value = ''
+        ExcelApp.Cells(row_to_write + 1, 55).Value = ''
+        ExcelApp.Cells(row_to_write + 1, 60).Value = tow_ub_tor
+
+
+
+
 
 
     # if II_rata_data:
