@@ -250,8 +250,8 @@ def przypis_daty_raty(pdf, page_1):
             (rata_IV := re.search(r'\n- (\d+)', box, re.I).group(1))
 
             def terminy(termin):
-                termin = re.sub('[^0-9]', '-', termin.group(1))
-                return re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin)
+                zamiana_sep = re.sub('[^0-9]', '-', termin.group(1))
+                return re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', zamiana_sep)
 
             termin_I = terminy(re.search(r'I\srata\s-\s+(\d{2}.\d{2}.\d{4})', box, re.I))
             termin_II = terminy(re.search(r'II rata -  (\d{2}.\d{2}.\d{4})', box, re.I))
