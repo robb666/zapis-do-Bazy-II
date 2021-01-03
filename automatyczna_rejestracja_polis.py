@@ -227,24 +227,38 @@ def numer_polisy(page_1):
 
 def przypis_daty_raty(pdf, page_1):
 
-    total, termin_I, rata_I, termin_II, rata_II = '', '', '', '', ''
+    total, termin_I, rata_I, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV = \
+                                                                                '', '', '', '', '', '', '', '', ''
 
     if 'AXA' in page_1:
         box = polisa_box(pdf, 0, 400, 590, 650)
-        print(box)
         (total := re.search(r'Składka: (\d+)', box, re.I).group(1))
-        print(total)
-
         if 'Wpłata przelewem' in box:
-
-            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, ''
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II
 
 
     if 'Compensa' in page_1:
-        box = polisa_box(pdf, 0, 200, 590, 650)
+        box = polisa_box(pdf, 0, 260, 590, 650)
         print(box)
-        (total := re.search(r'Składka: (\d+)', box, re.I).group(1))
-        print(total)
+        (total := re.search(r'Składka ogółem: (\d*\s?\d+)', box, re.I))
+        total = int(re.sub(r'\xa0', '', total.group(1)))
+
+        if 'składki: kwartalna' in box:
+            (rata_I := re.search(r'I rata -  \d{2}.\d{2}.\d{4} - (\d+)', box, re.I).group(1))
+            (rata_II := re.search(r'II rata.* - (\d+)', box, re.I).group(1))
+            (rata_III := re.search(r'[|III] rata.* - (\d+)', box, re.I).group(1))
+            (rata_IV := re.search(r'\n- (\d+)', box, re.I).group(1))
+
+            def terminy(termin):
+                termin = re.sub('[^0-9]', '-', termin.group(1))
+                return re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin)
+
+            termin_I = terminy(re.search(r'I\srata\s-\s+(\d{2}.\d{2}.\d{4})', box, re.I))
+            termin_II = terminy(re.search(r'II rata -  (\d{2}.\d{2}.\d{4})', box, re.I))
+            termin_III = terminy(re.search(r',   rata -  (\d{2}.\d{2}.\d{4})', box, re.I))
+            termin_IV = terminy(re.search(r'IV rata -  (\d{2}.\d{2}.\d{4})', box, re.I))
+
+            return total, termin_I, rata_I, 'P', 4, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
     if 'EUROINS' in page_1:
@@ -255,7 +269,7 @@ def przypis_daty_raty(pdf, page_1):
         (termin_I := re.search(r'1. (\d{4}-\d{2}-\d{2})', box, re.I).group(1))
 
         if 'jednorazowo' in box and 'przelew' in box:
-            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, ''
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II
 
     if 'MTU' in page_1:
         box = polisa_box(pdf, 0, 200, 590, 400)
@@ -267,7 +281,7 @@ def przypis_daty_raty(pdf, page_1):
             (termin := re.search(r'i kwoty płatności (\d{4}‑\d{2}‑\d{2})', box, re.I))
             termin_I = re.sub('[^0-9]', '-', termin.group(1))
             print(termin_I)
-            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, ''
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II
 
     if 'Proama' in page_1:
         box = polisa_box(pdf, 0, 250, 590, 450)
@@ -279,10 +293,11 @@ def przypis_daty_raty(pdf, page_1):
             (termin := re.search(r'płatna\s?do (\d{2}.\d{2}.\d{4})', box, re.I))
             termin_I = re.sub('[^0-9]', '-', termin.group(1))
             termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
-            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, ''
+
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II
 
         if 'została pobrana' in box:
-            return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, ''
+            return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II
 
     if 'TUW' in page_1 and not 'TUZ' in page_1:
         box = polisa_box(pdf, 0, 400, 300, 550)
@@ -294,7 +309,7 @@ def przypis_daty_raty(pdf, page_1):
         termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
 
         if 'JEDNORAZOWO' in box and 'PRZELEW' in box:
-            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, ''
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II
 
 
     if 'TUZ' in page_1:
@@ -310,7 +325,7 @@ def przypis_daty_raty(pdf, page_1):
 
             (termin_II := re.search(r'Termin płatności (.*)(\d{4}-\d{2}-\d{2})', box, re.I).group(2))
 
-            return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, 2
+            return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II
 
 
     if 'UNIQA' in page_1:
@@ -331,7 +346,7 @@ def przypis_daty_raty(pdf, page_1):
                 termin_II = re.sub('[^0-9]', '-', termin_II.group(2))
                 termin_II = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_II)
 
-                return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, 2
+                return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II
 
 
 
@@ -377,12 +392,17 @@ def rozpoznanie_danych(tacka_na_polisy):
     # druga linijka
     termin_II = przypis_daty_raty_[6]
     rata_II = przypis_daty_raty_[7]
-    nr_raty_II = 2
+    # nr_raty_II = 2
+
+    termin_III = przypis_daty_raty_[8]
+    rata_III = przypis_daty_raty_[9]
+    termin_IV = przypis_daty_raty_[10]
+    rata_IV = przypis_daty_raty_[11]
     # print(przypis(pdf, page_1))
 
     return nazwa_firmy, nazwisko, imie, p_lub_r, ulica_f_edit, kod_poczt, miasto_f, tel, email, data_wyst, \
             data_konca, tow_ub_tor, tow_ub, nr_polisy, przypis, termin_I, rata_I, f_platnosci, ilosc_rat, nr_raty, \
-            termin_II, rata_II, nr_raty_II
+            termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 def tacka_na_polisy(obj):
     if obj.endswith('.pdf'):
@@ -416,7 +436,7 @@ except:
 for dane_polisy in tacka_na_polisy(obj):
     nazwa_firmy, nazwisko, imie, p_lub_r, ulica_f_edit, kod_poczt, miasto_f, tel, email, data_wyst, data_konca, \
     tow_ub_tor, tow_ub, nr_polisy, przypis, ter_platnosci, rata_I, f_platnosci, ilosc_rat, nr_raty, termin_II, \
-    rata_II, nr_raty_II = dane_polisy
+    rata_II, termin_III, rata_III, termin_IV, rata_IV = dane_polisy
     print(dane_polisy)
 
     """Rozpoznaje kolejny wiersz, który może zapisać."""
@@ -487,46 +507,21 @@ for dane_polisy in tacka_na_polisy(obj):
         ExcelApp.Cells(row_to_write + 1, 53).Value = 2
         data_inkasa = ExcelApp.Cells(row_to_write + 1, 54).Value = ''
         ExcelApp.Cells(row_to_write + 1, 55).Value = ''
-        ExcelApp.Cells(row_to_write + 1, 60).Value = tow_ub_tor
 
+        if rata_IV:
+            ws.Range(f'A{row_to_write + 1}:BH{row_to_write + 1}').Copy()
+            ws.Range(f'A{row_to_write + 2}').PasteSpecial()
 
+            ExcelApp.Cells(row_to_write + 2, 49).Value = termin_III
+            ExcelApp.Cells(row_to_write + 2, 50).Value = rata_III
+            ExcelApp.Cells(row_to_write + 2, 53).Value = 3
 
+            ws.Range(f'A{row_to_write + 2}:BH{row_to_write + 2}').Copy()
+            ws.Range(f'A{row_to_write + 3}').PasteSpecial()
 
-
-
-    # if II_rata_data:
-    #     owca = ExcelApp.Cells(row_to_write + 1, 7).Value = 'Robert'
-    #     podpis = ExcelApp.Cells(row_to_write + 1, 10).Value = 'Grzelak'
-    #     ExcelApp.Cells(row_to_write + 1, 13).Value = imie
-    #     ExcelApp.Cells(row_to_write + 1, 12).Value = nazwisko
-    #     ExcelApp.Cells(row_to_write + 1, 14).Value = 'p' + pesel
-    #     ExcelApp.Cells(row_to_write + 1, 15).Value = data_pr_j
-    #     ExcelApp.Cells(row_to_write + 1, 16).Value = ulica
-    #     ExcelApp.Cells(row_to_write + 1, 17).Value = kod_poczt
-    #     ExcelApp.Cells(row_to_write + 1, 18).Value = miasto
-    #     # tel = ExcelApp.Cells(row_to_write, 19).Value = int('5001900')
-    #     # email = ExcelApp.Cells(row_to_write, 20).Value = 'malpa@gmail.pl'
-    #     ExcelApp.Cells(row_to_write + 1, 23).Value = marka
-    #     ExcelApp.Cells(row_to_write + 1, 24).Value = model
-    #     ExcelApp.Cells(row_to_write + 1, 25).Value = nr_rej
-    #     ExcelApp.Cells(row_to_write + 1, 26).Value = rok_prod
-    #     # data_podpi = ExcelApp.Cells(row_to_write, 30).Value = '18.02.2019'
-    #     ExcelApp.Cells(row_to_write + 1, 31).Value = data_pocz
-    #     ExcelApp.Cells(row_to_write + 1, 32).Value = data_konca
-    #     firma = ExcelApp.Cells(row_to_write, 36).Value = 'SPÓŁKA'
-    #     # tor = ExcelApp.Cells(row_to_write, 37).Value = 'GEN'
-    #     # tow = ExcelApp.Cells(row_to_write, 38).Value = 'GEN'
-    #     # rodz = ExcelApp.Cells(row_to_write, 39).Value = 'kom'
-    #     ExcelApp.Cells(row_to_write + 1, 40).Value = nr_polisy
-    #     # nowa_wzn = ExcelApp.Cells(row_to_write, 41).Value = 'N'
-    #     # nr_wzn = ExcelApp.Cells(row_to_write, 42).Value = '908568823555'
-    #     # ryzyko = ExcelApp.Cells(row_to_write, 46).Value = 'b/d'
-    #     ExcelApp.Cells(row_to_write + 1, 48).Value = ''
-    #     ExcelApp.Cells(row_to_write + 1, 49).Value = ter_platnosci
-    #     # ExcelApp.Cells(row_to_write + 1, 49).Value = I_rata_data   ###
-    #     ExcelApp.Cells(row_to_write + 1, 49).Value = II_rata_data
-    #     ExcelApp.Cells(row_to_write + 1, 50).Value = II_rata_wart
-    #     ExcelApp.Cells(row_to_write + 1, 51).Value = f_platnosci
+            ExcelApp.Cells(row_to_write + 3, 49).Value = termin_IV
+            ExcelApp.Cells(row_to_write + 3, 50).Value = rata_IV
+            ExcelApp.Cells(row_to_write + 3, 53).Value = 4
 
 
 
@@ -537,12 +532,5 @@ for dane_polisy in tacka_na_polisy(obj):
 # ExcelApp.DisplayAlerts = True
 
 
-
-
 end_time = time.time() - start_time
 print('Czas wykonania: {:.2f} sekund'.format(end_time))
-
-
-# def postal_code(data, nazwisko):
-#     # kod_poczt = re.compile('\d{,2}-\d{3,}')
-#     dystans = [data[data.index(nazwisk) - 6: data.index(nazwisk) + 15] for nazwisk in data if nazwisk.lower() == nazwisko.lower()][0]
