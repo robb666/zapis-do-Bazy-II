@@ -12,7 +12,7 @@ start_time = time.time()
 path = os.getcwd()
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
 
-obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy'
+obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy\I partia\com.pdf'
 
 
 def words_separately(text):
@@ -167,7 +167,7 @@ def data_wystawienia():
 
 def koniec_ochrony(page_1):
     one_day = timedelta(1)
-    daty = re.compile('(\d{2}[-|.|/]\d{2}[-|.|/]\d{4}|\d{4}[-|.|/]\d{2}[-|.|/]\d{2})')
+    daty = re.compile(r'(\b\d{2}[-|.|/]\d{2}[-|.|/]\d{4}|\b\d{4}[-|.|/]\d{2}[-|.|/]\d{2})')
     lista_dat = [re.sub('[^0-9]', '-', data) for data in daty.findall(page_1)]
     jeden_format = [re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', date) for date in lista_dat]
     koniec = max(datetime.strptime(data, '%Y-%m-%d') for data in jeden_format)
@@ -229,6 +229,23 @@ def przypis_daty_raty(pdf, page_1):
 
     total, termin_I, rata_I, termin_II, rata_II = '', '', '', '', ''
 
+    if 'AXA' in page_1:
+        box = polisa_box(pdf, 0, 400, 590, 650)
+        print(box)
+        (total := re.search(r'Składka: (\d+)', box, re.I).group(1))
+        print(total)
+
+        if 'Wpłata przelewem' in box:
+
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, ''
+
+
+    if 'Compensa' in page_1:
+        box = polisa_box(pdf, 0, 200, 590, 650)
+        print(box)
+        (total := re.search(r'Składka: (\d+)', box, re.I).group(1))
+        print(total)
+
 
     if 'EUROINS' in page_1:
         box = polisa_box(pdf, 0, 400, 590, 750)
@@ -242,7 +259,7 @@ def przypis_daty_raty(pdf, page_1):
 
     if 'MTU' in page_1:
         box = polisa_box(pdf, 0, 200, 590, 400)
-        print(box)
+
         (total := re.search(r'RAZEM DO ZAPŁATY (\d*\s?\d+)', box, re.I))
         total = int(re.sub(r' ', '', total.group(1)))
 
@@ -254,7 +271,7 @@ def przypis_daty_raty(pdf, page_1):
 
     if 'Proama' in page_1:
         box = polisa_box(pdf, 0, 250, 590, 450)
-        print(box)
+
         (total := re.search(r'RAZEM: (\d*\s?\d+)', box, re.I))
         total = int(re.sub(r'\xa0', '', total.group(1)))
 
