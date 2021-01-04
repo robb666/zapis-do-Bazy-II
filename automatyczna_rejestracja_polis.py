@@ -12,7 +12,7 @@ start_time = time.time()
 path = os.getcwd()
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
 
-obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy\I partia\com.pdf'
+obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy\I partia\pzu.pdf'
 
 
 def words_separately(text):
@@ -25,17 +25,24 @@ def polisa(pdf):
     """Tekst całej polisy."""
     with pdfplumber.open(pdf) as policy:
         page_1 = policy.pages[0].extract_text()  # Tylko pierwsza strona
+        # print(page_1)
     return page_1, words_separately(page_1.lower())
+
+def polisa_str(pdf):
+    with pdfplumber.open(pdf) as policy:
+        page_1 = policy.pages[0].extract_text()
+        page_2 = policy.pages[1].extract_text()
+    return page_1 + page_2
 
 
 def polisa_box(pdf, left, top, right, bottom):
     """Tekst wybranego fragmentu polisy."""
     with pdfplumber.open(pdf) as policy:
-        width = policy.pages[0].width
-        height = policy.pages[0].height
-        box_left = (0, 0, 150, 140)
+        # width = policy.pages[0].width
+        # height = policy.pages[0].height
+        # box_left = (0, 0, 150, 140)
         box_center = (left, top, right, bottom)
-        box_right = (150, 0, width, 140)
+        # box_right = (150, 0, width, 140)
         page_1_box = policy.pages[0].within_bbox(box_center, relative=False).extract_text()
     return page_1_box #words_separately(page_1_box.lower())
 
@@ -226,6 +233,9 @@ def numer_polisy(page_1):
 
 
 def przypis_daty_raty(pdf, page_1):
+    # box = polisa_box(pdf, 0, 200, 590, 530)
+    # print(box)
+
 
     total, termin_I, rata_I, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV = \
                                                                                 '', '', '', '', '', '', '', '', ''
@@ -234,12 +244,11 @@ def przypis_daty_raty(pdf, page_1):
         box = polisa_box(pdf, 0, 400, 590, 650)
         (total := re.search(r'Składka: (\d+)', box, re.I).group(1))
         if 'Wpłata przelewem' in box:
-            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
     if 'Compensa' in page_1:
         box = polisa_box(pdf, 0, 260, 590, 650)
-        print(box)
         (total := re.search(r'Składka ogółem: (\d*\s?\d+)', box, re.I))
         total = int(re.sub(r'\xa0', '', total.group(1)))
 
@@ -269,7 +278,62 @@ def przypis_daty_raty(pdf, page_1):
         (termin_I := re.search(r'1. (\d{4}-\d{2}-\d{2})', box, re.I).group(1))
 
         if 'jednorazowo' in box and 'przelew' in box:
-            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+    if 'Generali' in page_1 and not 'Proama' in page_1:
+        box = polisa_box(pdf, 0, 300, 590, 530)
+        (total := re.search(r'RAZEM: (\d*\s?\d+)', box, re.I))
+        total = int(re.sub(r' ', '', total.group(1)))
+
+        if 'przelewem' in box:
+            (termin := re.search(r'płatna\s?do\s?(\d{2}.\d{2}.\d{4})', box, re.I))
+            termin_I = re.sub('[^0-9]', '-', termin.group(1))
+            termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
+
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+        if 'została pobrana' in box or 'została opłacona' in box:
+            return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+
+    if 'HDI' in page_1 or '„WARTA” S.A. POTWIERDZA' in page_1:
+        box = polisa_box(pdf, 0, 200, 590, 530)
+        (total := re.search(r'ŁĄCZNA SKŁADKA (\d*\s?\d+)', box, re.I))
+        total = int(re.sub(r' ', '', total.group(1)))
+
+        if 'JEDNORAZOWO' in box and 'PRZELEW' in box:
+            (rata_I := re.search(r'kwota: (\d*\s?\d+)', box, re.I).group(1))
+            (termin_I := re.search(r'termin płatności: (\d{4}-\d{2}-\d{2})', box, re.I).group(1))
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+        if '2 RATACH' in box:
+            (rata_I := re.search(r'kwota: (\d*\s?\d+)', box, re.I).group(1))
+            (rata_II := re.search(r'kwota: (\d*\s?\d+) PLN (\d*\s?\d+)', box, re.I).group(2))
+
+            (termin_I := re.search(r'termin płatności: (\d{4}-\d{2}-\d{2})', box, re.I).group(1))
+            (termin_II := re.search(r'termin płatności: (\d{4}-\d{2}-\d{2})\s?(\d{4}-\d{2}-\d{2})', box, re.I).group(2))
+
+            return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+
+    if 'Hestia' in page_1 and not 'MTU' in page_1:
+        box = polisa_box(pdf, 0, 220, 590, 600)
+        print(box)
+        (total := re.search(r'DO ZAPŁATY (\d*\s?\d+)', box, re.I))
+        total = int(re.sub(r' ', '', total.group(1)))
+
+        if not 'II rata' in box and 'przelew' in box:
+            (termin_I := re.search(r'płatności (\d{4}-\d{2}-\d{2})', box, re.I).group(1))
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+        if 'II rata' in box and 'przelew' in box:
+            (termin_I := re.search(r'płatności I rata (\d{4}-\d{2}-\d{2})', box, re.I).group(1))
+            (termin_II := re.search(r'II rata (\d{4}-\d{2}-\d{2})', box, re.I).group(1))
+            (rata_I := re.search(fr'{termin_I},  (\d*\s?\d+)', box, re.I).group(1))
+            (rata_II := re.search(fr'{termin_II},  (\d*\s?\d+)', box, re.I).group(1))
+
+            return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
 
     if 'MTU' in page_1:
         box = polisa_box(pdf, 0, 200, 590, 400)
@@ -280,8 +344,8 @@ def przypis_daty_raty(pdf, page_1):
         if 'przelew' in box:
             (termin := re.search(r'i kwoty płatności (\d{4}‑\d{2}‑\d{2})', box, re.I))
             termin_I = re.sub('[^0-9]', '-', termin.group(1))
-            print(termin_I)
-            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II
+
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
     if 'Proama' in page_1:
         box = polisa_box(pdf, 0, 250, 590, 450)
@@ -294,10 +358,37 @@ def przypis_daty_raty(pdf, page_1):
             termin_I = re.sub('[^0-9]', '-', termin.group(1))
             termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
 
-            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         if 'została pobrana' in box:
-            return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+    if 'PZU' in page_1:
+        pdf_str = polisa_str(pdf)[3000:4600]
+        print(pdf_str)
+        (total := re.search(r'Składka łączna: (\d*\s?\d+)', pdf_str, re.I))
+        total = int(re.sub(r' ', '', total.group(1)))
+
+        if 'Rata 1 2 3 4' in pdf_str:
+            (raty := re.search(r'Kwota w złotych (\d*\s?\d+,\d{2}) (\d*\s?\d+,\d{2}) (\d*\s?\d+,\d{2}) (\d*\s?\d+,\d{2})', pdf_str, re.I))
+
+            rata_I = float(raty.group(1).replace(' ', '').replace(',', '.'))
+            rata_II = int(re.sub(r',', '.', raty.group(2)))
+            rata_III = int(re.sub(r',', '.', raty.group(3)))
+            rata_IV = int(re.sub(r',', '.', raty.group(4)))
+
+            def termin(terminy, n):
+                zamiana_sep = re.sub('[^0-9]', '-', terminy.group(n))
+                return re.sub(r'(\d{2})-(\d{2})-(\d{2})', r'\3-\2-\1', zamiana_sep)
+
+            terminy = re.search(r'Termin płatności (\d{2}.\d{2}.\d{2}) (\d{2}.\d{2}.\d{2}) (\d{2}.\d{2}.\d{2}) (\d{2}.\d{2}.\d{2})', pdf_str, re.I)
+            termin_I = termin(terminy, 1)
+            termin_II = termin(terminy, 2)
+            termin_III = termin(terminy, 3)
+            termin_IV = termin(terminy, 4)
+
+            return total, termin_I, rata_I, 'P', 4, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
 
     if 'TUW' in page_1 and not 'TUZ' in page_1:
         box = polisa_box(pdf, 0, 400, 300, 550)
@@ -309,7 +400,7 @@ def przypis_daty_raty(pdf, page_1):
         termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
 
         if 'JEDNORAZOWO' in box and 'PRZELEW' in box:
-            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
     if 'TUZ' in page_1:
@@ -325,7 +416,7 @@ def przypis_daty_raty(pdf, page_1):
 
             (termin_II := re.search(r'Termin płatności (.*)(\d{4}-\d{2}-\d{2})', box, re.I).group(2))
 
-            return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
     if 'UNIQA' in page_1:
@@ -346,7 +437,7 @@ def przypis_daty_raty(pdf, page_1):
                 termin_II = re.sub('[^0-9]', '-', termin_II.group(2))
                 termin_II = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_II)
 
-                return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II
+                return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
 
@@ -379,21 +470,19 @@ def rozpoznanie_danych(tacka_na_polisy):
     tow_ub = numer_polisy_[1]
     nr_polisy = numer_polisy_[2]
 
+
     przypis_daty_raty_ = przypis_daty_raty(pdf, page_1)
     print(przypis_daty_raty_)
 
     przypis = przypis_daty_raty_[0]
-    termin_I = przypis_daty_raty_[1] if przypis_daty_raty_[1] else data_wyst
+    termin_I = przypis_daty_raty_[1] if przypis_daty_raty_[1] else data_wyst # gotówka
     rata_I = przypis_daty_raty_[2]
     f_platnosci = przypis_daty_raty_[3]
     ilosc_rat = przypis_daty_raty_[4]
     nr_raty = przypis_daty_raty_[5]
 
-    # druga linijka
     termin_II = przypis_daty_raty_[6]
     rata_II = przypis_daty_raty_[7]
-    # nr_raty_II = 2
-
     termin_III = przypis_daty_raty_[8]
     rata_III = przypis_daty_raty_[9]
     termin_IV = przypis_daty_raty_[10]
