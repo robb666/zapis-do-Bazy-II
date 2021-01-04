@@ -12,7 +12,7 @@ start_time = time.time()
 path = os.getcwd()
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
 
-obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy\I partia\pzu.pdf'
+obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy\I partia\tuw.pdf'
 
 
 def words_separately(text):
@@ -235,7 +235,7 @@ def numer_polisy(page_1):
 def przypis_daty_raty(pdf, page_1):
     # box = polisa_box(pdf, 0, 200, 590, 530)
     # print(box)
-
+    one_day = timedelta(1)
 
     total, termin_I, rata_I, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV = \
                                                                                 '', '', '', '', '', '', '', '', ''
@@ -280,6 +280,7 @@ def przypis_daty_raty(pdf, page_1):
         if 'jednorazowo' in box and 'przelew' in box:
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
+
     if 'Generali' in page_1 and not 'Proama' in page_1:
         box = polisa_box(pdf, 0, 300, 590, 530)
         (total := re.search(r'RAZEM: (\d*\s?\d+)', box, re.I))
@@ -298,7 +299,7 @@ def przypis_daty_raty(pdf, page_1):
 
     if 'HDI' in page_1 or '„WARTA” S.A. POTWIERDZA' in page_1:
         box = polisa_box(pdf, 0, 200, 590, 530)
-        (total := re.search(r'ŁĄCZNA SKŁADKA (\d*\s?\d+)', box, re.I))
+        (total := re.search(r'[ŁĄCZNA SKŁADKA|Składka łączna] (\d*\s?\d+)', box, re.I))
         total = int(re.sub(r' ', '', total.group(1)))
 
         if 'JEDNORAZOWO' in box and 'PRZELEW' in box:
@@ -363,41 +364,54 @@ def przypis_daty_raty(pdf, page_1):
         if 'została pobrana' in box:
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
+
     if 'PZU' in page_1:
-        pdf_str = polisa_str(pdf)[3000:4600]
-        print(pdf_str)
+        pdf_str = polisa_str(pdf)[1900:4600]
+        # print(pdf_str)
         (total := re.search(r'Składka łączna: (\d*\s?\d+)', pdf_str, re.I))
         total = int(re.sub(r' ', '', total.group(1)))
 
-        if 'Rata 1 2 3 4' in pdf_str:
-            (raty := re.search(r'Kwota w złotych (\d*\s?\d+,\d{2}) (\d*\s?\d+,\d{2}) (\d*\s?\d+,\d{2}) (\d*\s?\d+,\d{2})', pdf_str, re.I))
 
-            rata_I = float(raty.group(1).replace(' ', '').replace(',', '.'))
-            rata_II = int(re.sub(r',', '.', raty.group(2)))
-            rata_III = int(re.sub(r',', '.', raty.group(3)))
-            rata_IV = int(re.sub(r',', '.', raty.group(4)))
+        if 'została opłacona w całości.' in pdf_str:
+            return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+        if 'Jednorazowo' in pdf_str and 'tytule przelewu' in pdf_str:
+            (termin_I := re.search(r'Termin płatności (\d{2}.\d{2}.\d{4})', pdf_str, re.I))
+            termin_I = re.sub('[^0-9]', '-', termin_I.group(1))
+            termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+        if 'Rata 1 2 3 4' in pdf_str:
+            (raty := re.search(r'Kwota w złotych (\d*\s?\d+,\d{2}) (\d*\s?\d+,\d{2}) (\d*\s?\d+,\d{2}) (\d*\s?\d+,\d{2})',
+                               pdf_str, re.I))
+            rata_I = float(raty.group(1).replace(',', '.').replace(' ', ''))
+            rata_II = float(raty.group(2).replace(',', '.').replace(' ', ''))
+            rata_III = float(raty.group(3).replace(',', '.').replace(' ', ''))
+            rata_IV = float(raty.group(4).replace(',', '.').replace(' ', ''))
 
             def termin(terminy, n):
                 zamiana_sep = re.sub('[^0-9]', '-', terminy.group(n))
                 return re.sub(r'(\d{2})-(\d{2})-(\d{2})', r'\3-\2-\1', zamiana_sep)
 
-            terminy = re.search(r'Termin płatności (\d{2}.\d{2}.\d{2}) (\d{2}.\d{2}.\d{2}) (\d{2}.\d{2}.\d{2}) (\d{2}.\d{2}.\d{2})', pdf_str, re.I)
-            termin_I = termin(terminy, 1)
-            termin_II = termin(terminy, 2)
-            termin_III = termin(terminy, 3)
-            termin_IV = termin(terminy, 4)
+            terminy = re.search(r'Termin płatności (\d{2}.\d{2}.\d{2}) (\d{2}.\d{2}.\d{2}) (\d{2}.\d{2}.\d{2}) '
+                                r'(\d{2}.\d{2}.\d{2})', pdf_str, re.I)
+            termin_I = datetime.strptime(termin(terminy, 1), '%y-%m-%d')
+            termin_II = datetime.strptime(termin(terminy, 2), '%y-%m-%d')
+            termin_III = datetime.strptime(termin(terminy, 3), '%y-%m-%d')
+            termin_IV = datetime.strptime(termin(terminy, 4), '%y-%m-%d')
 
             return total, termin_I, rata_I, 'P', 4, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
     if 'TUW' in page_1 and not 'TUZ' in page_1:
-        box = polisa_box(pdf, 0, 400, 300, 550)
+        box = polisa_box(pdf, 0, 400, 400, 600)
+        print(box)
         (total := re.search(r'Składka łączna: (\d*\s?\d+) PLN', box, re.I))
         total = int(re.sub(r'\xa0', '', total.group(1)))
 
-        (termin := re.search(r'Termin płatności (30-12-2020)', box, re.I))
+        (termin := re.search(r'Termin płatności.*(\d{2,4}-\d{2}-\d{2,4})', box, re.I))
         termin_I = re.sub('[^0-9]', '-', termin.group(1))
-        termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
+        termin_I = datetime.strptime(re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I), '%y-%m-%d') + one_day
 
         if 'JEDNORAZOWO' in box and 'PRZELEW' in box:
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
