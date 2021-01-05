@@ -5,16 +5,35 @@ import numpy as np
 from datetime import datetime
 
 
+pattern = r'(?=.*Przelew)(?=.*JEDNORAZOWA).*'
+
+if (o := re.findall(pattern, """
+składki 
+Wyrażam wolę przystąpienia do TUZ TUW (wysokość wpisowego 10 zł): TAK
+Deklaruję objęcie 1 (jednego) udziału członkowskiego o wartości nominalnej 10.00 zł słownie dziesięć złotych: TAK
+Objęcie większej liczby udziałów może nastąpić tylko na pisemny wniosek, po uzyskaniu zgody Zarządu TUZ TUW.
+Razem kwota do zapłaty (składka/rata, wpisowe, udział członkowski) 447.00 zł
+Forma płatności: PRZELEW płatny """, re.I | re.DOTALL)):
+
+    print(o)
 
 
-data = '2021/12/30'
-
-teraz = datetime.now().date()
-data = re.sub('[^0-9]', '-', data)
 
 
-if datetime.strptime(data, '%Y-%m-%d').date() > teraz or datetime.strptime(data, '%d-%m-%Y').date() > teraz:
-    print(data)
+
+
+
+
+
+
+# data = '2021/12/30'
+#
+# teraz = datetime.now().date()
+# data = re.sub('[^0-9]', '-', data)
+#
+#
+# if datetime.strptime(data, '%Y-%m-%d').date() > teraz or datetime.strptime(data, '%d-%m-%Y').date() > teraz:
+#     print(data)
 
 
 
