@@ -358,18 +358,18 @@ def przypis_daty_raty(pdf, page_1):
     if 'InterRisk' in page_1:
         # box = polisa_box(pdf, 0, 420, 590, 700)
         # print(box)
-        pdf_str = polisa_str(pdf)[1900:-2600]
-        print(pdf_str)
-        total_string = re.compile(r'[Składka łączna:\s*|WYSOKOŚĆ\sSKŁADKI\sŁĄCZNEJ:\n](\d*\s?\d{2,})', re.I | re.DOTALL)
+        pdf_str3 = polisa_str(pdf)[1900:-2600]
+        print(pdf_str3)
+        total_string = re.compile(r'Składka łączna:\s*|WYSOKOŚĆ\sSKŁADKI\sŁĄCZNEJ:\n(\d*\s?\d{2,})', re.I)
         # total_string = re.compile(r'Składka łączna:\s*(\d*\s?\d+)', re.I | re.DOTALL)
 
-        (total := re.search(total_string, pdf_str))
+        (total := re.search(total_string, pdf_str3))
 
         print(total)
         total = int(re.sub(r'\xa0', '', total.group(1)))
 
-        if re.findall(r'(?=.*jednorazow[o|a])(?=.*płatności:\s*przelewem).*', pdf_str, re.I | re.DOTALL):
-            (termin_I := re.search(r'płatna\sdo\sdnia:\s(\d{4}-\d{2}-\d{2})', pdf_str, re.I).group(1))
+        if re.findall(r'(?=.*jednorazow[o|a])(?=.*płatności:\s*przelewem).*', pdf_str3, re.I | re.DOTALL):
+            (termin_I := re.search(r'płatna\sdo\sdnia:\s(\d{4}-\d{2}-\d{2})', pdf_str3, re.I).group(1))
             print(termin_I)
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
@@ -586,8 +586,6 @@ def tacka_na_polisy(obj):
             if file.endswith('.pdf'):
                 pdf = obj + '\\' + file
                 yield rozpoznanie_danych(pdf)
-
-
 
 
 """Sprawdza czy arkusz jest otwarty."""
