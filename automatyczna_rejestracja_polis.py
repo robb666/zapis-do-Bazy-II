@@ -12,7 +12,7 @@ start_time = time.time()
 path = os.getcwd()
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
 
-obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy\II partia\Policy_KMHP_155239.pdf'
+obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy\II partia\Policy_BPPAP_98439.pdf'
 
 
 def words_separately(text):
@@ -360,7 +360,8 @@ def przypis_daty_raty(pdf, page_1):
         # print(box)
         pdf_str3 = polisa_str(pdf)[1900:-2600]
         print(pdf_str3)
-        total_string = re.compile(r'Składka łączna:\s*|WYSOKOŚĆ\sSKŁADKI\sŁĄCZNEJ:\n(\d*\s?\d{2,})', re.I)
+        shit!
+        total_string = re.compile(r'[Składka łączna:\s*|WYSOKOŚĆ\sSKŁADKI\sŁĄCZNEJ:\n](\d*\s?\d{2,6})', re.I)
         # total_string = re.compile(r'Składka łączna:\s*(\d*\s?\d+)', re.I | re.DOTALL)
 
         (total := re.search(total_string, pdf_str3))
