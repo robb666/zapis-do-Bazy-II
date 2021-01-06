@@ -339,7 +339,6 @@ def przypis_daty_raty(pdf, page_1):
 
             return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
-
     if 'INTER' in page_1:
         box = polisa_box(pdf, 0, 220, 590, 490)
         print(box)
@@ -361,15 +360,19 @@ def przypis_daty_raty(pdf, page_1):
         # print(box)
         pdf_str = polisa_str(pdf)[1900:-2600]
         print(pdf_str)
-        (total := re.search(r'WYSOKOŚĆ\sSKŁADKI\sŁĄCZNEJ:\n(\d*\s?\d+)', pdf_str, re.I | re.DOTALL))
+        total_string = re.compile(r'[Składka łączna:\s*|WYSOKOŚĆ\sSKŁADKI\sŁĄCZNEJ:\n](\d*\s?\d{2,})', re.I | re.DOTALL)
+        # total_string = re.compile(r'Składka łączna:\s*(\d*\s?\d+)', re.I | re.DOTALL)
 
-        total = int(re.sub(r'\xa0', '', total.group(1)))
+        (total := re.search(total_string, pdf_str))
+
         print(total)
+        total = int(re.sub(r'\xa0', '', total.group(1)))
 
-        if re.findall(r'(?=.*płatności\sskładki: jednorazowo)(?=.*płatności:\sprzelewem).*', pdf_str, re.I | re.DOTALL):
+        if re.findall(r'(?=.*jednorazow[o|a])(?=.*płatności:\s*przelewem).*', pdf_str, re.I | re.DOTALL):
             (termin_I := re.search(r'płatna\sdo\sdnia:\s(\d{4}-\d{2}-\d{2})', pdf_str, re.I).group(1))
-
+            print(termin_I)
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
 
 
 
@@ -388,10 +391,6 @@ def przypis_daty_raty(pdf, page_1):
             termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
 
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
-
-
-
-
 
     if 'MTU' in page_1:
         box = polisa_box(pdf, 0, 200, 590, 400)
