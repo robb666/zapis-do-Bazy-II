@@ -4,7 +4,7 @@ import pdfplumber
 from datetime import datetime, timedelta
 import win32com.client
 from win32com.client import Dispatch
-from regon_api import get_regon_data
+# from regon_api import get_regon_data
 import time
 
 start_time = time.time()
@@ -12,7 +12,7 @@ start_time = time.time()
 path = os.getcwd()
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
 
-obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy\II partia\Policy_BPPAP_98439.pdf'
+obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy\II partia\Polisa_email.pdf'
 
 
 def words_separately(text):
@@ -284,8 +284,12 @@ def przypis_daty_raty(pdf, page_1):
 
     if 'Generali' in page_1 and not 'Proama' in page_1:
         box = polisa_box(pdf, 0, 300, 590, 530)
-        (total := re.search(r'RAZEM: (\d*\s?\d+)', box, re.I))
-        total = int(re.sub(r' ', '', total.group(1)))
+        print(box)
+
+        (total := re.search(r'(RAZEM:|Składka) (\d*\s?\d+)', box, re.I))
+        print()
+        print(total)
+        total = int(re.sub(r' ', '', total.group(2)))
 
         if 'przelewem' in box:
             (termin := re.search(r'płatna\s?do\s?(\d{2}.\d{2}.\d{4})', box, re.I))
@@ -353,38 +357,33 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
-
-
     if 'InterRisk' in page_1:
-        # box = polisa_box(pdf, 0, 420, 590, 700)
-        # print(box)
+
         pdf_str3 = polisa_str(pdf)[1900:-2600]
         print(pdf_str3)
-        shit!
-        total_string = re.compile(r'[Składka łączna:\s*|WYSOKOŚĆ\sSKŁADKI\sŁĄCZNEJ:\n](\d*\s?\d{2,6})', re.I)
-        # total_string = re.compile(r'Składka łączna:\s*(\d*\s?\d+)', re.I | re.DOTALL)
 
-        (total := re.search(total_string, pdf_str3))
+        total_match = re.compile(r'(Składka\słączna:\s*|WYSOKOŚĆ\sSKŁADKI\sŁĄCZNEJ:\n)(\d*\s?\d+)')
+
+        (total := re.search(total_match, pdf_str3))
 
         print(total)
-        total = int(re.sub(r'\xa0', '', total.group(1)))
+        total = int(re.sub(r'\xa0', '', total.group(2)))
 
         if re.findall(r'(?=.*jednorazow[o|a])(?=.*płatności:\s*przelewem).*', pdf_str3, re.I | re.DOTALL):
             (termin_I := re.search(r'płatna\sdo\sdnia:\s(\d{4}-\d{2}-\d{2})', pdf_str3, re.I).group(1))
             print(termin_I)
+
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
-
-
-
 
 
     # Link4
     if (nr_polisy := re.search('Numer\s(\w\d+)', page_1)):
-        box = polisa_box(pdf, 0, 300, 590, 580)
+        box = polisa_box(pdf, 0, 300, 590, 600)
         print(box)
-        (total := re.search(r'do zapłacenia (.*) (\d*\s?\d+,\d+)', box, re.I))
-        print(total.group(2))
-        total = float(total.group(2).replace(',', '.').replace(' ', ''))
+        (total := re.search(r'[\w\s()](\d*\s?\d+,\d+)', box, re.I))
+        print()
+        print(total.group(1))
+        total = float(total.group(1).replace(',', '.').replace(' ', ''))
 
         if re.findall(r'(?=.*Metoda płatności Karta).*', box):
             (termin := re.search(r'Termin płatności (\d{2}/\d{2}/\d{4})', box, re.I))
@@ -392,6 +391,31 @@ def przypis_daty_raty(pdf, page_1):
             termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
 
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+        if re.findall(r'(?=.*Przelew)(?=.*Kolejne raty).*', box, re.I | re.DOTALL):
+
+            (raty := re.search(r'Termin Kwota raty.* (\d*\s?\d+,\d{2}).* (\d*\s?\d+,\d{2}).* (\d*\s?\d+,\d{2}).* '
+                                                   r'(\d*\s?\d+,\d{2})', box, re.I | re.DOTALL))
+            # print(raty.group(2))
+            rata_I = float(raty.group(1).replace(',', '.').replace(' ', ''))
+            rata_II = float(raty.group(2).replace(',', '.').replace(' ', ''))
+            rata_III = float(raty.group(3).replace(',', '.').replace(' ', ''))
+            rata_IV = float(raty.group(4).replace(',', '.').replace(' ', ''))
+
+            def termin(terminy, n):
+                zamiana_sep = re.sub('[^0-9]', '-', terminy.group(n))
+                return re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', zamiana_sep)
+
+            (terminy := re.search(r'Termin Kwota raty\n(\d{2}/\d{2}/\d{4}).*(\d{2}/\d{2}/\d{4}).*(\d{2}/\d{2}/\d{4}).*'
+                                                     r'(\d{2}/\d{2}/\d{4}).*', box, re.I | re.DOTALL))
+            print(terminy)
+            termin_I = datetime.strptime(termin(terminy, 1), '%Y-%m-%d') + one_day
+            termin_II = datetime.strptime(termin(terminy, 2), '%Y-%m-%d') + one_day
+            termin_III = datetime.strptime(termin(terminy, 3), '%Y-%m-%d') + one_day
+            termin_IV = datetime.strptime(termin(terminy, 4), '%Y-%m-%d') + one_day
+
+            return total, termin_I, rata_I, 'P', 4, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
 
     if 'MTU' in page_1:
         box = polisa_box(pdf, 0, 200, 590, 400)
