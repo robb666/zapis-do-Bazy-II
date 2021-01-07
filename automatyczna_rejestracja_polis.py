@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy\II partia\Policy_BPPAP_98439.pdf'
+obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy\II partia\WAR polisa 920008740183.pdf'
 
 
 
@@ -544,8 +544,8 @@ def przypis_daty_raty(pdf, page_1):
     if 'WARTA' in page_1:
         pdf_str = polisa_str(pdf)[1200:5000]
         print(pdf_str)
-        (total := re.search(r'SKŁADKA ŁĄCZNA|Kwota\s: (\d*\s?\.?\d+)', pdf_str, re.I))
-        total = int(total.group(1).replace('\xa0', '').replace('.', ''))
+        (total := re.search(r'(SKŁADKA ŁĄCZNA|Kwota\s:) (\d*\s?\.?\d+)', pdf_str, re.I))
+        total = int(total.group(2).replace('\xa0', '').replace('.', ''))
 
         if re.findall(r'(?=.*JEDNORAZOWO)(?=.*PRZELEW).*', pdf_str, re.I | re.DOTALL):
             (termin_I := re.search(r'Termin:|DO DNIA.*(\d{4}-\d{2}-\d{2})', pdf_str).group(1))
