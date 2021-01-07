@@ -9,10 +9,12 @@ import time
 
 start_time = time.time()
 path = os.getcwd()
+one_day = timedelta(1)
+
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
 obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy\II partia\Policy_BPPAP_98439.pdf'
 
-one_day = timedelta(1)
+
 
 def words_separately(text):
     """Tokenizuje tekst całej polisy."""
