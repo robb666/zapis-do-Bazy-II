@@ -12,8 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy\II partia\WAR polisa 920008740183.pdf'
-
+obj = r'M:\zSkrzynka na polisy'
 
 
 def words_separately(text):
@@ -237,7 +236,16 @@ def numer_polisy(page_1):
 def przypis_daty_raty(pdf, page_1):
     # one_day = timedelta(1)
     total, termin_I, rata_I, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV = \
-                                                                         '', '', '', '', '', '', '', '', ''
+                                                                                    '', '', '', '', '', '', '', '', ''
+
+
+    if 'Allianz' in page_1:
+        pdf_str3 = polisa_str(pdf)[1900:-2600]
+        print(pdf_str3)
+
+        (total := re.search(r'(Składka:|łącznie:) (\d*\s?\d+)', box).group(2))
+
+        return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
     if 'AXA' in page_1:
         box = polisa_box(pdf, 0, 250, 590, 650)
