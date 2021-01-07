@@ -4,16 +4,15 @@ import pdfplumber
 from datetime import datetime, timedelta
 import win32com.client
 from win32com.client import Dispatch
-# from regon_api import get_regon_data
+from regon_api import get_regon_data
 import time
 
 start_time = time.time()
-
 path = os.getcwd()
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
+obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy\II partia\Policy_BPPAP_98439.pdf'
 
-obj = r'C:\Users\ROBERT\Desktop\IT\PYTHON\PYTHON 37 PROJEKTY\excel\zapis do Bazy II\polisy\II partia\Polisa_email.pdf'
-
+one_day = timedelta(1)
 
 def words_separately(text):
     """Tokenizuje tekst całej polisy."""
@@ -168,13 +167,13 @@ def kod_pocztowy(page_1):
 
 
 def data_wystawienia():
-    one_day = timedelta(1)
+    # one_day = timedelta(1)
     today = datetime.strptime(datetime.now().strftime('%y-%m-%d'), '%y-%m-%d') + one_day
     return today # datetime.today().date().strftime('%y-%m-%d')
 
 
 def koniec_ochrony(page_1):
-    one_day = timedelta(1)
+    # one_day = timedelta(1)
     daty = re.compile(r'(\b\d{2}[-|.|/]\d{2}[-|.|/]\d{4}|\b\d{4}[-|.|/]\d{2}[-|.|/]\d{2})')
     lista_dat = [re.sub('[^0-9]', '-', data) for data in daty.findall(page_1)]
     jeden_format = [re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', date) for date in lista_dat]
@@ -234,17 +233,16 @@ def numer_polisy(page_1):
 
 
 def przypis_daty_raty(pdf, page_1):
-    # box = polisa_box(pdf, 0, 200, 590, 530)
-    # print(box)
-    one_day = timedelta(1)
-
+    # one_day = timedelta(1)
     total, termin_I, rata_I, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV = \
                                                                          '', '', '', '', '', '', '', '', ''
 
     if 'AXA' in page_1:
-        box = polisa_box(pdf, 0, 400, 590, 650)
-        (total := re.search(r'Składka: (\d+)', box, re.I).group(1))
-        if 'Wpłata przelewem' in box:
+        box = polisa_box(pdf, 0, 250, 590, 650)
+        print(box)
+        (total := re.search(r'(Składka:|łącznie:) (\d*\s?\d+)', box).group(2))
+
+        if 'Wpłata przelewem' in box or 'Nr konta' in box:
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
@@ -543,11 +541,12 @@ def przypis_daty_raty(pdf, page_1):
 
     if 'WARTA' in page_1:
         pdf_str = polisa_str(pdf)[1200:5000]
-        (total := re.search(r'SKŁADKA ŁĄCZNA (\d*\s?\d+)', pdf_str, re.I))
-        total = int(re.sub(r'\xa0', '', total.group(1)))
+        print(pdf_str)
+        (total := re.search(r'SKŁADKA ŁĄCZNA|Kwota\s: (\d*\s?\.?\d+)', pdf_str, re.I))
+        total = int(total.group(1).replace('\xa0', '').replace('.', ''))
 
         if re.findall(r'(?=.*JEDNORAZOWO)(?=.*PRZELEW).*', pdf_str, re.I | re.DOTALL):
-            (termin_I := re.search(r'Termin: (\d{4}-\d{2}-\d{2})', pdf_str).group(1))
+            (termin_I := re.search(r'Termin:|DO DNIA.*(\d{4}-\d{2}-\d{2})', pdf_str).group(1))
 
         return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
