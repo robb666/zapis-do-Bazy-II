@@ -304,7 +304,7 @@ def przypis_daty_raty(pdf, page_1):
         (total := re.search(r'(RAZEM:|Składka) (\d*\s?\d+)', box, re.I))
         total = int(re.sub(r' ', '', total.group(2)))
 
-        if 'przelewem' in box:
+        if 'przelewem' in box and not 'III rata' in box:
             (termin := re.search(r'płatna\s?do\s?(\d{2}.\d{2}.\d{4})', box, re.I))
             termin_I = re.sub('[^0-9]', '-', termin.group(1))
             termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
@@ -315,13 +315,20 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         if 'III rata' in page_1:
-            (rata_I := re.search(r'I rata -  \d{2}.\d{2}.\d{4} - (\d+)', box, re.I).group(1))
-            (rata_II := re.search(r'II rata.* - (\d+)', box, re.I).group(1))
-            (rata_III := re.search(r'[|III] rata.* - (\d+)', box, re.I).group(1))
+            (rata_I := re.search(r'I rata (\d*\s?\d+)', box, re.I).group(1))
+            (rata_II := re.search(r'II rata (\d*\s?\d+)', box, re.I).group(1))
+            (rata_III := re.search(r'III rata (\d*\s?\d+)', box, re.I).group(1))
 
-            termin_I = terminy(re.search(r'I\srata\s-\s+(\d{2}.\d{2}.\d{4})', box, re.I))
-            termin_II = terminy(re.search(r'II rata -  (\d{2}.\d{2}.\d{4})', box, re.I))
-            termin_III = terminy(re.search(r',   rata -  (\d{2}.\d{2}.\d{4})', box, re.I))
+            def termin(terminy, n):
+                zamiana_sep = re.sub('[^0-9]', '-', terminy.group(n))
+                return re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', zamiana_sep)
+
+            terminy = re.search(r' I rata .* płatna do (\d{2}.\d{2}.\d{4}).*(\d{2}.\d{2}.\d{4}).*(\d{2}.\d{2}.\d{4})',
+                                    box, re.I)
+
+            termin_I = datetime.strptime(termin(terminy, 1), '%Y-%m-%d') + one_day
+            termin_II = datetime.strptime(termin(terminy, 2), '%Y-%m-%d') + one_day
+            termin_III = datetime.strptime(termin(terminy, 3), '%Y-%m-%d') + one_day
 
             return total, termin_I, rata_I, 'P', 3, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
@@ -729,7 +736,7 @@ for dane_polisy in tacka_na_polisy(obj):
         data_inkasa = ExcelApp.Cells(row_to_write + 1, 54).Value = ''
         ExcelApp.Cells(row_to_write + 1, 55).Value = ''
 
-        if rata_IV:
+        if rata_III:
             ws.Range(f'A{row_to_write + 1}:BH{row_to_write + 1}').Copy()
             ws.Range(f'A{row_to_write + 2}').PasteSpecial()
 
@@ -737,12 +744,20 @@ for dane_polisy in tacka_na_polisy(obj):
             ExcelApp.Cells(row_to_write + 2, 50).Value = rata_III
             ExcelApp.Cells(row_to_write + 2, 53).Value = 3
 
-            ws.Range(f'A{row_to_write + 2}:BH{row_to_write + 2}').Copy()
-            ws.Range(f'A{row_to_write + 3}').PasteSpecial()
+            if  rata_IV:
+                # ws.Range(f'A{row_to_write + 1}:BH{row_to_write + 1}').Copy()
+                # ws.Range(f'A{row_to_write + 2}').PasteSpecial()
+                #
+                # ExcelApp.Cells(row_to_write + 2, 49).Value = termin_III
+                # ExcelApp.Cells(row_to_write + 2, 50).Value = rata_III
+                # ExcelApp.Cells(row_to_write + 2, 53).Value = 3
 
-            ExcelApp.Cells(row_to_write + 3, 49).Value = termin_IV
-            ExcelApp.Cells(row_to_write + 3, 50).Value = rata_IV
-            ExcelApp.Cells(row_to_write + 3, 53).Value = 4
+                ws.Range(f'A{row_to_write + 2}:BH{row_to_write + 2}').Copy()
+                ws.Range(f'A{row_to_write + 3}').PasteSpecial()
+
+                ExcelApp.Cells(row_to_write + 3, 49).Value = termin_IV
+                ExcelApp.Cells(row_to_write + 3, 50).Value = rata_IV
+                ExcelApp.Cells(row_to_write + 3, 53).Value = 4
 
 
 
