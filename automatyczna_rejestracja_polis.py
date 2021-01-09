@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\GEN Polisa_50006792475_07012021_134646.pdf'
+obj = r'M:\zSkrzynka na polisy\Polisa.pdf'
 
 
 def words_separately(text):
@@ -65,6 +65,7 @@ def pesel_checksum(p):
 def regon_checksum(r: int):
     """Waliduje regon sprawdzając sumę kontrolną."""
     regon = list(str(r))
+    print(regon)
     if len(regon) == 9:
         suma = (int(regon[0])*8 + int(regon[1])*9 + int(regon[2])*2 + int(regon[3])*3 + int(regon[4])*4 +
                 int(regon[5])*5 + int(regon[6])*6 + int(regon[7])*7) % 11
@@ -130,10 +131,12 @@ def nazwisko_imie(d):
 
 def pesel_regon(d):
     """Zapisuje pesel/regon."""
+    nr_reg_TU = {'AXA': '140806789'}
     pesel = [pesel for k, pesel in d.items() if k < 200 and len(pesel) == 11 and re.search('\d{11}', pesel) and
                                                                                                   pesel_checksum(pesel)]
-    regon = [regon for k, regon in d.items() if k < 200 and len(regon) == 9 and re.search('\d{9}', regon) and
-                                                                                                  regon_checksum(regon)]
+    regon = [regon for k, regon in d.items() if k < 200 and len(regon) == 9 and regon not in nr_reg_TU.values() and
+             re.search('\d{9}', regon) and regon_checksum(regon)]
+    # print(regon)
     if pesel:
         return 'p' + pesel[0]
     elif regon:
@@ -150,21 +153,29 @@ def adres():
     pass
 
 
-def kod_pocztowy(page_1):
+def kod_pocztowy(page_1, pdf):
     # print(page_1)
-    c = re.compile('(adres\w*|(?<!InterRisk) kontakt\w*|pocztowy|ubezpieczony)', re.I)
-    # print(c)
+    kod_comp = re.compile('(adres.*|(?<!InterRisk) kontakt\w*|pocztowy|ubezpieczony) (\d{2}[-|\xad]\d{3})', re.I | re.DOTALL)
+    if 'AXA' in page_1:
+        page_1 = polisa_str(pdf)[0:-1]
+        # print(page_1)
+    if (kod := kod_comp.search(page_1)):
+        kod_pocztowy = kod.group(2)
+        print(kod_pocztowy)
 
-    if (f := c.search(page_1)):
-        adres = f.group().strip()
-        # print(adres)
+        # data = page_1.split()
+        # # print(data)
+        #
+        # dystans = [data[data.index(split) - 10: data.index(split) + 33] for split in data if adres in split][0]
+        # # print(dystans)
+        # try:
+        #     kod_pocztowy = [kod for kod in dystans if re.search('\d{2}[-|\xad]\d{3}\b', kod)][0]
+        #     return kod_pocztowy
+        # except ValueError as e:
+        #     print(e)
+        #     kod_poczt = ''
 
-    data = page_1.split()
-    # print(data)
-    dystans = [data[data.index(split) - 10: data.index(split) + 33] for split in data if adres in split][0]
-    # print(dystans)
-    kod_pocztowy = [kod for kod in dystans if re.search('\d{2}[-|\xad]\d{3}', kod)][0]
-    return kod_pocztowy
+        return kod_pocztowy
 
 
 def data_wystawienia():
@@ -173,9 +184,11 @@ def data_wystawienia():
     return today # datetime.today().date().strftime('%y-%m-%d')
 
 
-def koniec_ochrony(page_1):
+def koniec_ochrony(page_1, pdf):
     # one_day = timedelta(1)
     daty = re.compile(r'(\b\d{2}[-|.|/]\d{2}[-|.|/]\d{4}|\b\d{4}[-|.|/]\d{2}[-|.|/]\d{2})')
+    if 'AXA' in page_1:
+        page_1 = page_1 = polisa_str(pdf)[0:-1]
     lista_dat = [re.sub('[^0-9]', '-', data) for data in daty.findall(page_1)]
     jeden_format = [re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', date) for date in lista_dat]
     koniec = max(datetime.strptime(data, '%Y-%m-%d') for data in jeden_format)
@@ -191,12 +204,14 @@ def TU():
     pass
 
 
-def numer_polisy(page_1):
+def numer_polisy(page_1, pdf):
     nr_polisy = ''
     if 'Allianz' in page_1 and (nr_polisy := re.search('(Polisa nr|NUMER POLISY) (\d*-?\d+)', page_1)):
         return 'ALL', 'ALL', nr_polisy.group(2)
-    if 'AXA' in page_1 and (nr_polisy := re.search('(\d{4}-\d+)', page_1)):
-        return 'AXA', 'AXA', nr_polisy.group(1)
+    if 'AXA' in page_1:
+            page_1 = polisa_str(pdf)[1000:4600]
+            if (nr_polisy := re.search('(\d{4}-\d{5,})', page_1)):
+                return 'AXA', 'AXA', nr_polisy.group(1)
     if 'Compensa' in page_1 and (nr_polisy := re.search('typ polisy: *\s*(\d+),numer: *\s*(\d+)', page_1)):
         return 'COM', 'COM', nr_polisy.group(1) + nr_polisy.group(2)
     if 'EUROINS' in page_1 and (nr_polisy := re.search('Polisa ubezpieczenia nr: (\d+)', page_1)):
@@ -245,7 +260,6 @@ def przypis_daty_raty(pdf, page_1):
         (total := re.search(r'(Składka:|łącznie:|za 3 lata:) (\d*\s?\d+)', box))
         total = int(re.sub(r'\xa0', '', total.group(2)))
 
-
         if 'płatność online' in page_1:
             termin_I = re.search(r'Dane płatności:\ndo (\d{2}.\d{2}.\d{4})', box, re.I)
             termin_I = re.sub('[^0-9]', '-', termin_I.group(1))
@@ -254,12 +268,16 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
-    if 'AXA' in page_1:
-        box = polisa_box(pdf, 0, 250, 590, 650)
-        # print(box)
-        (total := re.search(r'(Składka:|łącznie:) (\d*\s?\d+)', box).group(2))
 
-        if 'Wpłata przelewem' in box or 'Nr konta' in box:
+    if 'AXA' in page_1:
+        pdf_str2 = polisa_str(pdf)[1000:-1]
+        print(pdf_str2)
+        (total := re.search(r'(do zapłacenia) (\d*\s?\d+)', pdf_str2).group(2))
+        # print(total)
+        # return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+        if 'Wpłata przelewem' in pdf_str2 or 'Nr konta' in pdf_str2 or 'kwota do zapłacenia' in pdf_str2:
+            termin_I = re.search(r'Termin płatności.*(\d{4}[-./]\d{2}[-./]\d{2})', pdf_str2, re.I | re.DOTALL).group(1)
+
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
@@ -354,7 +372,7 @@ def przypis_daty_raty(pdf, page_1):
     if 'Hestia' in page_1 and not 'MTU' in page_1:
         box = polisa_box(pdf, 0, 220, 590, 600)
         print(box)
-        (total := re.search(r'DO ZAPŁATY (\d*\s?\d+)', box, re.I))
+        total = re.search(r'DO ZAPŁATY (\d*\s?\d+)', box, re.I)
         total = int(re.sub(r' ', '', total.group(1)))
 
         if not 'II rata' in box and 'gotówka' in box:
@@ -602,11 +620,11 @@ def rozpoznanie_danych(tacka_na_polisy):
     nazwa_firmy, ulica_f, nr_ulicy_f, nr_lok, kod_poczt_f, miasto_f, tel, email = regon_
     ulica_f_edit = f'{ulica_f} {nr_ulicy_f}' if not nr_lok else f'{ulica_f} {nr_ulicy_f} m {nr_lok}'
     kod_poczt_f_edit = f'{kod_poczt_f[:2]}-{kod_poczt_f[2:]}' if '-' not in kod_poczt_f else kod_poczt_f
-    kod_poczt = kod_pocztowy(page_1) if kod_pocztowy(page_1) else kod_poczt_f_edit
+    kod_poczt = kod_pocztowy(page_1, pdf) if kod_pocztowy(page_1, pdf) else kod_poczt_f_edit
     data_wyst = data_wystawienia()
-    data_konca = koniec_ochrony(page_1)
+    data_konca = koniec_ochrony(page_1, pdf)
 
-    numer_polisy_ = numer_polisy(page_1)
+    numer_polisy_ = numer_polisy(page_1, pdf)
     tow_ub_tor = numer_polisy_[0]
     tow_ub = numer_polisy_[1]
     nr_polisy = numer_polisy_[2]
