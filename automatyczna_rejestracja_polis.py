@@ -4,7 +4,7 @@ import pdfplumber
 from datetime import datetime, timedelta
 import win32com.client
 from win32com.client import Dispatch
-# from regon_api import get_regon_data
+from regon_api import get_regon_data
 import time
 
 start_time = time.time()
@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\PZU POLISA pc_100000310826169.pdf'
+obj = r'M:\zSkrzynka na polisy\PZU POLISA pc_100000311734510.pdf'
 
 
 def words_separately(text):
@@ -131,8 +131,10 @@ def nazwisko_imie(d):
 def pesel_regon(d):
     """Zapisuje pesel/regon."""
     nr_reg_TU = {'AXA': '140806789'}
+    print(d)
     pesel = [pesel for k, pesel in d.items() if k < 200 and len(pesel) == 11 and re.search('\d{11}', pesel) and
                                                                                                   pesel_checksum(pesel)]
+    print(pesel)
     regon = [regon for k, regon in d.items() if k < 200 and len(regon) == 9 and regon not in nr_reg_TU.values() and
              re.search('\d{9}', regon) and regon_checksum(regon)]
     # print(regon)
@@ -469,15 +471,16 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
     if 'PZU' in page_1:
-        pdf_str = polisa_str(pdf)[1900:4600]
-        (total := re.search(r'Składka łączna: (\d*\s?\d+)', pdf_str, re.I))
+        pdf_str = polisa_str(pdf)[800:4600]
+        # print(pdf_str)
+        total = re.search(r'Składka łączna: (\d*\s?\d+)', pdf_str, re.I)
         total = int(re.sub(r' ', '', total.group(1)))
 
         if 'została opłacona w całości.' in pdf_str:
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         if 'Jednorazowo' in pdf_str and 'tytule przelewu' in pdf_str:
-            (termin_I := re.search(r'Termin płatności (\d{2}.\d{2}.\d{4})', pdf_str, re.I))
+            termin_I = re.search(r'Termin płatności (\d{2}.\d{2}.\d{4})', pdf_str, re.I)
             termin_I = re.sub('[^0-9]', '-', termin_I.group(1))
             termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
