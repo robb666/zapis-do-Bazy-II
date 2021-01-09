@@ -5,17 +5,25 @@ import numpy as np
 from datetime import datetime
 
 
-pattern = r'(?=.*Przelew)(?=.*JEDNORAZOWA).*'
+dystans = ['07-11-2019', 'r.,', 'na', 'warunkach', 'i', 'zasadach', 'określonych', 'poniżej:', 'Miejsce', 'ubezpieczenia', 'Adres:', 'Zbiorcza', '21', 'm.', '3,', '92-328', 'Łódź', 'Dane', 'ubezpieczającego', 'Imię', 'i', 'nazwisko/Nazwa:', 'Sławomir', 'Skonka', 'Adres', 'zameldowania:', 'Zbiorcza', '21', 'm.', '3,', '92-328', 'Łódź', 'Zakres', 'i', 'sumy', 'ubezpieczenia', 'Wybrany', 'produkt:', 'Twoje', 'miejsce:', 'Mieszkanie', 'Wybrany', 'wariant:']
 
-if (o := re.findall(pattern, """
-składki 
-Wyrażam wolę przystąpienia do TUZ TUW (wysokość wpisowego 10 zł): TAK
-Deklaruję objęcie 1 (jednego) udziału członkowskiego o wartości nominalnej 10.00 zł słownie dziesięć złotych: TAK
-Objęcie większej liczby udziałów może nastąpić tylko na pisemny wniosek, po uzyskaniu zgody Zarządu TUZ TUW.
-Razem kwota do zapłaty (składka/rata, wpisowe, udział członkowski) 447.00 zł
-Forma płatności: PRZELEW płatny """, re.I | re.DOTALL)):
 
-    print(o)
+
+if (f := [re.search('\d{2}-\d{3}', kod) for kod in dystans if re.search('^\d{2}-\d{3}$', kod)][0]):
+    print(f)
+
+
+# pattern = r'(?=.*Przelew)(?=.*JEDNORAZOWA).*'
+#
+# if (o := re.findall(pattern, """
+# składki
+# Wyrażam wolę przystąpienia do TUZ TUW (wysokość wpisowego 10 zł): TAK
+# Deklaruję objęcie 1 (jednego) udziału członkowskiego o wartości nominalnej 10.00 zł słownie dziesięć złotych: TAK
+# Objęcie większej liczby udziałów może nastąpić tylko na pisemny wniosek, po uzyskaniu zgody Zarządu TUZ TUW.
+# Razem kwota do zapłaty (składka/rata, wpisowe, udział członkowski) 447.00 zł
+# Forma płatności: PRZELEW płatny """, re.I | re.DOTALL)):
+#
+#     print(o)
 
 
 

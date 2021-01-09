@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\Polisa.pdf'
+obj = r'M:\zSkrzynka na polisy\PZU POLISA pc_100000310826169.pdf'
 
 
 def words_separately(text):
@@ -65,7 +65,6 @@ def pesel_checksum(p):
 def regon_checksum(r: int):
     """Waliduje regon sprawdzając sumę kontrolną."""
     regon = list(str(r))
-    print(regon)
     if len(regon) == 9:
         suma = (int(regon[0])*8 + int(regon[1])*9 + int(regon[2])*2 + int(regon[3])*3 + int(regon[4])*4 +
                 int(regon[5])*5 + int(regon[6])*6 + int(regon[7])*7) % 11
@@ -154,38 +153,25 @@ def adres():
 
 
 def kod_pocztowy(page_1, pdf):
-    # print(page_1)
-    kod_comp = re.compile('(adres.*|(?<!InterRisk) kontakt\w*|pocztowy|ubezpieczony) (\d{2}[-|\xad]\d{3})', re.I | re.DOTALL)
+    c = re.compile('(adres\w*|(?<!InterRisk) kontakt\w*|pocztowy|ubezpieczony)', re.I)
     if 'AXA' in page_1:
         page_1 = polisa_str(pdf)[0:-1]
-        # print(page_1)
-    if (kod := kod_comp.search(page_1)):
-        kod_pocztowy = kod.group(2)
-        print(kod_pocztowy)
 
-        # data = page_1.split()
-        # # print(data)
-        #
-        # dystans = [data[data.index(split) - 10: data.index(split) + 33] for split in data if adres in split][0]
-        # # print(dystans)
-        # try:
-        #     kod_pocztowy = [kod for kod in dystans if re.search('\d{2}[-|\xad]\d{3}\b', kod)][0]
-        #     return kod_pocztowy
-        # except ValueError as e:
-        #     print(e)
-        #     kod_poczt = ''
+    if (f := c.search(page_1)):
+        adres = f.group().strip()
+        data = page_1.split()
+        dystans = [data[data.index(split) - 10: data.index(split) + 33] for split in data if adres in split][0]
+        kod_pocztowy = [kod for kod in dystans if re.search('^\d{2}[-\xad]\d{3}$', kod)][0]
 
         return kod_pocztowy
-
+    return ''
 
 def data_wystawienia():
-    # one_day = timedelta(1)
     today = datetime.strptime(datetime.now().strftime('%y-%m-%d'), '%y-%m-%d') + one_day
     return today # datetime.today().date().strftime('%y-%m-%d')
 
 
 def koniec_ochrony(page_1, pdf):
-    # one_day = timedelta(1)
     daty = re.compile(r'(\b\d{2}[-|.|/]\d{2}[-|.|/]\d{4}|\b\d{4}[-|.|/]\d{2}[-|.|/]\d{2})')
     if 'AXA' in page_1:
         page_1 = page_1 = polisa_str(pdf)[0:-1]
@@ -255,7 +241,6 @@ def przypis_daty_raty(pdf, page_1):
 
     if 'Allianz' in page_1:
         box = polisa_box(pdf, 0, 320, 590, 760)
-        # print(box)
 
         (total := re.search(r'(Składka:|łącznie:|za 3 lata:) (\d*\s?\d+)', box))
         total = int(re.sub(r'\xa0', '', total.group(2)))
@@ -268,14 +253,11 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
-
     if 'AXA' in page_1:
         pdf_str2 = polisa_str(pdf)[1000:-1]
-        print(pdf_str2)
-        (total := re.search(r'(do zapłacenia) (\d*\s?\d+)', pdf_str2).group(2))
-        # print(total)
-        # return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
-        if 'Wpłata przelewem' in pdf_str2 or 'Nr konta' in pdf_str2 or 'kwota do zapłacenia' in pdf_str2:
+        total = re.search(r'(do\szapłacenia) (\d*\s?\d+)', pdf_str2).group(2)
+
+        if re.search('(Wpłata przelewem|Nr konta|kwota\sdo\szapłacenia)', pdf_str2, re.I):
             termin_I = re.search(r'Termin płatności.*(\d{4}[-./]\d{2}[-./]\d{2})', pdf_str2, re.I | re.DOTALL).group(1)
 
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
@@ -317,7 +299,6 @@ def przypis_daty_raty(pdf, page_1):
 
     if 'Generali' in page_1 and not 'Proama' in page_1:
         box = polisa_box(pdf, 0, 300, 590, 530)
-        print(box)
 
         (total := re.search(r'(RAZEM:|Składka) (\d*\s?\d+)', box, re.I))
         total = int(re.sub(r' ', '', total.group(2)))
@@ -371,7 +352,6 @@ def przypis_daty_raty(pdf, page_1):
 
     if 'Hestia' in page_1 and not 'MTU' in page_1:
         box = polisa_box(pdf, 0, 220, 590, 600)
-        print(box)
         total = re.search(r'DO ZAPŁATY (\d*\s?\d+)', box, re.I)
         total = int(re.sub(r' ', '', total.group(1)))
 
@@ -393,7 +373,6 @@ def przypis_daty_raty(pdf, page_1):
 
     if 'INTER' in page_1:
         box = polisa_box(pdf, 0, 220, 590, 490)
-        print(box)
         (total := re.search(r'kwota składki: (\d*\s?\d+)', box, re.I))
         total = int(re.sub(r' ', '', total.group(1)))
 
@@ -408,13 +387,9 @@ def przypis_daty_raty(pdf, page_1):
     if 'InterRisk' in page_1:
 
         pdf_str3 = polisa_str(pdf)[1900:-2600]
-        print(pdf_str3)
 
         total_match = re.compile(r'(Składka\słączna:\s*|WYSOKOŚĆ\sSKŁADKI\sŁĄCZNEJ:\n)(\d*\s?\d+)')
-
         (total := re.search(total_match, pdf_str3))
-
-        print(total)
         total = int(re.sub(r'\xa0', '', total.group(2)))
 
         if re.findall(r'(?=.*jednorazow[o|a])(?=.*płatności:\s*przelewem).*', pdf_str3, re.I | re.DOTALL):
@@ -497,7 +472,6 @@ def przypis_daty_raty(pdf, page_1):
         pdf_str = polisa_str(pdf)[1900:4600]
         (total := re.search(r'Składka łączna: (\d*\s?\d+)', pdf_str, re.I))
         total = int(re.sub(r' ', '', total.group(1)))
-
 
         if 'została opłacona w całości.' in pdf_str:
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
