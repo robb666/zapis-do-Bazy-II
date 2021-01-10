@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\PZU POLISA pc_100000311734510.pdf'
+obj = r'M:\zSkrzynka na polisy'
 
 
 def words_separately(text):
@@ -29,10 +29,20 @@ def polisa(pdf):
 
 def polisa_str(pdf):
     """Tekst 3 str. polisy."""
+    page_1, page_2, page_3 = '', '', ''
     with pdfplumber.open(pdf) as policy:
-        page_1 = policy.pages[0].extract_text()
-        page_2 = policy.pages[1].extract_text()
-        page_3 = policy.pages[2].extract_text()
+        if policy.pages[0].extract_text():
+            page_1 = policy.pages[0].extract_text()
+        else:
+            pass
+        if policy.pages[1].extract_text():
+            page_2 = policy.pages[1].extract_text()
+        else:
+            pass
+        if policy.pages[2].extract_text():
+            page_3 = policy.pages[2].extract_text()
+        else:
+            pass
     return page_1 + page_2 + page_3
 
 
@@ -131,12 +141,11 @@ def nazwisko_imie(d):
 def pesel_regon(d):
     """Zapisuje pesel/regon."""
     nr_reg_TU = {'AXA': '140806789'}
-    print(d)
-    pesel = [pesel for k, pesel in d.items() if k < 200 and len(pesel) == 11 and re.search('\d{11}', pesel) and
-                                                                                                  pesel_checksum(pesel)]
-    print(pesel)
-    regon = [regon for k, regon in d.items() if k < 200 and len(regon) == 9 and regon not in nr_reg_TU.values() and
-             re.search('\d{9}', regon) and regon_checksum(regon)]
+
+    pesel = [pesel for k, pesel in d.items() if k < 200 and len(pesel) == 11 and re.search('\d{11}', pesel)
+                                                                                             and pesel_checksum(pesel)]
+    regon = [regon for k, regon in d.items() if k < 200 and len(regon) == 9 and re.search('\d{9}', regon) and regon
+                                                            not in nr_reg_TU.values() and regon_checksum(regon)]
     # print(regon)
     if pesel:
         return 'p' + pesel[0]
@@ -155,11 +164,15 @@ def adres():
 
 
 def kod_pocztowy(page_1, pdf):
-    c = re.compile('(adres\w*|(?<!InterRisk) kontakt\w*|pocztowy|ubezpieczony)', re.I)
-    if 'AXA' in page_1:
-        page_1 = polisa_str(pdf)[0:-1]
+    kod = re.compile('(adres\w*|(?<!InterRisk) kontakt\w*|pocztowy|ubezpieczony)', re.I)
+    if 'AXA' in page_1 or 'TUW' in page_1 and not 'TUZ' in page_1:
+        page_1 = polisa_str(pdf)[0:-200]
 
-    if (f := c.search(page_1)):
+    if (wiener := re.search('wiener', page_1, re.I)):
+        kod_pocztowy = re.search('Adres.*(\d{2}[-\xad]\d{3})', page_1)
+        return kod_pocztowy.group(1)
+
+    if (f := kod.search(page_1)):
         adres = f.group().strip()
         data = page_1.split()
         dystans = [data[data.index(split) - 10: data.index(split) + 33] for split in data if adres in split][0]
@@ -168,6 +181,7 @@ def kod_pocztowy(page_1, pdf):
         return kod_pocztowy
     return ''
 
+
 def data_wystawienia():
     today = datetime.strptime(datetime.now().strftime('%y-%m-%d'), '%y-%m-%d') + one_day
     return today # datetime.today().date().strftime('%y-%m-%d')
@@ -175,8 +189,8 @@ def data_wystawienia():
 
 def koniec_ochrony(page_1, pdf):
     daty = re.compile(r'(\b\d{2}[-|.|/]\d{2}[-|.|/]\d{4}|\b\d{4}[-|.|/]\d{2}[-|.|/]\d{2})')
-    if 'AXA' in page_1:
-        page_1 = page_1 = polisa_str(pdf)[0:-1]
+    if 'AXA' in page_1 or 'TUW' in page_1 and not 'TUZ' in page_1:
+        page_1 = polisa_str(pdf)[0:-1]
     lista_dat = [re.sub('[^0-9]', '-', data) for data in daty.findall(page_1)]
     jeden_format = [re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', date) for date in lista_dat]
     koniec = max(datetime.strptime(data, '%Y-%m-%d') for data in jeden_format)
@@ -197,9 +211,9 @@ def numer_polisy(page_1, pdf):
     if 'Allianz' in page_1 and (nr_polisy := re.search('(Polisa nr|NUMER POLISY) (\d*-?\d+)', page_1)):
         return 'ALL', 'ALL', nr_polisy.group(2)
     if 'AXA' in page_1:
-            page_1 = polisa_str(pdf)[1000:4600]
-            if (nr_polisy := re.search('(\d{4}-\d{5,})', page_1)):
-                return 'AXA', 'AXA', nr_polisy.group(1)
+        page_1 = polisa_str(pdf)[1000:4600]
+        if (nr_polisy := re.search('(\d{4}-\d{5,})', page_1)):
+            return 'AXA', 'AXA', nr_polisy.group(1)
     if 'Compensa' in page_1 and (nr_polisy := re.search('typ polisy: *\s*(\d+),numer: *\s*(\d+)', page_1)):
         return 'COM', 'COM', nr_polisy.group(1) + nr_polisy.group(2)
     if 'EUROINS' in page_1 and (nr_polisy := re.search('Polisa ubezpieczenia nr: (\d+)', page_1)):
@@ -222,15 +236,17 @@ def numer_polisy(page_1, pdf):
         return 'GEN', 'PRO', nr_polisy.group(1)
     if 'PZU' in page_1 and (nr_polisy := re.search('Nr *(\d+)', page_1)):
         return 'PZU', 'PZU', nr_polisy.group(1)
-    if 'TUW' in page_1 and (nr_polisy := re.search('Wniosko-Polisa\snr\s*(\d+)', page_1, re.I)):
-        return 'TUW', 'TUW', nr_polisy.group(1)
+    if 'TUW' in page_1:
+        page_1 = polisa_str(pdf)[0:-2600]
+        if (nr_polisy := re.search('Wniosko-Polisa\snr\s*(\d+)', page_1, re.I)):
+            return 'TUW', 'TUW', nr_polisy.group(1)
     if 'TUZ' in page_1 and (nr_polisy := re.search('WNIOSEK seria (\w+) nr (\d+)', page_1)):
         return 'TUZ', 'TUZ', nr_polisy.group(1) + nr_polisy.group(2)
     if 'UNIQA' in page_1 and (nr_polisy := re.search('Nr (\d{6,})', page_1)):
         return 'UNI', 'UNI', nr_polisy.group(1)
     if 'WARTA' in page_1 and (nr_polisy := re.search('POLISA NR\s?: *(\d+)', page_1)):
         return 'WAR', 'WAR', nr_polisy.group(1)
-    if 'Wiener' in page_1 and (nr_polisy := re.search('Seria i numer (\w+\d+)', page_1)):
+    if 'Wiener' in page_1 and (nr_polisy := re.search('Seria i numer|полис\s?(\w+\d+)', page_1)):
         return 'WIE', 'WIE', nr_polisy.group(1)
     else:
         return 'Nie rozpoznałem polisy!'
@@ -507,15 +523,17 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin_I, rata_I, 'P', 4, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
     if 'TUW' in page_1 and not 'TUZ' in page_1:
-        box = polisa_box(pdf, 0, 400, 400, 600)
-        (total := re.search(r'Składka łączna: (\d*\s?\d+) PLN', box, re.I))
+
+        pdf_str3 = polisa_str(pdf)[2000:6500]
+        # print(pdf_str3)
+        total = re.search(r'Składka łączna: (\d*\s?\d+) PLN', pdf_str3, re.I)
         total = int(re.sub(r'\xa0', '', total.group(1)))
 
-        (termin := re.search(r'Termin płatności.*(\d{2,4}-\d{2}-\d{2,4})', box, re.I))
+        termin = re.search(r'Termin płatności.*(\d{2,4}-\d{2}-\d{2,4})', pdf_str3, re.I)
         termin_I = re.sub('[^0-9]', '-', termin.group(1))
-        termin_I = datetime.strptime(re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I), '%y-%m-%d') + one_day
+        termin_I = datetime.strptime(re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I), '%Y-%m-%d') + one_day
 
-        if 'JEDNORAZOWO' in box and 'PRZELEW' in box:
+        if 'JEDNORAZOWO' in pdf_str3 and 'PRZELEW' in pdf_str3:
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
     if 'TUZ' in page_1:
@@ -566,6 +584,7 @@ def przypis_daty_raty(pdf, page_1):
 
                 return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
+
     if 'WARTA' in page_1:
         pdf_str = polisa_str(pdf)[1200:5000]
         print(pdf_str)
@@ -578,6 +597,18 @@ def przypis_daty_raty(pdf, page_1):
         return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
+    if (wiener := re.search('wiener', page_1, re.I)):
+        box = polisa_box(pdf, 0, 300, 590, 780)
+        print(box)
+        total = re.search(r'(SKŁADKA ŁĄCZNA|Kwota\s:|оплате) (\d*\s?\.?\d+)', box, re.I).group(2)
+        print(total)
+        if (wiener := re.search('IIrata', box, re.I)):
+
+            termin_I = re.search(r'Wysokośćratwzł\n(\d{4}-\d{2}-\d{2})', box).group(1)
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+
+
 """Koniec arkusza EXCEL"""
 def rozpoznanie_danych(tacka_na_polisy):
     pdf = tacka_na_polisy
@@ -587,6 +618,11 @@ def rozpoznanie_danych(tacka_na_polisy):
 
     d = dict(enumerate(page_1_tok))
     # print(d)
+    if 'TUW' in page_1 and not 'TUZ' in page_1:
+        page_123_ = polisa_str(pdf)[:]
+        page_123 = words_separately(page_123_)
+        d = dict(enumerate(page_123))
+        # print(d)
     p_lub_r = pesel_regon(d)
     # nazwisko, imie = '', '' if regon_checksum(p_lub_r[1:]) else nazwisko_imie(d)
 
