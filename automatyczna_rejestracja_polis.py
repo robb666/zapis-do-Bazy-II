@@ -598,15 +598,15 @@ def przypis_daty_raty(pdf, page_1):
 
     # Wiener
     if (wiener := re.search('wiener', page_1, re.I)):
-        pdf_str = polisa_str(pdf)[1200:5000]
+        pdf_str = polisa_str(pdf)[1450:5000]
         print(pdf_str)
         total = re.search(r'(SKŁADKA\sŁĄCZNA|Kwota\s:|оплате) (\d*\s?\.?\d+)', pdf_str, re.I)
         total = int(total.group(2).replace('\xa0', '').replace('.', ''))
         print(total)
         if (wiener := re.search('IIrata|Przelew', pdf_str, re.I)):
-            termin = re.search(r'(Wysokośćratwzł\n|do\sdnia\s)(\d{2}-\d{2}-\d{4})|(\d{4}-\d{2}-\d{2})', pdf_str, re.I)
-            print(termin.group())
-            termin_I = re.sub('[^0-9]', '-', termin.group())
+            termin = re.search(r'(Wysokośćratwzł\n|do\sdnia\s)(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})', pdf_str, re.I)
+            print(termin.group(2))
+            termin_I = re.sub('[^0-9]', '-', termin.group(2))
             termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
             print(termin_I)
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
