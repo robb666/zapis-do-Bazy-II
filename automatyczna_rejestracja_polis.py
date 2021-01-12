@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\WIE_2.pdf'
+obj = r'M:\zSkrzynka na polisy\Policy_KMHP_555240.pdf'
 
 
 def words_separately(text):
@@ -117,6 +117,7 @@ def regon(regon_checksum):
 """Funkcje odpowiadają kolumnom w bazie."""
 def nazwisko_imie(d):
     """Zwraca imię i nazwisko Klienta."""
+    agent = {'AGENT': 'Grzelak Robert'}
     with open(path + '\\imiona.txt') as content:
         all_names = content.read().split('\n')
         if 'euroins' in d.values():
@@ -131,7 +132,8 @@ def nazwisko_imie(d):
         elif 'warta' in d.values():
             name = [f'{d[k - 1].title()} {v.title()}' for k, v in d.items() if v.title() in all_names]
         else:
-            name = [f'{d[k + 1].title()} {v.title()}' for k, v in d.items() if v.title() in all_names]
+            name = [f'{d[k + 1].title()} {v.title()}' for k, v in d.items() if v.title() in all_names
+                    and f'{d[k + 1].title()} {v.title()}' not in agent.values()]
     if name:
         return name[0].split()[0], name[0].split()[1]
     else:
@@ -404,17 +406,25 @@ def przypis_daty_raty(pdf, page_1):
 
     if 'InterRisk' in page_1:
 
-        pdf_str3 = polisa_str(pdf)[1900:-2600]
+        pdf_str1 = polisa_str(pdf)[1500:-2600]
 
         total_match = re.compile(r'(Składka\słączna:\s*|WYSOKOŚĆ\sSKŁADKI\sŁĄCZNEJ:\n)(\d*\s?\d+)')
-        (total := re.search(total_match, pdf_str3))
+        (total := re.search(total_match, pdf_str1))
         total = int(re.sub(r'\xa0', '', total.group(2)))
-
-        if re.findall(r'(?=.*jednorazow[o|a])(?=.*płatności:\s*przelewem).*', pdf_str3, re.I | re.DOTALL):
-            (termin_I := re.search(r'płatna\sdo\sdnia:\s(\d{4}-\d{2}-\d{2})', pdf_str3, re.I).group(1))
+        print(total)
+        if re.findall(r'(?=.*jednorazow[o|a])(?=.*płatności:\s*przelewem).*', pdf_str1, re.I | re.DOTALL):
+            (termin_I := re.search(r'płatna\sdo\sdnia:\s(\d{4}-\d{2}-\d{2})', pdf_str1, re.I).group(1))
             print(termin_I)
-
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+        if re.findall(r'(?=.*Płatność: 2\sraty)(?=.*płatności:\s*przelewem).*', pdf_str1, re.I | re.DOTALL):
+            rata_I = re.search(r'1\srata: (\d*\s?\d+)', pdf_str1, re.I).group(1)
+            rata_II = re.search(r'2\srata: (\d*\s?\d+)', pdf_str1, re.I).group(1)
+
+            termin_I = re.search(r'płatna\sdo\sdnia:\s(\d{4}-\d{2}-\d{2})', pdf_str1, re.I).group(1)
+            termin_II = re.search(r'2\srata: (.*)(\d{4}-\d{2}-\d{2})', pdf_str1, re.I).group(2)
+
+            return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
     # Link4
