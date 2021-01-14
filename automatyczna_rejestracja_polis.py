@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\ALL Polisa_260-65536058_ubezpiecznie_mieszkaniowe.pdf'
+obj = r'M:\zSkrzynka na polisy\ALL Dokumenty_polisowe(1).pdf'
 
 
 def words_separately(text):
@@ -206,18 +206,20 @@ def tel_mail(page_1, pdf):
 
 def przedmiot_ub(page_1, pdf):
     print(page_1)
-    marka_kod, model_miasto, nr_rej_adres, rok = '', '', '', ''
+    marka, kod, model, miasto, nr_rej, adres, rok = '', '', '', '', '', '', ''
     if 'Allianz' in page_1: # coś tutaj nie gra..........
-        mk_com = re.compile('(Marka / model pojazdu|Miejsce ubezpieczenia .*)([\w+\d+]{3,}|\d{2}[-\xad]\d{3})', re.I)
-        marka_kod = re.search(mk_com, page_1).group(2)
-        mm_com = re.compile('(Marka / model pojazdu|\d{2}[-\xad]\d{3}) (\w+) ([\w\d]+)', re.I)
-        model_miasto = re.search(mm_com, page_1).group(2)
-        na_com = re.compile('(NR REJESTRACYJNY|Miejsce ubezpieczenia) ([\w\d.]+),?', re.I)
-        nr_rej_adres = re.search(na_com, page_1).group(2)
-        rok_com = re.compile('(Rok produkcji|Rok budowy) (\d+),?', re.I)
-        rok = re.search(rok_com, page_1).group(2)
+        if 'Marka / model pojazdu' in page_1:
 
-        return marka_kod, model_miasto, nr_rej_adres, rok
+            marka_com = re.compile('(Marka / model pojazdu) (\w+)', re.I)
+            marka = re.search(marka_com, page_1).group(2)
+            model_com = re.compile('(Marka / model pojazdu) (\w+) (\w+)', re.I)
+            model = re.search(model_com, page_1).group(3)
+            nr_rej_com = re.compile('(NR REJESTRACYJNY) ([\w\d.]+),?', re.I)
+            nr_rej = re.search(nr_rej_com, page_1).group(2)
+            rok_com = re.compile('(Rok produkcji) (\d+),?', re.I)
+            rok = re.search(rok_com, page_1).group(2)
+
+            return marka, kod, model, miasto, nr_rej, adres, rok
 
 
 
@@ -695,10 +697,15 @@ def rozpoznanie_danych(tacka_na_polisy):
     email = tel_mail_[1]
 
     przedmiot_ub_ = przedmiot_ub(page_1, pdf)
-    marka_kod = przedmiot_ub_[0]
-    model_miasto = przedmiot_ub_[1]
-    nr_rej_adres = przedmiot_ub_[2]
-    rok = przedmiot_ub_[3]
+
+
+    marka = przedmiot_ub_[0]
+    kod = przedmiot_ub_[1]
+    model = przedmiot_ub_[2]
+    miasto = przedmiot_ub_[3]
+    nr_rej = przedmiot_ub_[4]
+    adres = przedmiot_ub_[5]
+    rok = przedmiot_ub_[6]
 
     data_wyst = data_wystawienia()
     data_konca = koniec_ochrony(page_1, pdf)
@@ -727,8 +734,8 @@ def rozpoznanie_danych(tacka_na_polisy):
     rata_IV = przypis_daty_raty_[11]
     # print(przypis(pdf, page_1))
 
-    return nazwa_firmy, nazwisko, imie, p_lub_r, pr_j, ulica_f_edit, kod_poczt, miasto_f, tel, email, marka_kod, \
-           model_miasto, nr_rej_adres, rok, data_wyst, data_konca, tow_ub_tor, tow_ub, nr_polisy, przypis, termin_I, \
+    return nazwa_firmy, nazwisko, imie, p_lub_r, pr_j, ulica_f_edit, kod_poczt, miasto_f, tel, email, marka, kod, model,\
+           miasto, nr_rej, adres, rok, data_wyst, data_konca, tow_ub_tor, tow_ub, nr_polisy, przypis, termin_I, \
            rata_I, f_platnosci, ilosc_rat, nr_raty, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 def tacka_na_polisy(obj):
@@ -761,8 +768,8 @@ except:
 """Jesienne Bazie"""
 
 for dane_polisy in tacka_na_polisy(obj):
-    nazwa_firmy, nazwisko, imie, p_lub_r, pr_j, ulica_f_edit, kod_poczt, miasto_f, tel, email, marka_kod, model_miasto,\
-    nr_rej_adres, rok, data_wyst, data_konca, tow_ub_tor, tow_ub, nr_polisy, przypis, ter_platnosci, rata_I, \
+    nazwa_firmy, nazwisko, imie, p_lub_r, pr_j, ulica_f_edit, kod_poczt, miasto_f, tel, email, marka, kod, model, \
+    miasto, nr_rej, adres, rok, data_wyst, data_konca, tow_ub_tor, tow_ub, nr_polisy, przypis, ter_platnosci, rata_I, \
     f_platnosci, ilosc_rat, nr_raty, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV = dane_polisy
     print(dane_polisy)
 
@@ -782,9 +789,9 @@ for dane_polisy in tacka_na_polisy(obj):
     ExcelApp.Cells(row_to_write, 18).Value = miasto_f
     ExcelApp.Cells(row_to_write, 19).Value = tel
     ExcelApp.Cells(row_to_write, 20).Value = email
-    ExcelApp.Cells(row_to_write, 23).Value = marka_kod
-    ExcelApp.Cells(row_to_write, 24).Value = model_miasto
-    ExcelApp.Cells(row_to_write, 25).Value = nr_rej_adres
+    ExcelApp.Cells(row_to_write, 23).Value = marka if marka else kod
+    ExcelApp.Cells(row_to_write, 24).Value = model if model else miasto
+    ExcelApp.Cells(row_to_write, 25).Value = nr_rej if nr_rej else adres
     ExcelApp.Cells(row_to_write, 26).Value = rok
     # ExcelApp.Cells(row_to_write, 29).Value = int(ile_dni) + 1
     # ExcelApp.Cells(row_to_write, 30).NumberFormat = 'yy-mm-dd'
