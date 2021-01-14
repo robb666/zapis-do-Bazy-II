@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\ALL Dokumenty_polisowe(1).pdf'
+obj = r'M:\zSkrzynka na polisy\HES POLISA E7 wydruk-1.pdf'
 
 
 def words_separately(text):
@@ -162,6 +162,11 @@ def prawo_jazdy(page_1, pdf):
     data_pr_j = ''
     if 'Allianz' in page_1 and (data_pr_j := re.search('(prawa jazdy:) (\d{4})', page_1, re.I)):
         return data_pr_j.group(2)
+    if 'Generali' in page_1 and (data_pr_j := re.search('(rok uzyskania prawa jazdy:) (\d{4})', page_1, re.I)):
+        return data_pr_j.group(2)
+    if 'Hestia' in page_1 and (data_pr_j := re.search('(data uzyskania prawa jazdy) (\d{4})', page_1, re.I)):
+        return data_pr_j.group(2)
+
 
 
 def adres():
@@ -188,13 +193,11 @@ def kod_pocztowy(page_1, pdf):
     return ''
 
 
-
-
-
 def tel_mail(page_1, pdf):
     tel, mail = '', ''
     tel_mail_off = {'tel Robert': '606271169', 'mail Robert': 'ubezpieczenia.magro@gmail.com',
-                    'tel Maciej': '602752893', 'mail Maciej': 'magro@ubezpieczenia-magro.pl'}
+                    'tel Maciej': '602752893', 'mail Maciej': 'magro@ubezpieczenia-magro.pl',
+                    }
 
     if 'Allianz' in page_1:
         tel = ''.join([tel for tel in re.findall(r'tel.*([0-9 .\-\(\)]{8,}[0-9])', page_1) if tel not in tel_mail_off.values()])
@@ -205,7 +208,8 @@ def tel_mail(page_1, pdf):
 
 
 def przedmiot_ub(page_1, pdf):
-    print(page_1)
+    # print(page_1)
+
     marka, kod, model, miasto, nr_rej, adres, rok = '', '', '', '', '', '', ''
     if 'Allianz' in page_1: # coś tutaj nie gra..........
         if 'Marka / model pojazdu' in page_1:
@@ -216,15 +220,42 @@ def przedmiot_ub(page_1, pdf):
             return marka, kod, model, miasto, nr_rej, adres, rok
 
         if 'MÓJ DOM' in page_1:
-            kod = re.search('(Marka / model pojazdu) (\w+)', page_1, re.I).group(2)
-            miasto = re.search('(Marka / model pojazdu) (\w+) (\w+)', page_1).group(3)
-            adres = re.search('(NR REJESTRACYJNY) ([\w\d.]+),?', page_1).group(2)
+            kod = re.search('(Miejsce ubezpieczenia).*(\d{2}[-\xad]\d{3})', page_1, re.I).group(2)
+            miasto = re.search(f'{kod} (\w+)', page_1).group(1)
+            adres = re.search('(Miejsce ubezpieczenia) (ul.) ([\w \d/]+),', page_1).group(3)
+            rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
+            return marka, kod, model, miasto, nr_rej, adres, rok
+
+    if 'Generali' in page_1 and not 'Proama' in page_1:
+
+        if 'DANE POJAZDU' in page_1:
+            marka = re.search('(Marka / Model) (\w+)', page_1, re.I).group(2)
+            model = re.search('(Marka / Model) (\w+) /? ([\w\d./]+)', page_1).group(3)
+            nr_rej = re.search('(Numer rejestracyjny / VIN) ([\w\d.]+)', page_1).group(2)
             rok = re.search('(Rok produkcji) (\d+),?', page_1).group(2)
-            pass
+            return marka, kod, model, miasto, nr_rej, adres, rok
 
+        if 'UBEZPIECZENIE MIESZKANIA' in page_1:
+            kod = re.search('(Miejsce ubezpieczenia).*(\d{2}[-\xad]\d{3})', page_1, re.I).group(2)
+            miasto = re.search(f'{kod} (\w+)', page_1).group(1)
+            adres = re.search('(Miejsce ubezpieczenia) ([\w \d/]+),', page_1).group(2)
+            rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
+            return marka, kod, model, miasto, nr_rej, adres, rok
 
+    if 'Hestia' in page_1:
+        if 'Ubezpieczony pojazd' in page_1:
+            marka = re.search('pojazd OSOBOWE , (\w+)', page_1, re.I).group(1)
+            print(marka)
+            model = re.search(f'{marka} ([\w\d -/.]+) ,', page_1, re.I).group(1)
+            print(model)
+            nr_rej = re.search('(Numer rejestracyjny / VIN) ([\w\d.]+)', page_1).group(2)
+            rok = re.search('(Rok produkcji) (\d+),?', page_1).group(2)
 
+            return marka, kod, model, miasto, nr_rej, adres, rok
+# 'pojazd OSOBOWE , HONDA CIVIC HATCHBACK 08-12 , EZG9LN9 , ROK PRODUKCJI: 2008 , 5 MIEJSC'
+# 'CIVIC HATCHBACK 08-12 , EZG9LN9 '
 
+    return marka, kod, model, miasto, nr_rej, adres, rok
 
 
 def data_wystawienia():
