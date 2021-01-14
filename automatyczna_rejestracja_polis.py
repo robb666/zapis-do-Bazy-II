@@ -209,17 +209,18 @@ def przedmiot_ub(page_1, pdf):
     marka, kod, model, miasto, nr_rej, adres, rok = '', '', '', '', '', '', ''
     if 'Allianz' in page_1: # coś tutaj nie gra..........
         if 'Marka / model pojazdu' in page_1:
-
-            marka_com = re.compile('(Marka / model pojazdu) (\w+)', re.I)
-            marka = re.search(marka_com, page_1).group(2)
-            model_com = re.compile('(Marka / model pojazdu) (\w+) (\w+)', re.I)
-            model = re.search(model_com, page_1).group(3)
-            nr_rej_com = re.compile('(NR REJESTRACYJNY) ([\w\d.]+),?', re.I)
-            nr_rej = re.search(nr_rej_com, page_1).group(2)
-            rok_com = re.compile('(Rok produkcji) (\d+),?', re.I)
-            rok = re.search(rok_com, page_1).group(2)
-
+            marka = re.search('(Marka / model pojazdu) (\w+)', page_1, re.I).group(2)
+            model = re.search('(Marka / model pojazdu) (\w+) (\w+)', page_1).group(3)
+            nr_rej = re.search('(NR REJESTRACYJNY) ([\w\d.]+),?', page_1).group(2)
+            rok = re.search('(Rok produkcji) (\d+),?', page_1).group(2)
             return marka, kod, model, miasto, nr_rej, adres, rok
+
+        if 'MÓJ DOM' in page_1:
+            kod = re.search('(Marka / model pojazdu) (\w+)', page_1, re.I).group(2)
+            miasto = re.search('(Marka / model pojazdu) (\w+) (\w+)', page_1).group(3)
+            adres = re.search('(NR REJESTRACYJNY) ([\w\d.]+),?', page_1).group(2)
+            rok = re.search('(Rok produkcji) (\d+),?', page_1).group(2)
+            pass
 
 
 
