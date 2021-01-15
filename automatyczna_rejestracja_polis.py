@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\LIN Polisa_email.pdf'
+obj = r'M:\zSkrzynka na polisy\Polisa.pdf'
 
 
 def words_separately(text):
@@ -204,9 +204,14 @@ def tel_mail(page_1, pdf):
 
     if 'Allianz' in page_1:
         tel = ''.join([tel for tel in re.findall(r'tel.*([0-9 .\-\(\)]{8,}[0-9])', page_1) if tel not in tel_mail_off.values()])
-        mail = ''.join([mail for mail in re.findall('([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', page_1) if mail not in tel_mail_off.values()])
-
+        mail = ''.join([mail for mail in re.findall(r'([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', page_1) if mail not in tel_mail_off.values()])
         return tel, mail
+
+    elif 'PZU' in page_1:
+        tel = re.search(r'Telefon: ([0-9 .\-\(\)]{8,}[0-9])?', page_1).group(1)
+        mail = re.search(r'E\s?-\s?mail: ([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1).group(1)
+        return tel, mail
+
     return tel, mail
 
 
@@ -214,7 +219,7 @@ def przedmiot_ub(page_1, pdf):
     # print(page_1)
 
     marka, kod, model, miasto, nr_rej, adres, rok = '', '', '', '', '', '', ''
-    if 'Allianz' in page_1: # coś tutaj nie gra..........
+    if 'Allianz' in page_1:
         if 'Marka / model pojazdu' in page_1:
             marka = re.search('(Marka / model pojazdu) (\w+)', page_1, re.I).group(2)
             model = re.search('(Marka / model pojazdu) (\w+) (\w+)', page_1).group(3)
@@ -229,8 +234,18 @@ def przedmiot_ub(page_1, pdf):
             rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
             return marka, kod, model, miasto, nr_rej, adres, rok
 
-    elif 'Generali' in page_1 and not 'Proama' in page_1:
+    # dorobić to co w składkach - innne strony
+    elif 'AXA' in page_1:
+        pdf_str2 = polisa_str(pdf)[1000:-1]
+        if 'Przedmiot ubezpieczenia: Mieszkanie' in pdf_str2:
+            kod = re.search('(Adres:).*\s(\d{2}[-\xad]\d{3})\s', pdf_str2, re.I).group(2)
+            miasto = re.search(f'{kod}\s(\w+)', pdf_str2).group(1)
+            adres = re.search('(Adres:)\s(.*),', pdf_str2).group(2)
+            rok = re.search('(Rok budowy:)\s(\d{4})', pdf_str2).group(2)
+            return marka, kod, model, miasto, nr_rej, adres, rok
 
+
+    elif 'Generali' in page_1 and not 'Proama' in page_1:
         if 'DANE POJAZDU' in page_1:
             marka = re.search('(Marka / Model) (\w+)', page_1, re.I).group(2)
             model = re.search('(Marka / Model) (\w+) /? ([\w\d./]+)', page_1).group(3)
@@ -252,6 +267,18 @@ def przedmiot_ub(page_1, pdf):
             nr_rej = re.search(rf'([,]) ([A-Z0-9]+) (?:, ROK?)', page_1).group(2)
             rok = re.search(r'(ROK PRODUKCJI:) (\d{4})', page_1).group(2)
             return marka, kod, model, miasto, nr_rej, adres, rok
+
+
+    elif 'HDI' in page_1 or '„WARTA” S.A. POTWIERDZA' in page_1:
+        print(page_1)
+        if 'Marka, Model, Typ:' in page_1:
+            marka = re.search(r'Marka, Model, Typ: ([\w./]+)', page_1, re.I).group(1)
+            model = re.search(rf'(?<={marka})\s(\w+)', page_1, re.I).group(1)
+            nr_rej = re.search(r'Nr rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
+            rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
+            return marka, kod, model, miasto, nr_rej, adres, rok
+
+
     # Link4
     elif re.search('Numer\s(\w\d+)', page_1):
         if 'Marka / Model' in page_1:
@@ -259,6 +286,22 @@ def przedmiot_ub(page_1, pdf):
             model = re.search(rf'(?<={marka}) (\w+)', page_1, re.I).group(1)
             nr_rej = re.search(r'rejestracyjny ([A-Z0-9]+)', page_1).group(1)
             rok = re.search(r'Rok produkcji (\d{4})', page_1).group(1)
+            return marka, kod, model, miasto, nr_rej, adres, rok
+
+    elif 'PZU' in page_1:
+        if 'Ubezpieczony pojazd' in page_1:
+            marka = re.search(r'Marka: ([\w./]+)', page_1, re.I).group(1)
+            model = re.search(rf'typ pojazdu: (\w+)', page_1, re.I).group(1)
+            nr_rej = re.search(r'nr rejestracyjny ([A-Z0-9]+)', page_1).group(1)
+            rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
+            return marka, kod, model, miasto, nr_rej, adres, rok
+
+    elif 'InterRisk' in page_1:
+        if 'DANE POJAZDU' in page_1:
+            marka = re.search(r'Marka/typ/model: ([\w./]+)', page_1, re.I).group(1)
+            model = re.search(rf'(?<={marka})\s(\w+)', page_1, re.I).group(1)
+            nr_rej = re.search(r'Nr rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
+            rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
             return marka, kod, model, miasto, nr_rej, adres, rok
 
     return marka, kod, model, miasto, nr_rej, adres, rok
@@ -352,13 +395,17 @@ def przypis_daty_raty(pdf, page_1):
 
     if 'AXA' in page_1:
         pdf_str2 = polisa_str(pdf)[1000:-1]
+
         total = re.search(r'(do\szapłacenia) (\d*\s?\d+)', pdf_str2).group(2)
 
         if re.search('(Wpłata przelewem|Nr konta|kwota\sdo\szapłacenia)', pdf_str2, re.I):
-            termin_I = re.search(r'Termin płatności.*(\d{4}[-./]\d{2}[-./]\d{2})', pdf_str2, re.I | re.DOTALL).group(1)
+            print(pdf_str2)
+            termin_I = re.search(r'Termin płatności.*(\d{4}[-./]\d{2}[-./]\d{2})', pdf_str2, re.I | re.DOTALL | re.MULTILINE).group(1)
 
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
+# ' Termin płatności
+# Aktualna kwota do zapłacenia 213 zł 2021-01-07'
 
     if 'Compensa' in page_1:
         box = polisa_box(pdf, 0, 260, 590, 650)
@@ -430,12 +477,12 @@ def przypis_daty_raty(pdf, page_1):
 
     if 'HDI' in page_1 or '„WARTA” S.A. POTWIERDZA' in page_1:
         box = polisa_box(pdf, 0, 200, 590, 530)
-        (total := re.search(r'[ŁĄCZNA SKŁADKA|Składka łączna] (\d*\s?\d+)', box, re.I))
-        total = int(re.sub(r' ', '', total.group(1)))
+        (total := re.search(r'(ŁĄCZNA SKŁADKA|Składka łączna) (\d*\s?\d+)', box, re.I))
+        total = int(re.sub(r' ', '', total.group(2)))
 
         if 'JEDNORAZOWO' in box and 'PRZELEW' in box:
-            (rata_I := re.search(r'kwota: (\d*\s?\d+)', box, re.I).group(1))
-            (termin_I := re.search(r'termin płatności: (\d{4}-\d{2}-\d{2})', box, re.I).group(1))
+            rata_I = re.search(r'kwota: (\d*\s?\d+)', box, re.I).group(1)
+            termin_I = re.search(r'(termin płatności:|Termin:) (\d{4}-\d{2}-\d{2})', box, re.I).group(2)
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         if '2 RATACH' in box:
