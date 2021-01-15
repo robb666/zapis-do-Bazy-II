@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\HES POLISA E7 wydruk-1.pdf'
+obj = r'M:\zSkrzynka na polisy\LIN Polisa_email.pdf'
 
 
 def words_separately(text):
@@ -166,6 +166,9 @@ def prawo_jazdy(page_1, pdf):
         return data_pr_j.group(2)
     if 'Hestia' in page_1 and (data_pr_j := re.search('(data uzyskania prawa jazdy) (\d{4})', page_1, re.I)):
         return data_pr_j.group(2)
+       # Link4
+    if re.search('Numer\s(\w\d+)', page_1) and (data_pr_j := re.search('uzyskania prawa jazdy (\d{4})', page_1, re.I)):
+        return data_pr_j.group(1)
 
 
 
@@ -219,14 +222,14 @@ def przedmiot_ub(page_1, pdf):
             rok = re.search('(Rok produkcji) (\d+),?', page_1).group(2)
             return marka, kod, model, miasto, nr_rej, adres, rok
 
-        if 'MÓJ DOM' in page_1:
+        elif 'MÓJ DOM' in page_1:
             kod = re.search('(Miejsce ubezpieczenia).*(\d{2}[-\xad]\d{3})', page_1, re.I).group(2)
             miasto = re.search(f'{kod} (\w+)', page_1).group(1)
             adres = re.search('(Miejsce ubezpieczenia) (ul.) ([\w \d/]+),', page_1).group(3)
             rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
             return marka, kod, model, miasto, nr_rej, adres, rok
 
-    if 'Generali' in page_1 and not 'Proama' in page_1:
+    elif 'Generali' in page_1 and not 'Proama' in page_1:
 
         if 'DANE POJAZDU' in page_1:
             marka = re.search('(Marka / Model) (\w+)', page_1, re.I).group(2)
@@ -235,25 +238,28 @@ def przedmiot_ub(page_1, pdf):
             rok = re.search('(Rok produkcji) (\d+),?', page_1).group(2)
             return marka, kod, model, miasto, nr_rej, adres, rok
 
-        if 'UBEZPIECZENIE MIESZKANIA' in page_1:
+        elif 'UBEZPIECZENIE MIESZKANIA' in page_1:
             kod = re.search('(Miejsce ubezpieczenia).*(\d{2}[-\xad]\d{3})', page_1, re.I).group(2)
             miasto = re.search(f'{kod} (\w+)', page_1).group(1)
             adres = re.search('(Miejsce ubezpieczenia) ([\w \d/]+),', page_1).group(2)
             rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
             return marka, kod, model, miasto, nr_rej, adres, rok
 
-    if 'Hestia' in page_1:
+    elif 'Hestia' in page_1:
         if 'Ubezpieczony pojazd' in page_1:
-            marka = re.search('pojazd OSOBOWE , (\w+)', page_1, re.I).group(1)
-            print(marka)
-            model = re.search(f'{marka} ([\w\d -/.]+) ,', page_1, re.I).group(1)
-            print(model)
-            nr_rej = re.search('(Numer rejestracyjny / VIN) ([\w\d.]+)', page_1).group(2)
-            rok = re.search('(Rok produkcji) (\d+),?', page_1).group(2)
-
+            marka = re.search(r'pojazd (\w+)\s?,\s?(\w+)', page_1, re.I).group(2)
+            model = re.search(rf'(?<={marka}) (\w+)', page_1, re.I).group(1)
+            nr_rej = re.search(rf'([,]) ([A-Z0-9]+) (?:, ROK?)', page_1).group(2)
+            rok = re.search(r'(ROK PRODUKCJI:) (\d{4})', page_1).group(2)
             return marka, kod, model, miasto, nr_rej, adres, rok
-# 'pojazd OSOBOWE , HONDA CIVIC HATCHBACK 08-12 , EZG9LN9 , ROK PRODUKCJI: 2008 , 5 MIEJSC'
-# 'CIVIC HATCHBACK 08-12 , EZG9LN9 '
+    # Link4
+    elif re.search('Numer\s(\w\d+)', page_1):
+        if 'Marka / Model' in page_1:
+            marka = re.search(r'Marka / Model ([\w./]+)', page_1, re.I).group(1)
+            model = re.search(rf'(?<={marka}) (\w+)', page_1, re.I).group(1)
+            nr_rej = re.search(r'rejestracyjny ([A-Z0-9]+)', page_1).group(1)
+            rok = re.search(r'Rok produkcji (\d{4})', page_1).group(1)
+            return marka, kod, model, miasto, nr_rej, adres, rok
 
     return marka, kod, model, miasto, nr_rej, adres, rok
 
@@ -502,10 +508,10 @@ def przypis_daty_raty(pdf, page_1):
     if (nr_polisy := re.search('Numer\s(\w\d+)', page_1)):
         box = polisa_box(pdf, 0, 300, 590, 600)
         print(box)
-        (total := re.search(r'[\w\s()](\d*\s?\d+,\d+)', box, re.I))
+        total = re.search(r'(\(w złotych\))\s?(\d*\s?\d+,\d+)', box, re.I)
         print()
-        print(total.group(1))
-        total = float(total.group(1).replace(',', '.').replace(' ', ''))
+        print(total.group(2))
+        total = float(total.group(2).replace(',', '.').replace(' ', ''))
 
         if re.findall(r'(?=.*Metoda płatności Karta).*', box):
             (termin := re.search(r'Termin płatności (\d{2}/\d{2}/\d{4})', box, re.I))
