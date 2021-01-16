@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\PZU POLISA pc_100000311734510.pdf'
+obj = r'M:\zSkrzynka na polisy\TUW POLISA 43026224.pdf'
 
 
 def words_separately(text):
@@ -307,7 +307,6 @@ def przedmiot_ub(page_1, pdf):
             # rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
             return marka, kod, model, miasto, nr_rej, adres, rok
 
-# 'Miejsce ubezpieczenia: ŚLĄSKA 162A, 93-237 ŁÓDŹ Składka 231 zł'
 
     elif 'InterRisk' in page_1:
         if 'DANE POJAZDU' in page_1:
@@ -315,6 +314,16 @@ def przedmiot_ub(page_1, pdf):
             model = re.search(rf'(?<={marka})\s(\w+)', page_1, re.I).group(1)
             nr_rej = re.search(r'Nr rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
             rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
+            return marka, kod, model, miasto, nr_rej, adres, rok
+
+    elif 'TUW' in page_1 and not 'TUZ' in page_1:
+        pdf_str3 = polisa_str(pdf)[000:6500]
+        if 'pojazdu:' in pdf_str3:
+            print(pdf_str3)
+            nr_rej = re.search(r'numer\s*rejestracyjny:\s*([A-Z0-9]+)', pdf_str3).group(1)
+            marka = re.search(rf'{nr_rej}.*?([\w./]+)', pdf_str3, re.I | re.DOTALL).group(1).split('/')[0]
+            model = re.search(rf'{nr_rej}.*?([\w./]+)', pdf_str3, re.I | re.DOTALL).group(1).split('/')[1]
+            rok = re.search(r'rok produkcji:\s?(\d{4})', pdf_str3).group(1)
             return marka, kod, model, miasto, nr_rej, adres, rok
 
     return marka, kod, model, miasto, nr_rej, adres, rok
@@ -656,7 +665,7 @@ def przypis_daty_raty(pdf, page_1):
 
     if 'TUW' in page_1 and not 'TUZ' in page_1:
 
-        pdf_str3 = polisa_str(pdf)[2000:6500]
+        pdf_str3 = polisa_str(pdf)[1000:6500]
         # print(pdf_str3)
         total = re.search(r'Składka łączna: (\d*\s?\d+) PLN', pdf_str3, re.I)
         total = int(re.sub(r'\xa0', '', total.group(1)))
@@ -664,6 +673,9 @@ def przypis_daty_raty(pdf, page_1):
         termin = re.search(r'Termin płatności.*(\d{2,4}-\d{2}-\d{2,4})', pdf_str3, re.I)
         termin_I = re.sub('[^0-9]', '-', termin.group(1))
         termin_I = datetime.strptime(re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I), '%Y-%m-%d') + one_day
+
+        if re.findall(r'(?=.*GOTÓWKA)(?=.*I raty).*', pdf_str3, re.I | re.DOTALL):
+            return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         if 'JEDNORAZOWO' in pdf_str3 and 'PRZELEW' in pdf_str3:
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
