@@ -5,31 +5,67 @@ import numpy as np
 from datetime import datetime
 import pdfplumber
 
-obj = r'M:\zSkrzynka na polisy\TUW POLISA 43026224.pdf'
-
-def polisa_str(pdf):
-    """Tekst 3 str. polisy."""
-    page_1, page_2, page_3 = '', '', ''
-    with pdfplumber.open(pdf) as policy:
-        if policy.pages[0].extract_text():
-            page_1 = policy.pages[0].extract_text()
-        else:
-            pass
-        if policy.pages[1].extract_text():
-            page_2 = policy.pages[1].extract_text()
-        else:
-            pass
-        if policy.pages[2].extract_text():
-
-            page_3 = policy.pages[2].extract_text()
-        else:
-            pass
-    return page_1 + page_2 + page_3
 
 
 
 
-print(polisa_str(obj))
+pdf_str2 = """
+Opis Kwota Termin płatności Opis Kwota Termin płatności
+Aktualna kwota do zapłacenia 213 zł 2021-01-07 - - -
+"""
+
+
+
+
+
+termin_I = re.search(r'Termin płatności.*?(\d{4}[-./]\d{2}[-./]\d{2})', pdf_str2, re.I | re.DOTALL | re.MULTILINE).group(1)
+
+print(termin_I)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# obj = r'M:\zSkrzynka na polisy\TUW POLISA 43026224.pdf'
+#
+# def polisa_str(pdf):
+#     """Tekst 3 str. polisy."""
+#     page_1, page_2, page_3 = '', '', ''
+#     with pdfplumber.open(pdf) as policy:
+#         if policy.pages[0].extract_text():
+#             page_1 = policy.pages[0].extract_text()
+#         else:
+#             pass
+#         if policy.pages[1].extract_text():
+#             page_2 = policy.pages[1].extract_text()
+#         else:
+#             pass
+#         if policy.pages[2].extract_text():
+#
+#             page_3 = policy.pages[2].extract_text()
+#         else:
+#             pass
+#     return page_1 + page_2 + page_3
+#
+#
+#
+#
+# print(polisa_str(obj))
+
+
+
 
 
 
