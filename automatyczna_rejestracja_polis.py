@@ -4,7 +4,7 @@ import pdfplumber
 from datetime import datetime, timedelta
 import win32com.client
 from win32com.client import Dispatch
-# from regon_api import get_regon_data
+from regon_api import get_regon_data
 import time
 
 start_time = time.time()
