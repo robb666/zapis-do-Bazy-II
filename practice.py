@@ -10,15 +10,23 @@ import pdfplumber
 
 
 pdf_str2 = """
-Opis Kwota Termin płatności Opis Kwota Termin płatności
-Aktualna kwota do zapłacenia 213 zł 2021-01-07 - - -
+Wariant STANDARD 13-01-2022
+Płatności:
+Łączna kwota do zapłaty: 595 PLN
+Składka łączna: 585 PLN Składka członkowska: 10 PLN
+Sposób płatności: GOTÓWKA, kwituję odbiór składki w wysokości 595 PLN słownie: pięćset dziewięćdziesiąt pięć złotych
+Harmonogram płatności:JEDNORAZOWO
+Nr raty 1 rata
+Termin płatności 13-01-2021
+Kwota 595 PLN
+Informacje dotyczące zawartej umowy ubezpieczenia:
 """
 
 
 
 
 
-termin_I = re.search(r'Termin płatności.*?(\d{4}[-./]\d{2}[-./]\d{2})', pdf_str2, re.I | re.DOTALL | re.MULTILINE).group(1)
+termin_I = re.findall(r'(?=.*GOTÓWKA)(?=.*(I raty|JEDNORAZOWO)).*', pdf_str2, re.I | re.DOTALL)
 
 print(termin_I)
 
