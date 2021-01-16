@@ -8,27 +8,47 @@ import pdfplumber
 
 
 
-
-pdf_str2 = """
-Wariant STANDARD 13-01-2022
-Płatności:
-Łączna kwota do zapłaty: 595 PLN
-Składka łączna: 585 PLN Składka członkowska: 10 PLN
-Sposób płatności: GOTÓWKA, kwituję odbiór składki w wysokości 595 PLN słownie: pięćset dziewięćdziesiąt pięć złotych
-Harmonogram płatności:JEDNORAZOWO
-Nr raty 1 rata
-Termin płatności 13-01-2021
-Kwota 595 PLN
-Informacje dotyczące zawartej umowy ubezpieczenia:
+tel = """
+Telefon komórkowy:
+0048500204753
 """
 
 
 
 
+tel_val = re.search('(Telefon komórkowy:)\n(\+48|00)?\s?([0-9.\-\(\)\s]{9,})?', tel).group(3)
 
-termin_I = re.findall(r'(?=.*GOTÓWKA)(?=.*(I raty|JEDNORAZOWO)).*', pdf_str2, re.I | re.DOTALL)
+print(tel_val)
 
-print(termin_I)
+
+
+
+
+
+
+
+
+
+
+
+
+# pdf_str2 = """
+# Wariant STANDARD 13-01-2022
+# Płatności:
+# Łączna kwota do zapłaty: 595 PLN
+# Składka łączna: 585 PLN Składka członkowska: 10 PLN
+# Sposób płatności: GOTÓWKA, kwituję odbiór składki w wysokości 595 PLN słownie: pięćset dziewięćdziesiąt pięć złotych
+# Harmonogram płatności:JEDNORAZOWO
+# Nr raty 1 rata
+# Termin płatności 13-01-2021
+# Kwota 595 PLN
+# Informacje dotyczące zawartej umowy ubezpieczenia:
+# """
+#
+#
+# termin_I = re.findall(r'(?=.*GOTÓWKA)(?=.*(I raty|JEDNORAZOWO)).*', pdf_str2, re.I | re.DOTALL)
+#
+# print(termin_I)
 
 
 

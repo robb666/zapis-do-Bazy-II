@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy'
+obj = r'M:\zSkrzynka na polisy\WIE_2.pdf'
 
 
 def words_separately(text):
@@ -171,7 +171,6 @@ def prawo_jazdy(page_1, pdf):
         return data_pr_j.group(1)
 
 
-
 def adres():
     """Tylko w przypadku regon (API)."""
     pass
@@ -207,9 +206,31 @@ def tel_mail(page_1, pdf):
         mail = ''.join([mail for mail in re.findall(r'([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', page_1) if mail not in tel_mail_off.values()])
         return tel, mail
 
+    elif 'Generali' in page_1:
+        tel = re.search(r'telefon: (\+48|0048)?([0-9.\-\(\)\s]{9,})?', page_1).group(2)
+        mail = re.search(r'email: ([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1).group(1)
+        return tel, mail
+
     elif 'PZU' in page_1:
         tel = re.search(r'Telefon: ([0-9 .\-\(\)]{8,}[0-9])?', page_1).group(1)
         mail = re.search(r'E\s?-\s?mail: ([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1).group(1)
+        return tel, mail
+
+    elif 'TUW' in page_1 and not 'TUZ' in page_1:
+        pdf_str3 = polisa_str(pdf)[0:6500]
+        tel = re.search(r'(Tel:)? (\+48|0048)?\s?([0-9.\-\(\)]{9,})?', pdf_str3).group(3)
+        mail = re.search(r'(e-mail:)? ([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', pdf_str3).group(2)
+        return tel, mail
+
+    elif 'WARTA' in page_1:
+        pdf_str3 = polisa_str(pdf)[1000:-3500]
+        tel = re.search(r'Telefon komórkowy:\n?(\+48|0048)?\s?([0-9.\-\(\)]{9,})?', pdf_str3).group(2)
+        mail = re.search(r'E-MAIL: ([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', pdf_str3).group(1)
+        return tel, mail
+
+    elif 'Wiener' in page_1:
+        tel = re.search(r'(Telefon komórkowy:)? (\+48|0048)?\s?([0-9.\-\(\)]{9,})?', page_1).group(3)
+        mail = re.search(r'E-mail ([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1).group(1)
         return tel, mail
 
     return tel, mail
@@ -353,7 +374,7 @@ def przedmiot_ub(page_1, pdf):
             return marka, kod, model, miasto, nr_rej, adres, rok
 
 
-    if 'Wiener' in page_1: pass
+
 
     return marka, kod, model, miasto, nr_rej, adres, rok
 
