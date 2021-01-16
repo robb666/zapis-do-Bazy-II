@@ -260,7 +260,8 @@ def przedmiot_ub(page_1, pdf):
             rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
             return marka, kod, model, miasto, nr_rej, adres, rok
 
-    elif 'Hestia' and not 'MTU' in page_1:
+    elif 'Hestia' in page_1 and not 'MTU' in page_1:
+        print(page_1)
         if 'Ubezpieczony pojazd' in page_1:
             marka = re.search(r'pojazd (\w+)\s?,\s?(\w+)', page_1, re.I).group(2)
             model = re.search(rf'(?<={marka}) (\w+)', page_1, re.I).group(1)
@@ -279,7 +280,6 @@ def przedmiot_ub(page_1, pdf):
 
 
     elif 'HDI' in page_1 or '„WARTA” S.A. POTWIERDZA' in page_1:
-        print(page_1)
         if 'Marka, Model, Typ:' in page_1:
             marka = re.search(r'Marka, Model, Typ: ([\w./]+)', page_1, re.I).group(1)
             model = re.search(rf'(?<={marka})\s(\w+)', page_1, re.I).group(1)
