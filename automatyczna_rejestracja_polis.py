@@ -4,7 +4,7 @@ import pdfplumber
 from datetime import datetime, timedelta
 import win32com.client
 from win32com.client import Dispatch
-# from regon_api import get_regon_data
+from regon_api import get_regon_data
 import time
 
 start_time = time.time()
@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\I set\GEN Polisa_50006743391_04012021_225346.pdf'
+obj = r'M:\zSkrzynka na polisy\I set'
 
 
 def words_separately(text):
@@ -208,11 +208,9 @@ def tel_mail(page_1, pdf):
 
     elif 'Generali' in page_1:
         print(page_1)
-        try:
-            tel = re.match(r'telefon: (\+48|0048)?\s?([0-9.\-\(\)\s]{9,})?', page_1).group(2)
+        try: tel = re.search(r'telefon: (\+48|0048)?\s?([0-9.\-\(\)\s]{9,})?', page_1).group(2)
         except: pass
-        try:
-            mail = re.match(r'email: ([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1).group(1)
+        try: mail = re.search(r'email: ([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1).group(1)
         except: pass
         return tel, mail
 
@@ -234,8 +232,12 @@ def tel_mail(page_1, pdf):
         return tel, mail
 
     elif 'Wiener' in page_1:
-        tel = re.search(r'(Telefon komórkowy:)? (\+48|0048)?\s?([0-9.\-\(\)]{9,})?', page_1).group(3)
-        mail = re.search(r'E-mail ([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1).group(1)
+        try:
+            tel = re.search(r'(Telefon komórkowy:)\s?(\+48|0048)?\s?([0-9.\-\(\)]{9,})?', page_1).group(3)
+        except: pass
+        try:
+            mail = re.search(r'(E-mail)\s?([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1).group(2)
+        except: pass
         return tel, mail
 
     return tel, mail
@@ -356,7 +358,6 @@ def przedmiot_ub(page_1, pdf):
     elif 'TUW' in page_1 and not 'TUZ' in page_1:
         pdf_str3 = polisa_str(pdf)[000:6500]
         if 'pojazdu:' in pdf_str3:
-            print(pdf_str3)
             nr_rej = re.search(r'numer\s*rejestracyjny:\s*([A-Z0-9]+)', pdf_str3).group(1)
             marka = re.search(rf'{nr_rej}.*?([\w./]+)', pdf_str3, re.I | re.DOTALL).group(1).split('/')[0]
             model = re.search(rf'{nr_rej}.*?([\w./]+)', pdf_str3, re.I | re.DOTALL).group(1).split('/')[1]
@@ -378,9 +379,6 @@ def przedmiot_ub(page_1, pdf):
             nr_rej = re.search(r'Nr rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
             rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
             return marka, kod, model, miasto, nr_rej, adres, rok
-
-
-
 
     return marka, kod, model, miasto, nr_rej, adres, rok
 
@@ -843,7 +841,6 @@ def rozpoznanie_danych(tacka_na_polisy):
     tel_mail_ = tel_mail(page_1, pdf)
     tel = tel_mail_[0]
     email = tel_mail_[1]
-
     przedmiot_ub_ = przedmiot_ub(page_1, pdf)
 
 
@@ -936,7 +933,7 @@ for dane_polisy in tacka_na_polisy(obj):
     ExcelApp.Cells(row_to_write, 17).Value = kod_poczt # kod_pocztowy(page_1) if not kod_poczt_f else kod_poczt_f_edit
     ExcelApp.Cells(row_to_write, 18).Value = miasto_f
     ExcelApp.Cells(row_to_write, 19).Value = tel
-    ExcelApp.Cells(row_to_write, 20).Value = email
+    ExcelApp.Cells(row_to_write, 20).Value = email.lower() if email else ''
     ExcelApp.Cells(row_to_write, 23).Value = marka if marka else kod
     ExcelApp.Cells(row_to_write, 24).Value = model if model else miasto
     ExcelApp.Cells(row_to_write, 25).Value = nr_rej if nr_rej else adres
