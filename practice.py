@@ -8,15 +8,13 @@ import pdfplumber
 
 
 
-tel = """
-Telefon komórkowy:
-0048500204753
+tel = """email: okonskidariusz@gmail.com
 """
 
 
 
 
-tel_val = re.search('(Telefon komórkowy:)\n(\+48|00)?\s?([0-9.\-\(\)\s]{9,})?', tel).group(3)
+tel_val = re.search('((?:telefon: )(\+48|0048))?\s?([0-9.\-\(\)\s]{9,})?', tel).group(3)
 
 print(tel_val)
 

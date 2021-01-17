@@ -4,7 +4,7 @@ import pdfplumber
 from datetime import datetime, timedelta
 import win32com.client
 from win32com.client import Dispatch
-from regon_api import get_regon_data
+# from regon_api import get_regon_data
 import time
 
 start_time = time.time()
@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\WIE_2.pdf'
+obj = r'M:\zSkrzynka na polisy\GEN Polisa_50006743391_04012021_225346.pdf'
 
 
 def words_separately(text):
@@ -207,8 +207,9 @@ def tel_mail(page_1, pdf):
         return tel, mail
 
     elif 'Generali' in page_1:
-        tel = re.search(r'telefon: (\+48|0048)?([0-9.\-\(\)\s]{9,})?', page_1).group(2)
-        mail = re.search(r'email: ([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1).group(1)
+        print(page_1)
+        tel = re.search(r'(telefon: )?(\+48|0048)?\s?([0-9.\-\(\)\s]{9,})?', page_1).group()
+        mail = re.search(r'(email: )?([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1).group(2)
         return tel, mail
 
     elif 'PZU' in page_1:
@@ -281,6 +282,7 @@ def przedmiot_ub(page_1, pdf):
             rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
             return marka, kod, model, miasto, nr_rej, adres, rok
 
+
     elif 'Hestia' in page_1 and not 'MTU' in page_1:
         print(page_1)
         if 'Ubezpieczony pojazd' in page_1:
@@ -331,7 +333,6 @@ def przedmiot_ub(page_1, pdf):
             return marka, kod, model, miasto, nr_rej, adres, rok
 
 
-
     elif 'PZU' in page_1:
         if 'Ubezpieczony pojazd' in page_1:
             marka = re.search(r'Marka: ([\w./]+)', page_1, re.I).group(1)
@@ -364,6 +365,7 @@ def przedmiot_ub(page_1, pdf):
             adres = re.search('(Miejsce ubezpieczenia:) ([\w \d/]+),', page_1).group(2)
             # rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
             return marka, kod, model, miasto, nr_rej, adres, rok
+
 
     if 'WARTA' in page_1:
         if 'Marka, Model, Typ:' in page_1:
