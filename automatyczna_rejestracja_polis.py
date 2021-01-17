@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\GEN Polisa_50006743391_04012021_225346.pdf'
+obj = r'M:\zSkrzynka na polisy\I set\GEN Polisa_50006743391_04012021_225346.pdf'
 
 
 def words_separately(text):
@@ -208,8 +208,12 @@ def tel_mail(page_1, pdf):
 
     elif 'Generali' in page_1:
         print(page_1)
-        tel = re.search(r'(telefon: )?(\+48|0048)?\s?([0-9.\-\(\)\s]{9,})?', page_1).group()
-        mail = re.search(r'(email: )?([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1).group(2)
+        try:
+            tel = re.match(r'telefon: (\+48|0048)?\s?([0-9.\-\(\)\s]{9,})?', page_1).group(2)
+        except: pass
+        try:
+            mail = re.match(r'email: ([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1).group(1)
+        except: pass
         return tel, mail
 
     elif 'PZU' in page_1:
