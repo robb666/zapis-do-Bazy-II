@@ -9,6 +9,8 @@ import pdfplumber
 
 
 
+
+
 with open(os.getcwd() + '\imiona.txt', 'r') as file:
     l = []
     for name in file:

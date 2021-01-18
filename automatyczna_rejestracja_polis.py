@@ -4,7 +4,7 @@ import pdfplumber
 from datetime import datetime, timedelta
 import win32com.client
 from win32com.client import Dispatch
-# from regon_api import get_regon_data
+from regon_api import get_regon_data
 import time
 
 start_time = time.time()
@@ -12,8 +12,8 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\I set\Polisa.pdf'
-
+obj = r'M:\zSkrzynka na polisy\HES HB polisa_903013610229.pdf'
+print(obj)
 
 def words_separately(text):
     """Tokenizuje tekst całej polisy."""
@@ -561,7 +561,8 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
     if 'Hestia' in page_1 and not 'MTU' in page_1:
-        box = polisa_box(pdf, 0, 220, 590, 600)
+        box = polisa_box(pdf, 0, 120, 590, 600)
+        print(box)
         total = re.search(r'DO ZAPŁATY (\d*\s?\d+)', box, re.I)
         total = int(re.sub(r' ', '', total.group(1)))
 
