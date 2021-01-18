@@ -209,7 +209,6 @@ def tel_mail(page_1, pdf):
         return tel, mail
 
     elif 'Generali' in page_1:
-        print(page_1)
         try: tel = re.search(r'telefon: (\+48|0048)?\s?([0-9.\-\(\)\s]{9,})?', page_1).group(2)
         except: pass
         try: mail = re.search(r'email: ([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1).group(1)
@@ -264,10 +263,9 @@ def przedmiot_ub(page_1, pdf):
             rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
             return marka, kod, model, miasto, nr_rej, adres, rok
 
-    # dorobić to co w składkach - innne strony
+
     elif 'AXA' in page_1:
         pdf_str2 = polisa_str(pdf)[0:-1]
-        print(pdf_str2)
         if 'Pojazd' in pdf_str2:
             marka = re.search('(Dla samochodu:).*?(\d{4}).*?(\w+)', page_1, re.I | re.DOTALL).group(3)
             model = re.search(rf'{marka} ([\w\d./]+)', page_1).group(1)
@@ -300,7 +298,6 @@ def przedmiot_ub(page_1, pdf):
 
 
     elif 'Hestia' in page_1 and not 'MTU' in page_1:
-        print(page_1)
         if 'Ubezpieczony pojazd' in page_1:
             marka = re.search(r'pojazd (\w+)\s?,\s?(\w+)', page_1, re.I).group(2)
             model = re.search(rf'(?<={marka}) (\w+)', page_1, re.I).group(1)
@@ -339,11 +336,8 @@ def przedmiot_ub(page_1, pdf):
 
     elif 'MTU' in page_1:
         if 'Ubezpieczony pojazd' in page_1:
-            print(page_1)
             marka = re.search(r'(Ubezpieczony pojazd).*?(\w+), (\w+-?\w+)', page_1, re.I | re.DOTALL).group(3)
-            print(marka)
             model = re.search(rf'(?<={marka}) (\w+)', page_1, re.I).group(1)
-            print(model)
             nr_rej = re.search(rf'([A-Z0-9]+)(?=, ROK)', page_1).group(1)
             rok = re.search(r'(ROK PRODUKCJI:) (\d{4})', page_1).group(2)
             return marka, kod, model, miasto, nr_rej, adres, rok

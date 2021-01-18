@@ -5,26 +5,26 @@ import numpy as np
 from datetime import datetime
 import pdfplumber
 
+with open(os.getcwd() + '\imiona.txt', 'r') as file:
+    l = []
+    for name in file:
+        l.append(name)
+    print(len(l))
+
+
+# with open(os.environ['USERPROFILE'] + '\Desktop\imionamienia.txt', 'rb') as file:
+#     li = []
+#     for name in file:
+#         li.append(name)
+#     print(len(li))
 
 
 
-mail = ''
-
-
-
-
-
-mail_l = mail.lower()
-
-print(mail_l)
-
-
-
-
-
-
-
-
+# with open(os.environ['USERPROFILE'] + '\Desktop\imionamienia.txt', encoding='utf-8') as f:
+#     with open(os.getcwd() + '\imiona1.txt', "w") as f1:
+#         for line in f:
+#             # if "ROW" in line:
+#                 f1.write(line)
 
 
 
