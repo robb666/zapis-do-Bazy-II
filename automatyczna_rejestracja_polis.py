@@ -4,7 +4,7 @@ import pdfplumber
 from datetime import datetime, timedelta
 import win32com.client
 from win32com.client import Dispatch
-from regon_api import get_regon_data
+# from regon_api import get_regon_data
 import time
 
 start_time = time.time()
@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\I set'
+obj = r'M:\zSkrzynka na polisy\I set\Polisa.pdf'
 
 
 def words_separately(text):
@@ -40,10 +40,10 @@ def polisa_str(pdf):
             page_2 = policy.pages[1].extract_text()
         else:
             pass
-        if policy.pages[2].extract_text():
-            page_3 = policy.pages[2].extract_text()
-        else:
-            pass
+
+        try: (page_3 := policy.pages[2].extract_text())
+        except:pass
+
     return page_1 + page_2 + page_3
 
 
@@ -162,6 +162,8 @@ def prawo_jazdy(page_1, pdf):
     data_pr_j = ''
     if 'Allianz' in page_1 and (data_pr_j := re.search('(prawa jazdy:) (\d{4})', page_1, re.I)):
         return data_pr_j.group(2)
+    if 'AXA' in page_1 and (data_pr_j := re.search('(Prawo jazdy od) (\d{4})', page_1, re.I)):
+        return data_pr_j.group(2)
     if 'Generali' in page_1 and (data_pr_j := re.search('(rok uzyskania prawa jazdy:) (\d{4})', page_1, re.I)):
         return data_pr_j.group(2)
     if 'Hestia' in page_1 and (data_pr_j := re.search('(data uzyskania prawa jazdy) (\d{4})', page_1, re.I)):
@@ -264,7 +266,15 @@ def przedmiot_ub(page_1, pdf):
 
     # dorobić to co w składkach - innne strony
     elif 'AXA' in page_1:
-        pdf_str2 = polisa_str(pdf)[1000:-1]
+        pdf_str2 = polisa_str(pdf)[0:-1]
+        print(pdf_str2)
+        if 'Pojazd' in pdf_str2:
+            marka = re.search('(Dla samochodu:).*?(\d{4}).*?(\w+)', page_1, re.I | re.DOTALL).group(3)
+            model = re.search(rf'{marka} ([\w\d./]+)', page_1).group(1)
+            nr_rej = re.search('(gwarancyjna/ubezpieczenia) ([\w\d.]+)', page_1).group(2)
+            rok = re.search('(Rok produkcji) (\d+),?', page_1).group(2)
+            return marka, kod, model, miasto, nr_rej, adres, rok
+
         if 'Przedmiot ubezpieczenia: Mieszkanie' in pdf_str2:
             kod = re.search('(Adres:).*\s(\d{2}[-\xad]\d{3})\s', pdf_str2, re.I).group(2)
             miasto = re.search(f'{kod}\s(\w+)', pdf_str2).group(1)
@@ -412,7 +422,7 @@ def numer_polisy(page_1, pdf):
     if 'Allianz' in page_1 and (nr_polisy := re.search('(Polisa nr|NUMER POLISY) (\d*-?\d+)', page_1)):
         return 'ALL', 'ALL', nr_polisy.group(2)
     if 'AXA' in page_1:
-        page_1 = polisa_str(pdf)[1000:4600]
+        page_1 = polisa_str(pdf)[0:4600]
         if (nr_polisy := re.search('(\d{4}-\d{5,})', page_1)):
             return 'AXA', 'AXA', nr_polisy.group(1)
     if 'Compensa' in page_1 and (nr_polisy := re.search('typ polisy: *\s*(\d+),numer: *\s*(\d+)', page_1)):
@@ -468,11 +478,12 @@ def przypis_daty_raty(pdf, page_1):
 
 
     if 'AXA' in page_1:
-        pdf_str2 = polisa_str(pdf)[1000:-1]
-        total = re.search(r'(do\szapłacenia) (\d*\s?\d+)', pdf_str2).group(2)
+        pdf_str2 = polisa_str(pdf)[500:-1]
+        total = re.search(r'(do\szapłacenia|Składka łącznie:) (\d*\s?\d+)', pdf_str2).group(2)
         if re.search('(Wpłata przelewem|Nr konta|kwota\sdo\szapłacenia)', pdf_str2, re.I):
-            print(pdf_str2)
-            termin_I = re.search(r'Termin płatności.*?(\d{4}[-./]\d{2}[-./]\d{2})', pdf_str2, re.I | re.DOTALL | re.MULTILINE).group(1)
+            termin_I = re.search(r'Termin płatności.*?(\d{4}[-./]\d{2}[-./]\d{2}|\d{2}[-./]\d{2}[-./]\d{4})', pdf_str2, re.I | re.DOTALL)
+            termin_I = re.sub('[^0-9]', '-', termin_I.group(1))
+            termin_I = re.sub(r'(\d{4}[-./]\d{2}[-./]\d{2}|\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
