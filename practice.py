@@ -5,17 +5,36 @@ import numpy as np
 from datetime import datetime
 import pdfplumber
 
+box = 'terminy i kwoty płatności I rata 2021‑01‑31, 199 zł; II rata 2021‑06‑20, 198 zł'
+
+termin_I = re.search(r'płatności I\srata\s(\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
+termin_I = re.sub('[^0-9]', '-', termin_I)
+
+print(termin_I)
 
 
 
 
 
 
-with open(os.getcwd() + '\imiona.txt', 'r') as file:
-    l = []
-    for name in file:
-        l.append(name)
-    print(len(l))
+
+
+
+
+
+
+
+
+
+
+
+
+
+# with open(os.getcwd() + '\imiona.txt', 'r') as file:
+#     l = []
+#     for name in file:
+#         l.append(name)
+#     print(len(l))
 
 
 # with open(os.environ['USERPROFILE'] + '\Desktop\imionamienia.txt', 'rb') as file:
