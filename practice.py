@@ -5,15 +5,57 @@ import numpy as np
 from datetime import datetime
 import pdfplumber
 
-box = 'terminy i kwoty płatności I rata 2021‑01‑31, 199 zł; II rata 2021‑06‑20, 198 zł'
 
-termin_I = re.search(r'płatności I\srata\s(\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
-termin_I = re.sub('[^0-9]', '-', termin_I)
+box = """
+numer konta 03 1240 6960 6013 9090 0654 1411
+terminy i kwoty płatności I rata 2021‑01‑31, 199 zł; I rata 2021‑06‑20, 198 zł
+Wybrany sposób płatności pierwszej raty składki: przelew.  
+Oświadczenia Ubezpieczającego
+Oświadczam, że:
+"""
 
-print(termin_I)
+if not (r := re.search(r'(?=.*II\srata)(?=.*przelew).*', box, re.I | re.DOTALL)):
+# if not 'III rata' in box and 'przelew' in box:
+    # print(r)
+    print(True)
+    termin_I = re.search(r'płatności (\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
+    print(termin_I)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+# box = 'terminy i kwoty płatności I rata 31‑01‑2021, 199 zł; II rata 2021‑06‑20, 198 zł'
+#
+#
+# def terminy(termin):
+#     if hasattr(termin, 'group'):
+#         zamiana_sep = re.sub('[^0-9]', '-', termin)
+#     else:
+#         zamiana_sep = re.sub('[^0-9]', '-', termin.group(1))
+#     return re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', zamiana_sep)
+#
+#
+#
+#
+# termin_I = re.search(r'płatności I\srata\s(\d{2}[-‑]\d{2}[-‑]\d{4})', box, re.I)
+#
+# if hasattr(termin_I, 'group'):
+#     print(True)
+#
+#
+#
+# print(termin_I)
 
 
 
