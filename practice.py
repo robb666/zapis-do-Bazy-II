@@ -6,20 +6,30 @@ from datetime import datetime
 import pdfplumber
 
 
-box = """
-numer konta 03 1240 6960 6013 9090 0654 1411
-terminy i kwoty płatności I rata 2021‑01‑31, 199 zł; I rata 2021‑06‑20, 198 zł
-Wybrany sposób płatności pierwszej raty składki: przelew.  
-Oświadczenia Ubezpieczającego
-Oświadczam, że:
-"""
 
-if not (r := re.search(r'(?=.*II\srata)(?=.*przelew).*', box, re.I | re.DOTALL)):
-# if not 'III rata' in box and 'przelew' in box:
-    # print(r)
-    print(True)
-    termin_I = re.search(r'płatności (\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
-    print(termin_I)
+
+do_p = '500204753, tomekhelbik@op.pl, VOLKSWAGEN'
+
+st = do_p.partition(',')
+
+print(st)
+
+
+
+# box = """
+# numer konta 03 1240 6960 6013 9090 0654 1411
+# terminy i kwoty płatności I rata 2021‑01‑31, 199 zł; I rata 2021‑06‑20, 198 zł
+# Wybrany sposób płatności pierwszej raty składki: przelew.
+# Oświadczenia Ubezpieczającego
+# Oświadczam, że:
+# """
+#
+# if not (r := re.search(r'(?=.*II\srata)(?=.*przelew).*', box, re.I | re.DOTALL)):
+# # if not 'III rata' in box and 'przelew' in box:
+#     # print(r)
+#     print(True)
+#     termin_I = re.search(r'płatności (\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
+#     print(termin_I)
 
 
 

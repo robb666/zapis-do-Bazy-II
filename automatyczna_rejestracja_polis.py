@@ -4,7 +4,7 @@ import pdfplumber
 from datetime import datetime, timedelta
 import win32com.client
 from win32com.client import Dispatch
-# from regon_api import get_regon_data
+from regon_api import get_regon_data
 import time
 
 start_time = time.time()
@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\wydruk(1).pdf'
+obj = r'M:\zSkrzynka na polisy'
 # print(obj)
 
 def words_separately(text):
@@ -40,10 +40,8 @@ def polisa_str(pdf):
             page_2 = policy.pages[1].extract_text()
         else:
             pass
-
         try: (page_3 := policy.pages[2].extract_text())
         except:pass
-
     return page_1 + page_2 + page_3
 
 
@@ -200,8 +198,7 @@ def kod_pocztowy(page_1, pdf):
 def tel_mail(page_1, pdf, nazwisko):
     tel, mail = '', ''
     tel_mail_off = {'tel Robert': '606271169', 'mail Robert': 'ubezpieczenia.magro@gmail.com',
-                    'tel Maciej': '602752893', 'mail Maciej': 'magro@ubezpieczenia-magro.pl',
-                    }
+                    'tel Maciej': '602752893', 'mail Maciej': 'magro@ubezpieczenia-magro.pl',}
 
     if 'Allianz' in page_1:
         tel = ''.join([tel for tel in re.findall(r'tel.*([0-9 .\-\(\)]{8,}[0-9])', page_1) if tel not in tel_mail_off.values()])
@@ -215,19 +212,29 @@ def tel_mail(page_1, pdf, nazwisko):
         except: pass
         return tel, mail
 
+    elif 'Hestia' in page_1:
+        dane_kont = [line for line in page_1.split('\n') if line.startswith('dane kontaktowe')]
+        if dane_kont:
+            if (t := re.search('TEL. ([0-9.\-\(\)\s]{9})?', dane_kont[0])):
+                tel = t.group(1)
+                print(tel)
+            if (m := re.search(r' ([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', dane_kont[0])):
+                mail = m.group(1).lower()
+            return tel, mail
+
     elif 'PZU' in page_1:
-        tel = str(re.search(r'Telefon: (\+48|0048)?\s?([0-9.\-\(\)\s]{9})?', page_1).group(2))
+        tel = re.search(r'Telefon: (\+48|0048)?\s?([0-9.\-\(\)\s]{9})?', page_1).group(2)
         mail = re.search(r'E\s?-\s?mail: ([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1).group(1)
         return tel, mail
 
     elif 'TUW' in page_1 and not 'TUZ' in page_1:
-        pdf_str3 = polisa_str(pdf)[0:6500]
+        pdf_str3 = polisa_str(pdf)[0:-500]
         tel = re.search(r'(Tel:) (\+48|0048)?\s?([0-9.\-\(\)]{9,})?', pdf_str3).group(3)
-        mail = re.search(r'(e-mail:) ([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', pdf_str3)
+        mail = re.search(r'(e-mail:)\s?([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', pdf_str3).group(2)
         return tel, mail
 
+
     elif 'TUZ' in page_1:
-        print(page_1)
         try:
             tel = re.search(rf'{nazwisko} (\d+) (\d+)', page_1, re.I).group(2)
             tel.replace('\n', '')
@@ -368,7 +375,7 @@ def przedmiot_ub(page_1, pdf):
 
 
     elif 'TUW' in page_1 and not 'TUZ' in page_1:
-        pdf_str3 = polisa_str(pdf)[000:6500]
+        pdf_str3 = polisa_str(pdf)[0:6500]
         if 'pojazdu:' in pdf_str3:
             nr_rej = re.search(r'numer\s*rejestracyjny:\s*([A-Z0-9]+)', pdf_str3).group(1)
             marka = re.search(rf'{nr_rej}.*?([\w./]+)', pdf_str3, re.I | re.DOTALL).group(1).split('/')[0]
@@ -453,7 +460,7 @@ def numer_polisy(page_1, pdf):
         return 'AZ', 'MTU', nr_polisy.group(1)
     if 'Proama' in page_1 and (nr_polisy := re.search('POLISA NR\s*(\d+)', page_1, re.I)):
         return 'GEN', 'PRO', nr_polisy.group(1)
-    if 'PZU' in page_1 and (nr_polisy := re.search('Nr *(\d+)', page_1)):
+    if 'PZU' in page_1 and (nr_polisy := re.search('Nr *(\d+)', page_1, re.I)):
         return 'PZU', 'PZU', nr_polisy.group(1)
     if 'TUW' in page_1:
         page_1 = polisa_str(pdf)[0:-2600]
@@ -810,7 +817,7 @@ def przypis_daty_raty(pdf, page_1):
 
     if 'WARTA' in page_1:
         pdf_str = polisa_str(pdf)[100:-1]
-
+        print(pdf_str)
         total = re.search(r'(SKŁADKA ŁĄCZNA|Kwota\s:) (\d*\s?\.?\d+)', pdf_str, re.I)
         total = int(total.group(2).replace('\xa0', '').replace('.', ''))
 
@@ -821,6 +828,12 @@ def przypis_daty_raty(pdf, page_1):
         if re.findall(r'(?=.*JEDNORAZOWO)(?=.*PRZELEW).*', pdf_str, re.I | re.DOTALL):
             termin_I = re.search(r'Termin:|DO DNIA.*(\d{4}-\d{2}-\d{2})', pdf_str).group(1)
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+        if re.findall(r'(?=.*2 RATACH)(?=.*GOTÓWKA).*', pdf_str, re.I | re.DOTALL):
+            termin = re.search(r'2 RATACH Termin: (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2})', pdf_str)
+            raty = re.search(r'Kwota: (\d+) zł (\d+)', pdf_str)
+            return total, termin.group(1), raty.group(1), 'G', 2, 1, termin.group(2), raty.group(2), \
+                   termin_III, rata_III, termin_IV, rata_IV
 
         if re.findall(r'(?=.*3 rata)(?=.*PRZELEW).*', pdf_str, re.I | re.DOTALL):
             termin = re.search(r'3 RATACH Termin: (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2})', pdf_str)
@@ -871,7 +884,7 @@ def rozpoznanie_danych(tacka_na_polisy):
     kod_poczt = kod_pocztowy(page_1, pdf) if kod_pocztowy(page_1, pdf) else kod_poczt_f_edit
 
     tel_mail_ = tel_mail(page_1, pdf, nazwisko)
-    tel = tel_mail_[0]
+    tel = tel_mail_[0].replace('\n', '') if tel_mail_[0] else ''
     email = tel_mail_[1]
     przedmiot_ub_ = przedmiot_ub(page_1, pdf)
 
@@ -940,12 +953,12 @@ except:
 
 
 """Jesienne Bazie"""
-try:
-    for dane_polisy in tacka_na_polisy(obj):
-        nazwa_firmy, nazwisko, imie, p_lub_r, pr_j, ulica_f_edit, kod_poczt, miasto_f, tel, email, marka, kod, model, \
-        miasto, nr_rej, adres, rok, data_wyst, data_konca, tow_ub_tor, tow_ub, nr_polisy, przypis, ter_platnosci, rata_I, \
-        f_platnosci, ilosc_rat, nr_raty, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV = dane_polisy
-        print(dane_polisy)
+# try:
+for dane_polisy in tacka_na_polisy(obj):
+    nazwa_firmy, nazwisko, imie, p_lub_r, pr_j, ulica_f_edit, kod_poczt, miasto_f, tel, email, marka, kod, model, \
+    miasto, nr_rej, adres, rok, data_wyst, data_konca, tow_ub_tor, tow_ub, nr_polisy, przypis, ter_platnosci, rata_I, \
+    f_platnosci, ilosc_rat, nr_raty, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV = dane_polisy
+    print(dane_polisy)
 
     """Rozpoznaje kolejny wiersz, który może zapisać."""
     row_to_write = wb.Worksheets(1).Cells(wb.Worksheets(1).Rows.Count, 30).End(-4162).Row + 1
@@ -1039,8 +1052,8 @@ try:
                 ExcelApp.Cells(row_to_write + 3, 50).Value = rata_IV
                 ExcelApp.Cells(row_to_write + 3, 53).Value = 4
 
-except FileNotFoundError as e:
-    ExcelApp.Cells(row_to_write, 12).Value = 'POLISA NIEZAREJESTROWANA !'
+# except FileNotFoundError as e:
+# ExcelApp.Cells(row_to_write, 12).Value = 'POLISA NIEZAREJESTROWANA !'
 
 """Opcje zapisania"""
 # ExcelApp.DisplayAlerts = False
