@@ -4,7 +4,7 @@ import pdfplumber
 from datetime import datetime, timedelta
 import win32com.client
 from win32com.client import Dispatch
-from regon_api import get_regon_data
+# from regon_api import get_regon_data
 import time
 
 start_time = time.time()
@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy'
+obj = r'M:\zSkrzynka na polisy\Polisa.pdf'
 # print(obj)
 
 def words_separately(text):
@@ -281,12 +281,23 @@ def przedmiot_ub(page_1, pdf):
 
     elif 'AXA' in page_1:
         pdf_str2 = polisa_str(pdf)[0:-1]
+        print(pdf_str2)
         if 'Pojazd' in pdf_str2:
-            marka = re.search('(Dla samochodu:).*?(\d{4}).*?(\w+)', page_1, re.I | re.DOTALL).group(3)
-            model = re.search(rf'{marka} ([\w\d./]+)', page_1).group(1)
-            nr_rej = re.search('(gwarancyjna/ubezpieczenia) ([\w\d.]+)', page_1).group(2)
-            rok = re.search('(Rok produkcji) (\d+),?', page_1).group(2)
-            return marka, kod, model, miasto, nr_rej, adres, rok
+            # marka = re.search('(Dla samochodu:).*?(\d{4}).*?[% ]?([A-Z]{2,})', page_1, re.I | re.DOTALL).group(3)
+            # model = re.search(rf'{marka} ([\w\d./]+)', page_1).group(1)
+            for line in pdf_str2.split('\n'):
+                if line.startswith('Udział'):
+                    print(line)
+                    if (marka := re.search('[A-Z]{3,}', line)):
+                        print(marka.group())
+                        marka = marka.group()
+                else:
+                    marka = re.search('(Dla samochodu:).*?([a-z]{2,})', pdf_str2, re.I | re.DOTALL).group(2)
+                print(marka)
+                model = re.search(rf'{marka} (118i)', pdf_str2, re.I).group(1)
+                nr_rej = re.search('(gwarancyjna/ubezpieczenia) ([\w\d.]+)', page_1).group(2)
+                rok = re.search('(Rok produkcji) (\d+),?', page_1).group(2)
+                return marka, kod, model, miasto, nr_rej, adres, rok
 
         if 'Przedmiot ubezpieczenia: Mieszkanie' in pdf_str2:
             kod = re.search('(Adres:).*\s(\d{2}[-\xad]\d{3})\s', pdf_str2, re.I).group(2)
@@ -295,6 +306,7 @@ def przedmiot_ub(page_1, pdf):
             rok = re.search('(Rok budowy:)\s(\d{4})', pdf_str2).group(2)
             return marka, kod, model, miasto, nr_rej, adres, rok
 
+# 'Udział własny wypadkowy 2000 zł, kradzieżowy 10% BMW 118i Cabrio'
 
     elif 'Generali' in page_1 and not 'Proama' in page_1:
         if 'DANE POJAZDU' in page_1:
@@ -482,8 +494,8 @@ def zamiana_sep(termin):
     return re.sub('[^0-9]', '-', termin)
 
 
-def terminy(termin):
-    zamiana_sep = re.sub('[^0-9]', '-', termin.group(1))
+def terminy_pln(termin, n):
+    zamiana_sep = re.sub('[^0-9]', '-', termin.group(n))
     return re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', zamiana_sep)
 
 
@@ -503,12 +515,24 @@ def przypis_daty_raty(pdf, page_1):
 
     if 'AXA' in page_1:
         pdf_str2 = polisa_str(pdf)[500:-1]
+        # print(pdf_str2)
         total = re.search(r'(do\szapłacenia|Składka łącznie:) (\d*\s?\d+)', pdf_str2).group(2)
-        if re.search('(Wpłata przelewem|Nr konta|kwota\sdo\szapłacenia)', pdf_str2, re.I):
+        if not re.findall(r'(?=.*Rata\s2)(?=.*Nr\skonta).*', pdf_str2, re.I | re.DOTALL):
             termin_I = re.search(r'Termin płatności.*?(\d{4}[-./]\d{2}[-./]\d{2}|\d{2}[-./]\d{2}[-./]\d{4})', pdf_str2, re.I | re.DOTALL)
             termin_I = re.sub('[^0-9]', '-', termin_I.group(1))
             termin_I = re.sub(r'(\d{4}[-./]\d{2}[-./]\d{2}|\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+        if re.findall(r'(?=.*Rata\s2)(?=.*Nr\skonta).*', pdf_str2, re.I | re.DOTALL):
+
+            rata_I = re.search(r'(Rata 1:) (\d*\s?\d+)', pdf_str2).group(2)
+            # rata_II = re.search(r'(Rata 2:) (\d*\s?\d+)', pdf_str2).group(2)
+
+            termin_I = terminy_pln(re.search(r'Rata 1: (.*) (\d{4}[-./]\d{2}[-./]\d{2}|\d{2}[-./]\d{2}[-./]\d{4})', pdf_str2, re.I | re.DOTALL), 2)
+            # termin_II = terminy_pln(re.search(r'Rata 2: (.*) (\d{4}[-./]\d{2}[-./]\d{2}|\d{2}[-./]\d{2}[-./]\d{4})', pdf_str2, re.I | re.DOTALL), 2)
+            # termin_ = [re.sub('[^0-9]', '-', t) for t in termin_I.group(2) + termin_II.group(2)]
+            # termin_ = [re.sub(r'(\d{4}[-./]\d{2}[-./]\d{2}|\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', t) for t in termin]
+            return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
     if 'Compensa' in page_1:
@@ -526,10 +550,10 @@ def przypis_daty_raty(pdf, page_1):
             #     zamiana_sep = re.sub('[^0-9]', '-', termin.group(1))
             #     return re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', zamiana_sep)
 
-            termin_I = terminy(re.search(r'I\srata\s-\s+(\d{2}.\d{2}.\d{4})', box, re.I))
-            termin_II = terminy(re.search(r'II rata -  (\d{2}.\d{2}.\d{4})', box, re.I))
-            termin_III = terminy(re.search(r',   rata -  (\d{2}.\d{2}.\d{4})', box, re.I))
-            termin_IV = terminy(re.search(r'IV rata -  (\d{2}.\d{2}.\d{4})', box, re.I))
+            termin_I = terminy_pln(re.search(r'I\srata\s-\s+(\d{2}.\d{2}.\d{4})', box, re.I))
+            termin_II = terminy_pln(re.search(r'II rata -  (\d{2}.\d{2}.\d{4})', box, re.I))
+            termin_III = terminy_pln(re.search(r',   rata -  (\d{2}.\d{2}.\d{4})', box, re.I))
+            termin_IV = terminy_pln(re.search(r'IV rata -  (\d{2}.\d{2}.\d{4})', box, re.I))
             return total, termin_I, rata_I, 'P', 4, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
@@ -739,16 +763,16 @@ def przypis_daty_raty(pdf, page_1):
             rata_III = float(raty.group(3).replace(',', '.').replace(' ', ''))
             rata_IV = float(raty.group(4).replace(',', '.').replace(' ', ''))
 
-            def termin(terminy, n):
-                zamiana_sep = re.sub('[^0-9]', '-', terminy.group(n))
-                return re.sub(r'(\d{2})-(\d{2})-(\d{2})', r'\3-\2-\1', zamiana_sep)
+            # def terminy_pln(terminy, n):
+            #     zamiana_sep = re.sub('[^0-9]', '-', terminy.group(n))
+            #     return re.sub(r'(\d{2})-(\d{2})-(\d{2})', r'\3-\2-\1', zamiana_sep)
 
             terminy = re.search(r'Termin płatności (\d{2}.\d{2}.\d{2}) (\d{2}.\d{2}.\d{2}) (\d{2}.\d{2}.\d{2}) '
                                 r'(\d{2}.\d{2}.\d{2})', pdf_str, re.I)
-            termin_I = datetime.strptime(termin(terminy, 1), '%y-%m-%d') + one_day
-            termin_II = datetime.strptime(termin(terminy, 2), '%y-%m-%d') + one_day
-            termin_III = datetime.strptime(termin(terminy, 3), '%y-%m-%d') + one_day
-            termin_IV = datetime.strptime(termin(terminy, 4), '%y-%m-%d') + one_day
+            termin_I = datetime.strptime(terminy_pln(terminy, 1), '%y-%m-%d') + one_day
+            termin_II = datetime.strptime(terminy_pln(terminy, 2), '%y-%m-%d') + one_day
+            termin_III = datetime.strptime(terminy_pln(terminy, 3), '%y-%m-%d') + one_day
+            termin_IV = datetime.strptime(terminy_pln(terminy, 4), '%y-%m-%d') + one_day
 
             return total, termin_I, rata_I, 'P', 4, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
