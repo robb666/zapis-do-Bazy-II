@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\000012116176.pdf'
+obj = r'M:\zSkrzynka na polisy\ALL Polisa_260-65567756_ubezpiecznie_mieszkaniowe.pdf'
 # print(obj)
 
 def words_separately(text):
@@ -191,9 +191,9 @@ def kod_pocztowy(page_1, pdf):
         adres = f.group().strip()
         data = page_1.split()
         dystans = [data[data.index(split) - 10: data.index(split) + 33] for split in data if adres in split][0]
-        kod_pocztowy = [kod for kod in dystans if re.search('^\d{2}[-\xad]\d{3}$', kod)][0]
+        if kod_pocztowy := [kod for kod in dystans if re.search('^\d{2}[-\xad]\d{3}$', kod)]:
 
-        return kod_pocztowy
+            return kod_pocztowy[0]
     return ''
 
 
@@ -283,10 +283,11 @@ def przedmiot_ub(page_1, pdf):
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
             elif 'MÓJ DOM' in page_1:
-                kod = re.search('(Miejsce ubezpieczenia).*(\d{2}[-\xad]\d{3})', page_1, re.I).group(2)
+                kod = re.search('(Miejsce ubezpieczenia).*\n?.*,\s?(\d{2}-\d{3})', page_1).group(2)
                 miasto = re.search(f'{kod} (\w+)', page_1).group(1)
-                adres = re.search('(Miejsce ubezpieczenia) (ul.) ([\w \d/]+),', page_1).group(3)
-                rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
+                adres = re.search('(Miejsce ubezpieczenia) (ul.) ([\w ]+)\s?(,|UBEZPIECZAJĄCY)', page_1).group(3)
+                if rok := re.search('(Rok budowy) (\d+)', page_1):
+                    rok.group(2)
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
 
@@ -508,8 +509,8 @@ def zamiana_sep(termin):
     return re.sub('[^0-9]', '-', termin)
 
 
-def terminy_pln(termin, n):
-    zamiana_sep = re.sub('[^0-9]', '-', termin.group(n))
+def terminy_pln(termin, group_n):
+    zamiana_sep = re.sub('[^0-9]', '-', termin.group(group_n))
     return re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', zamiana_sep)
 
 
@@ -520,11 +521,31 @@ def przypis_daty_raty(pdf, page_1):
         box = polisa_box(pdf, 0, 320, 590, 760)
         (total := re.search(r'(Składka:|łącznie:|za 3 lata:|Razem) (\d*\s?\d+)', box))
         total = int(re.sub(r'\xa0', '', total.group(2)))
-        if 'płatność online' in page_1 or 'przelew' in page_1:
+
+        if 'płatność online' in page_1 and 'przelew' in page_1:
+
             termin_I = re.search(r'Dane płatności:\ndo (\d{2}.\d{2}.\d{4})', box, re.I)
             termin_I = re.sub('[^0-9]', '-', termin_I.group(1))
             termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+        if 'Twoja składka za 3 lata' in page_1:
+            print(page_1)
+            termin = terminy_pln(
+                re.search(fr'do (\d{2}.\d{2}.\d{4}).*\n?do (\d{2}.\d{2}.\d{4}).*\n?do (\d{2}.\d{2}.\d{4})', box, re.I),
+                1)
+
+            termin_I = terminy_pln(termin, 1)
+            print(termin_I)
+            termin_II = terminy_pln(termin, 2)
+            termin_III = terminy_pln(termin, 3)
+
+            rata_I = re.search(f'{termin_I} r. (\d*\s?\d+)', box, re.I)
+            rata_II = re.search(f'{termin_II} r. (\d*\s?\d+)', box, re.I)
+            rata_III = re.search(f'{termin_III} r. (\d*\s?\d+)', box, re.I)
+
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
 
 
     if 'AXA' in page_1:
@@ -826,16 +847,20 @@ def przypis_daty_raty(pdf, page_1):
 
 
     if 'UNIQA' in page_1:
-        box = polisa_box(pdf, 0, 300, 590, 470)
-        (total := re.search(r'Składka łączna: (\d*\xa0?\d+)', box, re.I))
+        box = polisa_box(pdf, 0, 300, 590, 700)
+        print(box)
+        total = re.search(r'Składka łączna: (\d*\s?\d+)', box, re.I)
+        print(total)
         total = int(re.sub(r'\xa0', '', total.group(1)))
-
+        print(total)
         if re.findall(r'(?=.*przelewem)(?=.*jednorazowo).*', box, re.I | re.DOTALL):
             (termin_I := re.search(r'do dnia: (\d{2}.\d{2}.\d{4})', box))
             termin_I = re.sub('[^0-9]', '-', termin_I.group(1))
             termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
-
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+        if re.findall(r'(?=.*gotówką)(?=.*jednorazowo).*', box, re.I | re.DOTALL):
+            return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
         if 'przelewem' in box and 'w ratach' in box:
