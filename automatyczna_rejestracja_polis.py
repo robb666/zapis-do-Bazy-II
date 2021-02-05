@@ -530,22 +530,17 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         if 'Twoja składka za 3 lata' in page_1:
-            print(page_1)
-            termin = terminy_pln(
-                re.search(fr'do (\d{2}.\d{2}.\d{4}).*\n?do (\d{2}.\d{2}.\d{4}).*\n?do (\d{2}.\d{2}.\d{4})', box, re.I),
-                1)
+            termin = re.search('do (\d{2}.\d{2}.\d{4}).*\n?do (\d{2}.\d{2}.\d{4}).*\n?do (\d{2}.\d{2}.\d{4})', box, re.I)
 
             termin_I = terminy_pln(termin, 1)
-            print(termin_I)
             termin_II = terminy_pln(termin, 2)
             termin_III = terminy_pln(termin, 3)
 
-            rata_I = re.search(f'{termin_I} r. (\d*\s?\d+)', box, re.I)
-            rata_II = re.search(f'{termin_II} r. (\d*\s?\d+)', box, re.I)
-            rata_III = re.search(f'{termin_III} r. (\d*\s?\d+)', box, re.I)
+            rata_I = re.search(f'{termin.group(1)} r. (\d*\s?\d+)', box, re.I).group(1)
+            rata_II = re.search(f'{termin.group(2)} r. (\d*\s?\d+)', box, re.I).group(1)
+            rata_III = re.search(f'{termin.group(3)} r. (\d*\s?\d+)', box, re.I).group(1)
 
-            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
-
+            return total, termin_I, rata_I, 'P', 3, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
     if 'AXA' in page_1:
