@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\Polisa.pdf'
+obj = r'M:\zSkrzynka na polisy\000012116176.pdf'
 # print(obj)
 
 def words_separately(text):
@@ -122,7 +122,9 @@ def nazwisko_imie(d):
         if 'euroins' in d.values():
             name = []
             for k, v in d.items():
-                if v.title() in all_names and not re.search('\d', d[k + 4]):
+                if v.title() in all_names and d[k + 1] != 'pesel':
+                    name.append(f'{d[k + 1].title()} {v.title()}')
+                if v.title() in all_names and not re.search('\d|telefon$', d[k + 4]):
                     name.append(f'{d[k + 4].title()} {v.title()}')
                 if v.title() in all_names and re.search('\d', d[k + 4]):
                     name.append(f'{d[k + 5].title()} {v.title()}')
@@ -203,6 +205,13 @@ def tel_mail(page_1, pdf, nazwisko):
     if 'Allianz' in page_1:
         tel = ''.join([tel for tel in re.findall(r'tel.*([0-9 .\-\(\)]{8,}[0-9])', page_1) if tel not in tel_mail_off.values()])
         mail = ''.join([mail for mail in re.findall(r'([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', page_1) if mail not in tel_mail_off.values()])
+        return tel, mail
+
+    elif 'EUROINS' in page_1:
+        if tel := re.search(r'telefon: (\+48|0048)?\s?([0-9.\-\(\)\s]{9,})?', page_1):
+            tel = tel.group(2)
+        if mail := re.search(r'email: ([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1):
+            mail = mail.group(1)
         return tel, mail
 
     elif 'Generali' in page_1:
@@ -301,6 +310,15 @@ def przedmiot_ub(page_1, pdf):
                 miasto = re.search(f'{kod}\s(\w+)', pdf_str2).group(1)
                 adres = re.search('(Adres:)\s(.*),', pdf_str2).group(2)
                 rok = re.search('(Rok budowy:)\s(\d{4})', pdf_str2).group(2)
+                return marka, kod, model, miasto, nr_rej, adres, rok
+
+
+        elif 'EUROINS' in page_1:
+            if 'Dane pojazdu' in page_1:
+                marka = re.search('(Marka, model:) (\w+)', page_1, re.I).group(2)
+                model = re.search(f'{marka} ([\w\d./]+)', page_1).group(1)
+                nr_rej = re.search('(rejestracyjny:) ([\w\d.]+)', page_1).group(2)
+                rok = re.search('(Rok produkcji:) (\d+),?', page_1).group(2)
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
 
@@ -555,8 +573,9 @@ def przypis_daty_raty(pdf, page_1):
 
     if 'EUROINS' in page_1:
         box = polisa_box(pdf, 0, 400, 590, 750)
-        (total := re.search(r'Łączna składka do zapłaty (\d+,\d*)', box, re.I))
-        total = re.sub(r',', '.', total.group(1))
+        print(page_1)
+        (total := re.search(r'Łączna składka do zapłaty ([\d ]+,\d*)', box, re.I))
+        total = float(total.group(1).replace(r',', '.').replace(' ', ''))
         (termin_I := re.search(r'1. (\d{4}-\d{2}-\d{2})', box, re.I).group(1))
         if 'jednorazowo' in box and 'przelew' in box:
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
