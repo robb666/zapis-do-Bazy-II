@@ -263,161 +263,157 @@ def tel_mail(page_1, pdf, nazwisko):
 
 def przedmiot_ub(page_1, pdf):
     marka, kod, model, miasto, nr_rej, adres, rok = '', '', '', '', '', '', ''
-    if 'Allianz' in page_1:
-        if 'Marka / model pojazdu' in page_1:
-            marka = re.search('(Marka / model pojazdu) (\w+)', page_1, re.I).group(2)
-            model = re.search('(Marka / model pojazdu) (\w+) (\w+)', page_1).group(3)
-            nr_rej = re.search('(NR REJESTRACYJNY) ([\w\d.]+),?', page_1).group(2)
-            rok = re.search('(Rok produkcji) (\d+),?', page_1).group(2)
-            return marka, kod, model, miasto, nr_rej, adres, rok
-
-        elif 'MÓJ DOM' in page_1:
-            kod = re.search('(Miejsce ubezpieczenia).*(\d{2}[-\xad]\d{3})', page_1, re.I).group(2)
-            miasto = re.search(f'{kod} (\w+)', page_1).group(1)
-            adres = re.search('(Miejsce ubezpieczenia) (ul.) ([\w \d/]+),', page_1).group(3)
-            rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
-            return marka, kod, model, miasto, nr_rej, adres, rok
-
-
-    elif 'AXA' in page_1:
-        pdf_str2 = polisa_str(pdf)[0:-1]
-        print(pdf_str2)
-        if 'Pojazd' in pdf_str2:
-            # marka = re.search('(Dla samochodu:).*?(\d{4}).*?[% ]?([A-Z]{2,})', page_1, re.I | re.DOTALL).group(3)
-            # model = re.search(rf'{marka} ([\w\d./]+)', page_1).group(1)
-            for line in pdf_str2.split('\n'):
-                if line.startswith('Udział'):
-                    print(line)
-                    if (marka := re.search('[A-Z]{3,}', line)):
-                        print(marka.group())
-                        marka = marka.group()
-                else:
-                    marka = re.search('(Dla samochodu:).*?([a-z]{2,})', pdf_str2, re.I | re.DOTALL).group(2)
-                print(marka)
-                model = re.search(rf'{marka} (118i)', pdf_str2, re.I).group(1)
-                nr_rej = re.search('(gwarancyjna/ubezpieczenia) ([\w\d.]+)', page_1).group(2)
+    with open(path + '\\marki.txt') as content:
+        makes = content.read().split('\n')
+        if 'Allianz' in page_1:
+            if 'Marka / model pojazdu' in page_1:
+                marka = re.search('(Marka / model pojazdu) (\w+)', page_1, re.I).group(2)
+                model = re.search('(Marka / model pojazdu) (\w+) (\w+)', page_1).group(3)
+                nr_rej = re.search('(NR REJESTRACYJNY) ([\w\d.]+),?', page_1).group(2)
                 rok = re.search('(Rok produkcji) (\d+),?', page_1).group(2)
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
-        if 'Przedmiot ubezpieczenia: Mieszkanie' in pdf_str2:
-            kod = re.search('(Adres:).*\s(\d{2}[-\xad]\d{3})\s', pdf_str2, re.I).group(2)
-            miasto = re.search(f'{kod}\s(\w+)', pdf_str2).group(1)
-            adres = re.search('(Adres:)\s(.*),', pdf_str2).group(2)
-            rok = re.search('(Rok budowy:)\s(\d{4})', pdf_str2).group(2)
-            return marka, kod, model, miasto, nr_rej, adres, rok
-
-# 'Udział własny wypadkowy 2000 zł, kradzieżowy 10% BMW 118i Cabrio'
-
-    elif 'Generali' in page_1 and not 'Proama' in page_1:
-        if 'DANE POJAZDU' in page_1:
-            marka = re.search('(Marka / Model) (\w+)', page_1, re.I).group(2)
-            model = re.search('(Marka / Model) (\w+) /? ([\w\d./]+)', page_1).group(3)
-            nr_rej = re.search('(Numer rejestracyjny / VIN) ([\w\d.]+)', page_1).group(2)
-            rok = re.search('(Rok produkcji) (\d+),?', page_1).group(2)
-            return marka, kod, model, miasto, nr_rej, adres, rok
-
-        elif 'UBEZPIECZENIE MIESZKANIA' in page_1:
-            kod = re.search('(Miejsce ubezpieczenia).*(\d{2}[-\xad]\d{3})', page_1, re.I).group(2)
-            miasto = re.search(f'{kod} (\w+)', page_1).group(1)
-            adres = re.search('(Miejsce ubezpieczenia) ([\w \d/]+),', page_1).group(2)
-            rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
-            return marka, kod, model, miasto, nr_rej, adres, rok
+            elif 'MÓJ DOM' in page_1:
+                kod = re.search('(Miejsce ubezpieczenia).*(\d{2}[-\xad]\d{3})', page_1, re.I).group(2)
+                miasto = re.search(f'{kod} (\w+)', page_1).group(1)
+                adres = re.search('(Miejsce ubezpieczenia) (ul.) ([\w \d/]+),', page_1).group(3)
+                rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
+                return marka, kod, model, miasto, nr_rej, adres, rok
 
 
-    elif 'Hestia' in page_1 and not 'MTU' in page_1:
-        if 'Ubezpieczony pojazd' in page_1:
-            marka = re.search(r'pojazd (\w+)\s?,\s?(\w+)', page_1, re.I).group(2)
-            model = re.search(rf'(?<={marka}) (\w+)', page_1, re.I).group(1)
-            nr_rej = re.search(rf'([A-Z0-9]+)\s?(?=, ROK)', page_1).group(1)
-            rok = re.search(r'(ROK PRODUKCJI:?) (\d{4})', page_1).group(2)
-            return marka, kod, model, miasto, nr_rej, adres, rok
+        elif 'AXA' in page_1:
+            pdf_str2 = polisa_str(pdf)[0:-1]
+            if 'Pojazd' in pdf_str2:
+                for make in makes:
+                    for line in pdf_str2.split('\n'):
+                        if line.startswith('Udział'):
+                            if make in (lsplt := line.split()):
+                                marka = make
+                                model = lsplt[lsplt.index(marka) + 1]
+                        if line.startswith('Zakres Suma'):
+                            nr_rej = line.split()[-1]
+                        if line.startswith('Rok produkcji'):
+                            rok = line.split()[-1]
+                return marka, kod, model, miasto, nr_rej, adres, rok
+
+            if 'Przedmiot ubezpieczenia: Mieszkanie' in pdf_str2:
+                kod = re.search('(Adres:).*\s(\d{2}[-\xad]\d{3})\s', pdf_str2, re.I).group(2)
+                miasto = re.search(f'{kod}\s(\w+)', pdf_str2).group(1)
+                adres = re.search('(Adres:)\s(.*),', pdf_str2).group(2)
+                rok = re.search('(Rok budowy:)\s(\d{4})', pdf_str2).group(2)
+                return marka, kod, model, miasto, nr_rej, adres, rok
 
 
-    elif 'InterRisk' in page_1:
-        if 'DANE POJAZDU' in page_1:
-            marka = re.search(r'Marka/typ/model: ([\w./]+)', page_1, re.I).group(1)
-            model = re.search(rf'(?<={marka})\s(\w+)', page_1, re.I).group(1)
-            nr_rej = re.search(r'Nr rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
-            rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
-            return marka, kod, model, miasto, nr_rej, adres, rok
+        elif 'Generali' in page_1 and not 'Proama' in page_1:
+            if 'DANE POJAZDU' in page_1:
+                marka = re.search('(Marka / Model) (\w+)', page_1, re.I).group(2)
+                model = re.search('(Marka / Model) (\w+) /? ([\w\d./]+)', page_1).group(3)
+                nr_rej = re.search('(Numer rejestracyjny / VIN) ([\w\d.]+)', page_1).group(2)
+                rok = re.search('(Rok produkcji) (\d+),?', page_1).group(2)
+                return marka, kod, model, miasto, nr_rej, adres, rok
+
+            elif 'UBEZPIECZENIE MIESZKANIA' in page_1:
+                kod = re.search('(Miejsce ubezpieczenia).*(\d{2}[-\xad]\d{3})', page_1, re.I).group(2)
+                miasto = re.search(f'{kod} (\w+)', page_1).group(1)
+                adres = re.search('(Miejsce ubezpieczenia) ([\w \d/]+),', page_1).group(2)
+                rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
+                return marka, kod, model, miasto, nr_rej, adres, rok
 
 
-    elif 'HDI' in page_1 or '„WARTA” S.A. POTWIERDZA' in page_1:
-        if 'Marka, Model, Typ:' in page_1:
-            marka = re.search(r'Marka, Model, Typ: ([\w./]+)', page_1, re.I).group(1)
-            model = re.search(rf'(?<={marka})\s(\w+)', page_1, re.I).group(1)
-            nr_rej = re.search(r'Nr rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
-            rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
-            return marka, kod, model, miasto, nr_rej, adres, rok
+        elif 'Hestia' in page_1 and not 'MTU' in page_1:
+            if 'Ubezpieczony pojazd' in page_1:
+                marka = re.search(r'pojazd (\w+)\s?,\s?(\w+)', page_1, re.I).group(2)
+                model = re.search(rf'(?<={marka}) (\w+)', page_1, re.I).group(1)
+                nr_rej = re.search(rf'([A-Z0-9]+)\s?(?=, ROK)', page_1).group(1)
+                rok = re.search(r'(ROK PRODUKCJI:?) (\d{4})', page_1).group(2)
+                return marka, kod, model, miasto, nr_rej, adres, rok
 
 
-    # Link4
-    elif re.search('Numer\s(\w\d+)', page_1):
-        if 'Marka / Model' in page_1:
-            marka = re.search(r'Marka / Model ([\w./]+)', page_1, re.I).group(1)
-            model = re.search(rf'(?<={marka}) (\w+)', page_1, re.I).group(1)
-            nr_rej = re.search(r'rejestracyjny ([A-Z0-9]+)', page_1).group(1)
-            rok = re.search(r'Rok produkcji (\d{4})', page_1).group(1)
-            return marka, kod, model, miasto, nr_rej, adres, rok
+        elif 'InterRisk' in page_1:
+            if 'DANE POJAZDU' in page_1:
+                marka = re.search(r'Marka/typ/model: ([\w./]+)', page_1, re.I).group(1)
+                model = re.search(rf'(?<={marka})\s(\w+)', page_1, re.I).group(1)
+                nr_rej = re.search(r'Nr rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
+                rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
+                return marka, kod, model, miasto, nr_rej, adres, rok
 
 
-    elif 'MTU' in page_1:
-        if 'Ubezpieczony pojazd' in page_1:
-            marka = re.search(r'(Ubezpieczony pojazd).*?(\w+), (\w+-?\w+)', page_1, re.I | re.DOTALL).group(3)
-            model = re.search(rf'(?<={marka}) (\w+)', page_1, re.I).group(1)
-            nr_rej = re.search(rf'([A-Z0-9]+)(?=, ROK)', page_1).group(1)
-            rok = re.search(r'(ROK PRODUKCJI:) (\d{4})', page_1).group(2)
-            return marka, kod, model, miasto, nr_rej, adres, rok
+        elif 'HDI' in page_1 or '„WARTA” S.A. POTWIERDZA' in page_1:
+            if 'Marka, Model, Typ:' in page_1:
+                marka = re.search(r'Marka, Model, Typ: ([\w./]+)', page_1, re.I).group(1)
+                model = re.search(rf'(?<={marka})\s(\w+)', page_1, re.I).group(1)
+                nr_rej = re.search(r'Nr rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
+                rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
+                return marka, kod, model, miasto, nr_rej, adres, rok
 
 
-    elif 'PZU' in page_1:
-        if 'Ubezpieczony pojazd' in page_1:
-            marka = re.search(r'Marka: ([\w./]+)', page_1, re.I).group(1)
-            model = re.search(rf'typ pojazdu: (\w+)', page_1, re.I).group(1)
-            nr_rej = re.search(r'nr rejestracyjny ([A-Z0-9]+)', page_1).group(1)
-            rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
-            return marka, kod, model, miasto, nr_rej, adres, rok
-
-        if 'Miejsce ubezpieczenia:' in page_1:
-            kod = re.search('(Miejsce ubezpieczenia:).*(\d{2}[-\xad]\d{3})', page_1, re.I).group(2)
-            miasto = re.search(f'{kod} (\w+)', page_1).group(1)
-            adres = re.search('(Miejsce ubezpieczenia:) ([\w \d/]+),', page_1).group(2)
-            # rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
-            return marka, kod, model, miasto, nr_rej, adres, rok
+        # Link4
+        elif re.search('Numer\s(\w\d+)', page_1):
+            if 'Marka / Model' in page_1:
+                marka = re.search(r'Marka / Model ([\w./]+)', page_1, re.I).group(1)
+                model = re.search(rf'(?<={marka}) (\w+)', page_1, re.I).group(1)
+                nr_rej = re.search(r'rejestracyjny ([A-Z0-9]+)', page_1).group(1)
+                rok = re.search(r'Rok produkcji (\d{4})', page_1).group(1)
+                return marka, kod, model, miasto, nr_rej, adres, rok
 
 
-    elif 'TUW' in page_1 and not 'TUZ' in page_1:
-        pdf_str3 = polisa_str(pdf)[0:6500]
-        if 'pojazdu:' in pdf_str3:
-            nr_rej = re.search(r'numer\s*rejestracyjny:\s*([A-Z0-9]+)', pdf_str3).group(1)
-            marka = re.search(rf'{nr_rej}.*?([\w./]+)', pdf_str3, re.I | re.DOTALL).group(1).split('/')[0]
-            model = re.search(rf'{nr_rej}.*?([\w./]+)', pdf_str3, re.I | re.DOTALL).group(1).split('/')[1]
-            rok = re.search(r'rok produkcji:\s?(\d{4})', pdf_str3).group(1)
-            return marka, kod, model, miasto, nr_rej, adres, rok
-
-        if 'Miejsce ubezpieczenia:' in page_1:
-            kod = re.search('(Miejsce ubezpieczenia:).*(\d{2}[-\xad]\d{3})', page_1, re.I).group(2)
-            miasto = re.search(f'{kod} (\w+)', page_1).group(1)
-            adres = re.search('(Miejsce ubezpieczenia:) ([\w \d/]+),', page_1).group(2)
-            # rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
-            return marka, kod, model, miasto, nr_rej, adres, rok
+        elif 'MTU' in page_1:
+            if 'Ubezpieczony pojazd' in page_1:
+                marka = re.search(r'(Ubezpieczony pojazd).*?(\w+), (\w+-?\w+)', page_1, re.I | re.DOTALL).group(3)
+                model = re.search(rf'(?<={marka}) (\w+)', page_1, re.I).group(1)
+                nr_rej = re.search(rf'([A-Z0-9]+)(?=, ROK)', page_1).group(1)
+                rok = re.search(r'(ROK PRODUKCJI:) (\d{4})', page_1).group(2)
+                return marka, kod, model, miasto, nr_rej, adres, rok
 
 
-    if 'WARTA' in page_1:
-        if 'Marka, Model, Typ:' in page_1:
-            marka = re.search(r'Marka, Model, Typ: ([\w./]+)', page_1, re.I).group(1)
-            model = re.search(rf'(?<={marka})\s(\w+)', page_1, re.I).group(1)
-            nr_rej = re.search(r'Nr rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
-            rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
-            return marka, kod, model, miasto, nr_rej, adres, rok
+        elif 'PZU' in page_1:
+            if 'Ubezpieczony pojazd' in page_1:
+                marka = re.search(r'Marka: ([\w./]+)', page_1, re.I).group(1)
+                model = re.search(rf'typ pojazdu: (\w+)', page_1, re.I).group(1)
+                nr_rej = re.search(r'nr rejestracyjny ([A-Z0-9]+)', page_1).group(1)
+                rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
+                return marka, kod, model, miasto, nr_rej, adres, rok
 
-        if 'WARTA DOM' in page_1:
-            kod = re.search('(Adres:).*\s(\d{2}[-\xad]\d{3})\s', page_1, re.I).group(2) # zamieszkania/korespondencyjny:
-            miasto = re.search(f'{kod}\s(\w+)', page_1).group(1)
-            adres = re.search(rf'{miasto},\n?(.*)\n', page_1).group(1)
-            return marka, kod, model, miasto, nr_rej, adres, rok
+            if 'Miejsce ubezpieczenia:' in page_1:
+                kod = re.search('(Miejsce ubezpieczenia:).*(\d{2}[-\xad]\d{3})', page_1, re.I).group(2)
+                miasto = re.search(f'{kod} (\w+)', page_1).group(1)
+                adres = re.search('(Miejsce ubezpieczenia:) ([\w \d/]+),', page_1).group(2)
+                # rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
+                return marka, kod, model, miasto, nr_rej, adres, rok
 
-    return marka, kod, model, miasto, nr_rej, adres, rok
+
+        elif 'TUW' in page_1 and not 'TUZ' in page_1:
+            pdf_str3 = polisa_str(pdf)[0:6500]
+            if 'pojazdu:' in pdf_str3:
+                nr_rej = re.search(r'numer\s*rejestracyjny:\s*([A-Z0-9]+)', pdf_str3).group(1)
+                marka = re.search(rf'{nr_rej}.*?([\w./]+)', pdf_str3, re.I | re.DOTALL).group(1).split('/')[0]
+                model = re.search(rf'{nr_rej}.*?([\w./]+)', pdf_str3, re.I | re.DOTALL).group(1).split('/')[1]
+                rok = re.search(r'rok produkcji:\s?(\d{4})', pdf_str3).group(1)
+                return marka, kod, model, miasto, nr_rej, adres, rok
+
+            if 'Miejsce ubezpieczenia:' in page_1:
+                kod = re.search('(Miejsce ubezpieczenia:).*(\d{2}[-\xad]\d{3})', page_1, re.I).group(2)
+                miasto = re.search(f'{kod} (\w+)', page_1).group(1)
+                adres = re.search('(Miejsce ubezpieczenia:) ([\w \d/]+),', page_1).group(2)
+                # rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
+                return marka, kod, model, miasto, nr_rej, adres, rok
+
+
+        elif 'WARTA' in page_1:
+            if 'Marka, Model, Typ:' in page_1:
+                marka = re.search(r'Marka, Model, Typ: ([\w./]+)', page_1, re.I).group(1)
+                model = re.search(rf'(?<={marka})\s(\w+)', page_1, re.I).group(1)
+                nr_rej = re.search(r'Nr rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
+                rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
+                return marka, kod, model, miasto, nr_rej, adres, rok
+
+            if 'WARTA DOM' in page_1:
+                kod = re.search('(Adres:).*\s(\d{2}[-\xad]\d{3})\s', page_1, re.I).group(2) # zamieszkania/korespondencyjny:
+                miasto = re.search(f'{kod}\s(\w+)', page_1).group(1)
+                adres = re.search(rf'{miasto},\n?(.*)\n', page_1).group(1)
+                return marka, kod, model, miasto, nr_rej, adres, rok
+
+        return marka, kod, model, miasto, nr_rej, adres, rok
 
 
 def data_wystawienia():
