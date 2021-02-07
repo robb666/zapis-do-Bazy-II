@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\ALL Polisa_260-65567756_ubezpiecznie_mieszkaniowe.pdf'
+obj = r'M:\zSkrzynka na polisy'
 # print(obj)
 
 def words_separately(text):
@@ -25,6 +25,7 @@ def polisa(pdf):
     """Tekst całej 1 str. polisy."""
     with pdfplumber.open(pdf) as policy:
         page_1 = policy.pages[0].extract_text()  # Tylko pierwsza strona
+        print(page_1)
     return page_1, words_separately(page_1.lower())
 
 
@@ -461,7 +462,7 @@ def TU():
 
 def numer_polisy(page_1, pdf):
     nr_polisy = ''
-    if 'Allianz' in page_1 and (nr_polisy := re.search('(Polisa nr|NUMER POLISY) (\d*-?\d+)', page_1)):
+    if 'Allianz' in page_1 or 'Globtloter' in page_1 and (nr_polisy := re.search('(Polisa nr|NUMER POLISY) (\d*-?\d+)', page_1)):
         return 'ALL', 'ALL', nr_polisy.group(2)
     if 'AXA' in page_1:
         page_1 = polisa_str(pdf)[0:4600]
@@ -518,6 +519,7 @@ def przypis_daty_raty(pdf, page_1):
     total, termin_I, rata_I, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV = \
                                                                                     '', '', '', '', '', '', '', '', ''
     if 'Allianz' in page_1:
+        print(page_1)
         box = polisa_box(pdf, 0, 320, 590, 760)
         (total := re.search(r'(Składka:|łącznie:|za 3 lata:|Razem) (\d*\s?\d+)', box))
         total = int(re.sub(r'\xa0', '', total.group(2)))
@@ -998,7 +1000,6 @@ def tacka_na_polisy(obj):
 
 """Sprawdza czy arkusz jest otwarty."""
 """Jeżeli arkusz jest zamknięty, otwiera go."""
-
 try:
     ExcelApp = win32com.client.GetActiveObject('Excel.Application')
     wb = ExcelApp.Workbooks("DTESTY.xlsx")
@@ -1011,6 +1012,9 @@ except:
     ws = wb.Worksheets("BAZA 2014")
 
 
+"""Rozpoznaje kolejny wiersz, który może zapisać."""
+row_to_write = wb.Worksheets(1).Cells(wb.Worksheets(1).Rows.Count, 30).End(-4162).Row + 1
+
 """Jesienne Bazie"""
 # try:
 for dane_polisy in tacka_na_polisy(obj):
@@ -1018,9 +1022,6 @@ for dane_polisy in tacka_na_polisy(obj):
     miasto, nr_rej, adres, rok, data_wyst, data_konca, tow_ub_tor, tow_ub, nr_polisy, przypis, ter_platnosci, rata_I, \
     f_platnosci, ilosc_rat, nr_raty, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV = dane_polisy
     print(dane_polisy)
-
-    """Rozpoznaje kolejny wiersz, który może zapisać."""
-    row_to_write = wb.Worksheets(1).Cells(wb.Worksheets(1).Rows.Count, 30).End(-4162).Row + 1
 
     # Rok_przypisu = ExcelApp.Cells(row_to_write, 1).Value = data_wyst[:2] # Komórka tylko do testów
     Rozlicz = ExcelApp.Cells(row_to_write, 7).Value = 'Robert'
@@ -1111,8 +1112,12 @@ for dane_polisy in tacka_na_polisy(obj):
                 ExcelApp.Cells(row_to_write + 3, 50).Value = rata_IV
                 ExcelApp.Cells(row_to_write + 3, 53).Value = 4
 
-# except FileNotFoundError as e:
-# ExcelApp.Cells(row_to_write, 12).Value = 'POLISA NIEZAREJESTROWANA !'
+
+
+# except:
+#     ExcelApp.Cells(row_to_write, 12).Value = 'POLISA NIEZAREJESTROWANA !'
+
+
 
 """Opcje zapisania"""
 # ExcelApp.DisplayAlerts = False
