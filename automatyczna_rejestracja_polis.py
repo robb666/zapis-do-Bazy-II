@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\PZU Dokument+polisy.pdf'
+obj = r'M:\zSkrzynka na polisy\RIS Policy_KMHP_567598.pdf'
 # print(obj)
 
 def words_separately(text):
@@ -399,7 +399,7 @@ def przedmiot_ub(page_1, pdf):
                 kod = re.search('(Miejsce ubezpieczenia:).*(\d{2}[-\xad]\d{3})', page_1, re.I).group(2)
                 miasto = re.search(f'{kod} (\w+)', page_1).group(1)
                 adres = re.search('(Miejsce ubezpieczenia:) ([\w \d/]+),', page_1).group(2)
-                # rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
+                rok = re.search('rok budowy: (\d+)', page_1).group(1)
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
 
@@ -673,7 +673,7 @@ def przypis_daty_raty(pdf, page_1):
                    rata_III, termin_IV, rata_IV
 
 
-    if 'INTER' in page_1:
+    if 'INTER' in page_1 and not 'InterRisk' in page_1:
         box = polisa_box(pdf, 0, 220, 590, 490)
         (total := re.search(r'kwota składki: (\d*\s?\d+)', box, re.I))
         total = int(re.sub(r' ', '', total.group(1)))
@@ -688,6 +688,7 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'InterRisk' in page_1:
         pdf_str1 = polisa_str(pdf)[1500:-2600]
+        # print(pdf_str1)
         total_match = re.compile(r'(Składka\słączna:\s*|WYSOKOŚĆ\sSKŁADKI\sŁĄCZNEJ:\n)(\d*\s?\d+)')
         (total := re.search(total_match, pdf_str1))
         total = int(re.sub(r'\xa0', '', total.group(2)))
@@ -697,8 +698,8 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         if re.findall(r'(?=.*Płatność: 2\sraty)(?=.*płatności:\s*przelewem).*', pdf_str1, re.I | re.DOTALL):
-            rata_I = re.search(r'1\srata: (\d*\s?\d+)', pdf_str1, re.I).group(1)
-            rata_II = re.search(r'2\srata: (\d*\s?\d+)', pdf_str1, re.I).group(1)
+            rata_I = re.search(r'1\srata: (\d*\s?\d+,?\d*)', pdf_str1, re.I).group(1).replace(',', '.').replace('\xa0', '')
+            rata_II = re.search(r'2\srata: (\d*\s?\d+)', pdf_str1, re.I).group(1).replace(',', '.').replace('\xa0', '')
 
             termin_I = re.search(r'płatna\sdo\sdnia:\s(\d{4}-\d{2}-\d{2})', pdf_str1, re.I).group(1)
             termin_II = re.search(r'2\srata: (.*)(\d{4}-\d{2}-\d{2})', pdf_str1, re.I).group(2)
@@ -778,7 +779,6 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'PZU' in page_1:
         pdf_str = polisa_str(pdf)[400:5000]
-        print(pdf_str)
         total = re.search(r'Składka łączna: (\d*\s?\d+,?\d{2}?)', pdf_str, re.I).group(1)
         # total = float(re.sub(r' ', '', total.group(1)))
         total = float(total.replace(' ', '').replace(',', '.'))
@@ -792,6 +792,18 @@ def przypis_daty_raty(pdf, page_1):
             termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
+        if re.search('(Rata 1 2\n)', pdf_str):
+            raty = re.search(r'Kwota w złotych (\d*\s?\d+,\d{2}) (\d*\s?\d+,\d{2})', pdf_str, re.I)
+            rata_I = float(raty.group(1).replace(',', '.').replace(' ', ''))
+            rata_II = float(raty.group(2).replace(',', '.').replace(' ', ''))
+
+            terminy = re.search(r'Termin płatności (\d{2}.\d{2}.\d{2}) (\d{2}.\d{2}.\d{2})', pdf_str, re.I)
+            termin_I = datetime.strptime(terminy_pln(terminy, 1), '%y-%m-%d') + one_day
+            termin_II = datetime.strptime(terminy_pln(terminy, 2), '%y-%m-%d') + one_day
+
+            return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+
         if 'Rata 1 2 3 4' in pdf_str:
             (raty := re.search(r'Kwota w złotych (\d*\s?\d+,\d{2}) (\d*\s?\d+,\d{2}) (\d*\s?\d+,\d{2}) (\d*\s?\d+,\d{2})',
                                pdf_str, re.I))
@@ -799,10 +811,6 @@ def przypis_daty_raty(pdf, page_1):
             rata_II = float(raty.group(2).replace(',', '.').replace(' ', ''))
             rata_III = float(raty.group(3).replace(',', '.').replace(' ', ''))
             rata_IV = float(raty.group(4).replace(',', '.').replace(' ', ''))
-
-            # def terminy_pln(terminy, n):
-            #     zamiana_sep = re.sub('[^0-9]', '-', terminy.group(n))
-            #     return re.sub(r'(\d{2})-(\d{2})-(\d{2})', r'\3-\2-\1', zamiana_sep)
 
             terminy = re.search(r'Termin płatności (\d{2}.\d{2}.\d{2}) (\d{2}.\d{2}.\d{2}) (\d{2}.\d{2}.\d{2}) '
                                 r'(\d{2}.\d{2}.\d{2})', pdf_str, re.I)
@@ -812,6 +820,9 @@ def przypis_daty_raty(pdf, page_1):
             termin_IV = datetime.strptime(terminy_pln(terminy, 4), '%y-%m-%d') + one_day
 
             return total, termin_I, rata_I, 'P', 4, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+
+
 
     elif 'TUW' in page_1 and not 'TUZ' in page_1:
         pdf_str3 = polisa_str(pdf)[1000:6500]
@@ -849,11 +860,9 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'UNIQA' in page_1:
         box = polisa_box(pdf, 0, 300, 590, 700)
-        print(box)
         total = re.search(r'Składka łączna: (\d*\s?\d+)', box, re.I)
-        print(total)
         total = int(re.sub(r'\xa0', '', total.group(1)))
-        print(total)
+
         if re.findall(r'(?=.*przelewem)(?=.*jednorazowo).*', box, re.I | re.DOTALL):
             (termin_I := re.search(r'do dnia: (\d{2}.\d{2}.\d{4})', box))
             termin_I = re.sub('[^0-9]', '-', termin_I.group(1))
