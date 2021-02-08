@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\GEN Polisa_50006911287_02022021_112038.pdf'
+obj = r'M:\zSkrzynka na polisy'
 # print(obj)
 
 def words_separately(text):
@@ -519,11 +519,8 @@ def terminy_pln(termin, group_n):
 def przypis_daty_raty(pdf, page_1):
     total, termin_I, rata_I, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV = \
                                                                            '', '', '', '', '', '', '', '', ''
-    # print(page_1)
     if 'Allianz' in page_1 or 'Globtroter' in page_1:
-
         box = polisa_box(pdf, 0, 320, 590, 760)
-        print(box)
         total = re.search(r'(Składka:|łącznie:|za 3 lata:|Razem) (\d*\s?\d+)', box)
         if total:
             total = int(re.sub(r'\xa0', '', total).group(2))
