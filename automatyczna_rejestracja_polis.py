@@ -274,6 +274,7 @@ def przedmiot_ub(page_1, pdf):
     marka, kod, model, miasto, nr_rej, adres, rok = '', '', '', '', '', '', ''
     with open(path + '\\marki.txt') as content:
         makes = content.read().split('\n')
+        # print(page_1)
         if 'Allianz' in page_1:
             if 'Marka / model pojazdu' in page_1:
                 marka = re.search('(Marka / model pojazdu) (\w+)', page_1, re.I).group(2)
@@ -292,14 +293,17 @@ def przedmiot_ub(page_1, pdf):
 
 
         elif 'AXA' in page_1:
-            pdf_str2 = polisa_str(pdf)[0:-1]
+            pdf_str2 = polisa_str(pdf)[0:-300]
+            print(pdf_str2)
             if 'Pojazd' in pdf_str2:
                 for make in makes:
+
                     for line in pdf_str2.split('\n'):
-                        if line.startswith('Udział'):
-                            if make in (lsplt := line.split()):
-                                marka = make
-                                model = lsplt[lsplt.index(marka) + 1]
+                        # if line.startswith('Udział'):
+                        if make in (lsplt := line.split()):
+                            marka = make
+                            model = lsplt[lsplt.index(marka) + 1]
+
                         if line.startswith('Zakres Suma'):
                             nr_rej = line.split()[-1]
                         if line.startswith('Rok produkcji'):
@@ -323,8 +327,7 @@ def przedmiot_ub(page_1, pdf):
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
 
-        elif 'Generali' in page_1 and not 'Proama' in page_1:
-            print(page_1)
+        elif 'Generali' in page_1 or 'Proama' in page_1:
             if 'DANE POJAZDU' in page_1:
                 marka = re.search('(Marka / Model) (\w+)', page_1, re.I).group(2)
                 model = re.search('(Marka / Model) (\w+) /? ([\w\d./]+)', page_1).group(3)
@@ -368,7 +371,7 @@ def przedmiot_ub(page_1, pdf):
 
 
         # Link4
-        elif re.search('Numer:?\s\n?(\w\d+)', page_1, re.I):
+        elif re.search('Numer:?\s\n?(\w\d+)', page_1, re.I) and not 'WARTA' in page_1:
             if 'Marka / Model' in page_1 or 'DANE POJAZDU' in page_1:
                 marka = re.search(r'Marka / Model|Marka ([\w./]+)', page_1, re.I).group(1)
                 model = re.search(rf'({marka}|\n?Model) (\w+)', page_1, re.I).group(2)
@@ -423,6 +426,7 @@ def przedmiot_ub(page_1, pdf):
         elif 'WARTA' in page_1:
             if 'Marka, Model, Typ:' in page_1:
                 marka = re.search(r'Marka, Model, Typ: ([\w./]+)', page_1, re.I).group(1)
+                print(marka)
                 model = re.search(rf'(?<={marka})\s(\w+)', page_1, re.I).group(1)
                 nr_rej = re.search(r'Nr rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
                 rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
@@ -483,7 +487,7 @@ def numer_polisy(page_1, pdf):
         return 'INT', 'INT', nr_polisy.group(1) + nr_polisy.group(2)
     if 'InterRisk' in page_1 and (nr_polisy := re.search('Polisa seria?\s(.*)\snumer\s(\d+)', page_1, re.I)):
         return 'RIS', 'RIS', nr_polisy.group(1) + nr_polisy.group(2)
-    if (nr_polisy := re.search('Numer:?\s?\n?(\w\d+)', page_1, re.I)) and not 'Travel' in page_1:
+    if (nr_polisy := re.search('Numer:?\s?\n?(\w\d+)', page_1, re.I)) and not 'Travel' in page_1 and not 'WARTA' in page_1:
         return 'LIN', 'LIN',  nr_polisy.group(1)
     if 'MTU' in page_1 and (nr_polisy := re.search('Polisa\s.*\s(\d+)', page_1, re.I)):
         return 'AZ', 'MTU', nr_polisy.group(1)
@@ -593,7 +597,6 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'EUROINS' in page_1:
         box = polisa_box(pdf, 0, 400, 590, 750)
-        print(page_1)
         (total := re.search(r'Łączna składka do zapłaty ([\d ]+,\d*)', box, re.I))
         total = float(total.group(1).replace(r',', '.').replace(' ', ''))
         (termin_I := re.search(r'1. (\d{4}-\d{2}-\d{2})', box, re.I).group(1))
@@ -708,10 +711,9 @@ def przypis_daty_raty(pdf, page_1):
 
 
     # Link4
-    elif (nr_polisy := re.search('Numer:?\s?\n?(\w\d+)', page_1, re.I)):
+    elif (nr_polisy := re.search('Numer:?\s?\n?(\w\d+)', page_1, re.I)) and not 'WARTA' in page_1:
         pdf_str2 = polisa_str(pdf)[400:4600]
-        print(page_1)
-        # box = polisa_box(pdf, 0, 300, 590, 600)
+
         total = re.search(r'(\(w złotych\)|ŁĄCZNIE)\s?(\d*\s?\d+,\d+)', pdf_str2, re.I)
         total = float(total.group(2).replace(',', '.').replace(' ', ''))
 
@@ -883,8 +885,8 @@ def przypis_daty_raty(pdf, page_1):
 
 
     elif 'WARTA' in page_1:
-        pdf_str = polisa_str(pdf)[100:-1]
-        print(pdf_str)
+        pdf_str = polisa_str(pdf)[100:-300]
+
         total = re.search(r'(SKŁADKA ŁĄCZNA|Kwota\s:) (\d*\s?\.?\d+)', pdf_str, re.I)
         total = int(total.group(2).replace('\xa0', '').replace('.', ''))
 
