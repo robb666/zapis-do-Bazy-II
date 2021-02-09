@@ -255,8 +255,13 @@ def tel_mail(page_1, pdf, nazwisko):
 
     elif 'WARTA' in page_1:
         pdf_str3 = polisa_str(pdf)[0:-3000]
-        tel = re.search(r'Telefon komórkowy:\s?(\+48|0048)?\s?([0-9.\-\(\)]{9,})?', pdf_str3).group(2)
-        mail = re.search(r'E-?MAIL:\s?([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', pdf_str3, re.I).group(1)
+        try:
+            tel = re.search(r'Telefon komórkowy:\s?(\+48|0048)?\s?([0-9.\-\(\)]{9,})?', pdf_str3).group(2)
+        except Exception:pass
+        try:
+            mail = re.search(r'E-?MAIL:\s?([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', pdf_str3, re.I).group(1)
+        except Exception:pass
+
         return tel, mail
 
     elif 'Wiener' in page_1:
@@ -272,8 +277,12 @@ def tel_mail(page_1, pdf, nazwisko):
         tel_comp, email_comp = re.compile(r' ([0-9]{9})\n? '), re.compile(r'([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)')
         tel_list = re.findall(tel_comp, page_1)
         email_list = re.findall(email_comp, page_1)
-        tel = [phony for phony in tel_list if not regon_checksum(phony) and phony not in tel_mail_off.values()][0]
-        mail = [email.casefold() for email in email_list if email.casefold() not in tel_mail_off.values()][0]
+        try:
+            tel = [phony for phony in tel_list if not regon_checksum(phony) and phony not in tel_mail_off.values()][0]
+        except:pass
+        try:
+            mail = [email.casefold() for email in email_list if email.casefold() not in tel_mail_off.values()][0]
+        except:pass
 
         return tel, mail
 
@@ -517,7 +526,7 @@ def numer_polisy(page_1, pdf):
         return 'TUZ', 'TUZ', nr_polisy.group(1) + nr_polisy.group(2)
     if 'UNIQA' in page_1 and (nr_polisy := re.search('Nr (\d{6,})', page_1)):
         return 'UNI', 'UNI', nr_polisy.group(1)
-    if 'WARTA' in page_1 and (nr_polisy := re.search('(POLISA NR\s?:|WARTA DOM.*NR:)\s*(\d+)', page_1)):
+    if 'WARTA' in page_1 and (nr_polisy := re.search('(POLISA NR\s?:|WARTA DOM.*NR:|PLUS NR:)\s*(\d+)', page_1)):
         return 'WAR', 'WAR', nr_polisy.group(2)
     if 'Wiener' in page_1 and (nr_polisy := re.search('(Seria i numer\s|полис\s?)(\w+\d+)', page_1)):
         return 'WIE', 'WIE', nr_polisy.group(2)
@@ -912,11 +921,11 @@ def przypis_daty_raty(pdf, page_1):
 
                 return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
-
+# 'SKŁADKA w kwocie 1.325,'
     elif 'WARTA' in page_1:
         pdf_str = polisa_str(pdf)[100:-300]
-
-        total = re.search(r'(SKŁADKA ŁĄCZNA|Kwota\s:) (\d*\s?\.?\d+)', pdf_str, re.I)
+        print(pdf_str)
+        total = re.search(r'(SKŁADKA ŁĄCZNA|Kwota\s?:?|w kwocie) (\d*\s?\.?\d+)', pdf_str, re.I)
         total = int(total.group(2).replace('\xa0', '').replace('.', ''))
 
         if re.findall(r'(?=.*JEDNORAZOWO)(?=.*GOTÓWKA).*', pdf_str, re.I | re.DOTALL):
@@ -942,13 +951,13 @@ def przypis_daty_raty(pdf, page_1):
 
     # Wiener
     elif re.search('wiener', page_1, re.I):
-        pdf_str = polisa_str(pdf)[1450:5000]
-
-        total = re.search(r'(SKŁADKA\sŁĄCZNA|Kwota\s:|оплате) (\d*\s?\.?\d+)', pdf_str, re.I)
+        pdf_str = polisa_str(pdf)[100:5000]
+        print(pdf_str)
+        total = re.search(r'(SKŁADKA\sŁĄCZNA|Kwota\s|оплате):? (\d*\s?\.?\d+)', pdf_str, re.I)
         total = int(total.group(2).replace('\xa0', '').replace('.', ''))
 
         if (wiener := re.search('IIrata|Przelew', pdf_str, re.I)):
-            termin = re.search(r'(Wysokośćratwzł\n|do\sdnia\s)(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})', pdf_str, re.I)
+            termin = re.search(r'(Wysokośćratwzł\n|do\sdnia\s|rata)\s?(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})', pdf_str, re.I)
             print(termin.group(2))
             termin_I = re.sub('[^0-9]', '-', termin.group(2))
             termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
