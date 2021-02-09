@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\UNI POLISA 340503837970.pdf'
+obj = r'M:\zSkrzynka na polisy'
 # print(obj)
 
 def words_separately(text):
@@ -200,7 +200,8 @@ def kod_pocztowy(page_1, pdf):
 def tel_mail(page_1, pdf, nazwisko):
     tel, mail = '', ''
     tel_mail_off = {'tel Robert': '606271169', 'mail Robert': 'ubezpieczenia.magro@gmail.com',
-                    'tel Maciej': '602752893', 'mail Maciej': 'magro@ubezpieczenia-magro.pl',}
+                    'tel Maciej': '602752893', 'mail Maciej': 'magro@ubezpieczenia-magro.pl',
+                    'tel MAGRO': '572810576'}
 
     if 'Allianz' in page_1:
         tel = ''.join([tel for tel in re.findall(r'tel.*([0-9 .\-\(\)]{8,}[0-9])', page_1) if tel not in tel_mail_off.values()])
@@ -243,7 +244,6 @@ def tel_mail(page_1, pdf, nazwisko):
         except: pass
         return tel, mail
 
-
     elif 'TUZ' in page_1:
         try:
             tel = re.search(rf'(\d+)(\n?Imię i nazwisko)', page_1, re.I).group(1)
@@ -269,17 +269,16 @@ def tel_mail(page_1, pdf, nazwisko):
         return tel, mail
 
     else:
-        tel_dict = {'Maciej': '602752893'}
-        tel = re.search('\s(?:\d{9})\s', page_1)
-        print(tel)
-        if tel and not regon_checksum(tel.group(1)) and tel.group(1) not in tel_dict.values():
-            print(tel.group(1))
-            tel = tel.group(1)
+        tel_comp, email_comp = re.compile(r' ([0-9]{9})\n? '), re.compile(r'([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)')
+        tel_list = re.findall(tel_comp, page_1)
+        email_list = re.findall(email_comp, page_1)
+        tel = [phony for phony in tel_list if not regon_checksum(phony) and phony not in tel_mail_off.values()][0]
+        mail = [email.casefold() for email in email_list if email.casefold() not in tel_mail_off.values()][0]
 
-            return tel, mail
-
+        return tel, mail
 
     return tel, mail
+
 
 def przedmiot_ub(page_1, pdf):
     marka, kod, model, miasto, nr_rej, adres, rok = '', '', '', '', '', '', ''

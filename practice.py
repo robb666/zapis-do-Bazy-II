@@ -6,13 +6,57 @@ from datetime import datetime
 import pdfplumber
 
 
+page_1 = """
+Auto & Przestrzeń
+Ubezpieczenia komunikacyjne
+Nr 340503837970
+Archiwizacja w POS
+DRUK POLISY JEST JEDNOCZEŚNIE WNIOSKIEM UBEZPIECZENIOWYM Sygnatura 2304/2021/2/AP/156/2
+UBEZPIECZENIE nowe
+UNIQA Towarzystwo Ubezpieczeń Spółka Akcyjna potwierdza zawarcie umowy ubezpieczenia na okres 10.02.2021 - 09.02.2022
+POŚREDNICY MAGRO UBEZPIECZENIA SP Z OO, UL. AL KOŚCIUSZKI 123 \307 90-441 ŁÓDŹ
+UBEZPIECZENIOWI
+Nr Agenta 23040644, MAGRO UBEZPIECZENIA SP. Z O.O., MAGRO@UBEZPIECZENIA-MAGRO.PL, 602752893
+Nr OFWCA 23040645, GRZELAK MACIEJ, magro@ubezpieczenia-magro.pl, 602752893
+UBEZPIECZAJĄCY ANDRZEJ KWIATKOWSKI, PESEL 63090511195
+/UBEZPIECZONY KĄKOLOWA 12 91-171 ŁÓDŹ 502547119 KWIATKOWSKI3@GMAIL.COM
+POJAZD Numer rejestracyjny: EL2098 Data pierwszej rejestracji: 1973.01.02
+Numer VIN: 184321 Rok produkcji: 1973
+Marka i model: URSUS C 355 Pojemność: 3120 ccm
+Moc: 38 kW
+Rodzaj pojazdu: CIĄGNIK ROLNICZY Liczba miejsc: 2
+Wykorzystanie pojazdu: standardowe EC Kod:
+Rodzaj paliwa: olej napędowy
+UBEZPIECZENIE ODPOWIEDZIALNOŚCI CYWILNEJ POSIADACZY POJAZDÓW MECHANICZNYCH (KOC)
+"""
 
 
-do_p = '500204753, tomekhelbik@op.pl, VOLKSWAGEN'
 
-st = do_p.partition(',')
 
-print(st)
+
+
+tel_dict = {'Maciej': 'magro@ubezpieczenia-magro.pl'}
+email_list = re.findall(r'([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', page_1)
+mail = [email for email in email_list if email.casefold() not in tel_dict.values()][0]
+
+print(mail)
+
+# for token in page_1.split():
+#     if mail := re.search(r'([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', token):
+#         if mail.group(1).casefold() not in tel_dict.values():
+#             print(mail.group(1))
+
+
+
+
+
+
+
+# do_p = '500204753, tomekhelbik@op.pl, VOLKSWAGEN'
+#
+# st = do_p.partition(',')
+#
+# print(st)
 
 
 
