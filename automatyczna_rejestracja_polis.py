@@ -4,7 +4,7 @@ import pdfplumber
 from datetime import datetime, timedelta
 import win32com.client
 from win32com.client import Dispatch
-from regon_api import get_regon_data
+# from regon_api import get_regon_data
 import time
 
 start_time = time.time()
@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\RIS Policy_KMHP_567598.pdf'
+obj = r'M:\zSkrzynka na polisy\UNI POLISA 340503837970.pdf'
 # print(obj)
 
 def words_separately(text):
@@ -116,7 +116,7 @@ def regon(regon_checksum):
 """Funkcje odpowiadają kolumnom w bazie."""
 def nazwisko_imie(d):
     """Zwraca imię i nazwisko Klienta."""
-    agent = {'AGENT': 'Grzelak Robert'}
+    agent = {'Robert': 'Grzelak Robert', 'Maciej': 'Grzelak Maciej', 'MAGRO': 'Magro Maciej'}
     with open(path + '\\imiona.txt') as content:
         all_names = content.read().split('\n')
         if 'euroins' in d.values():
@@ -237,14 +237,16 @@ def tel_mail(page_1, pdf, nazwisko):
 
     elif 'TUW' in page_1 and not 'TUZ' in page_1:
         pdf_str3 = polisa_str(pdf)[0:-500]
-        tel = re.search(r'(Tel:) (\+48|0048)?\s?([0-9.\-\(\)]{9,})?', pdf_str3).group(3)
-        mail = re.search(r'(e-mail:)\s?([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', pdf_str3).group(2)
+        try:
+            tel = re.search(r'(Tel:) (\+48|0048)?\s?([0-9.\-\(\)]{9,})?', pdf_str3).group(3)
+            mail = re.search(r'(e-mail:)\s?([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', pdf_str3).group(2)
+        except: pass
         return tel, mail
 
 
     elif 'TUZ' in page_1:
         try:
-            tel = re.search(rf'{nazwisko} (\d+) (\d+)', page_1, re.I).group(2)
+            tel = re.search(rf'(\d+)(\n?Imię i nazwisko)', page_1, re.I).group(1)
             tel.replace('\n', '')
         except: pass
         try: mail = re.search(r'(email:).*([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1, re.DOTALL).group(2)
@@ -266,8 +268,18 @@ def tel_mail(page_1, pdf, nazwisko):
         except: pass
         return tel, mail
 
-    return tel, mail
+    else:
+        tel_dict = {'Maciej': '602752893'}
+        tel = re.search('\s(?:\d{9})\s', page_1)
+        print(tel)
+        if tel and not regon_checksum(tel.group(1)) and tel.group(1) not in tel_dict.values():
+            print(tel.group(1))
+            tel = tel.group(1)
 
+            return tel, mail
+
+
+    return tel, mail
 
 def przedmiot_ub(page_1, pdf):
     marka, kod, model, miasto, nr_rej, adres, rok = '', '', '', '', '', '', ''
@@ -377,7 +389,6 @@ def przedmiot_ub(page_1, pdf):
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
 
-
         elif 'MTU' in page_1:
             if 'Ubezpieczony pojazd' in page_1:
                 marka = re.search(r'(Ubezpieczony pojazd).*?(\w+), (\w+-?\w+)', page_1, re.I | re.DOTALL).group(3)
@@ -417,6 +428,14 @@ def przedmiot_ub(page_1, pdf):
                 miasto = re.search(f'{kod} (\w+)', page_1).group(1)
                 adres = re.search('(Miejsce ubezpieczenia:) ([\w \d/]+),', page_1).group(2)
                 # rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
+                return marka, kod, model, miasto, nr_rej, adres, rok
+
+        elif 'UNIQA' in page_1:
+            if 'POJAZD' in page_1:
+                marka = re.search(r'Marka i model: ([\w./]+)', page_1, re.I).group(1)
+                model = re.search(rf'Marka i model: (\w+) ([\w./\d]+)', page_1, re.I).group(2)
+                nr_rej = re.search(r'Numer rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
+                rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
 
@@ -492,8 +511,8 @@ def numer_polisy(page_1, pdf):
     if 'PZU' in page_1 and (nr_polisy := re.search('Nr *(\d+)', page_1, re.I)):
         return 'PZU', 'PZU', nr_polisy.group(1)
     if 'TUW' in page_1:
-        page_1 = polisa_str(pdf)[0:-2600]
-        if (nr_polisy := re.search('Wniosko-Polisa\snr:?\s*(\d+)', page_1, re.I)):
+        page_str3 = polisa_str(pdf)[0:-600]
+        if (nr_polisy := re.search('Wniosko-Polisa\snr:?\s?(\d+)', page_str3, re.I)):
             return 'TUW', 'TUW', nr_polisy.group(1)
     if 'TUZ' in page_1 and (nr_polisy := re.search('WNIOSEK seria (\w+) nr (\d+)', page_1)):
         return 'TUZ', 'TUZ', nr_polisy.group(1) + nr_polisy.group(2)
@@ -505,6 +524,7 @@ def numer_polisy(page_1, pdf):
         return 'WIE', 'WIE', nr_polisy.group(2)
     else:
         return 'NIE ROZPOZNANE !', '', ''
+# 'Wniosko-polisa nr:43195408'
 
 
 def zamiana_sep(termin):
@@ -673,7 +693,7 @@ def przypis_daty_raty(pdf, page_1):
                    rata_III, termin_IV, rata_IV
 
 
-    if 'INTER' in page_1 and not 'InterRisk' in page_1:
+    elif 'INTER' in page_1 and not 'InterRisk' in page_1:
         box = polisa_box(pdf, 0, 220, 590, 490)
         (total := re.search(r'kwota składki: (\d*\s?\d+)', box, re.I))
         total = int(re.sub(r' ', '', total.group(1)))
@@ -843,6 +863,11 @@ def przypis_daty_raty(pdf, page_1):
         pdf_str = polisa_str(pdf)[2000:6500]
         total = re.search(r'[kwota|Składka] do zapłaty .* (\d*\s?\d+)', pdf_str, re.I)
         total = int(re.sub(r' ', '', total.group(1)))
+
+        if re.findall(r'(?=.*JEDNORAZOWA)(?=.*Gotówka).*', pdf_str, re.I | re.DOTALL):
+            termin_I = re.search(r'płatn[ey] do dnia (\d{4}-\d{2}-\d{2})', pdf_str, re.I).group(1)
+
+            return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         if re.findall(r'(?=.*JEDNORAZOWA)(?=.*Przelew).*', pdf_str, re.I | re.DOTALL):
             termin_I = re.search(r'płatn[ey] do dnia (\d{4}-\d{2}-\d{2})', pdf_str, re.I).group(1)
