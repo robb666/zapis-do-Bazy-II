@@ -786,7 +786,6 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'MTU' in page_1:
         box = polisa_box(pdf, 0, 180, 590, 400)
-        print(box)
         total = re.search(r'RAZEM DO ZAPŁATY (\d*\s?\d+)', box, re.I)
         total = int(re.sub(r' ', '', total.group(1)))
 
@@ -798,9 +797,8 @@ def przypis_daty_raty(pdf, page_1):
 
         if re.findall(r'(?=.*II\srata)(?=.*przelew).*', box, re.I | re.DOTALL):
             termin_I = re.search(r'płatności I\srata\s(\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
-            print(termin_I)
             termin_II = re.search(r'II\srata\s(\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
-            print(termin_II)
+
             rata_I = re.search(rf'{termin_I},\s*(\d*\s?\d+)', box, re.I).group(1)
             rata_II = re.search(rf'{termin_II},\s*(d*\s?\d+)', box, re.I).group(1)
 
