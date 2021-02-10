@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\COM AC Policy_22014_7156317.pdf'
+obj = r'M:\zSkrzynka na polisy'
 # print(obj)
 
 def words_separately(text):
@@ -202,7 +202,7 @@ def tel_mail(page_1, pdf, nazwisko):
     tel_mail_off = {'tel Robert': '606271169', 'mail Robert': 'ubezpieczenia.magro@gmail.com',
                     'tel Maciej': '602752893', 'mail Maciej': 'magro@ubezpieczenia-magro.pl',
                     'tel MAGRO': '572810576', 'mail AXA': 'obsluga@axaubezpieczenia.pl'}
-
+    # print(page_1)
     if 'Allianz' in page_1:
         tel = ''.join([tel for tel in re.findall(r'tel.*([0-9 .\-\(\)]{8,}[0-9])', page_1) if tel not in tel_mail_off.values()])
         mail = ''.join([mail for mail in re.findall(r'([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', page_1) if mail not in tel_mail_off.values()])
@@ -230,6 +230,9 @@ def tel_mail(page_1, pdf, nazwisko):
             if (m := re.search(r' ([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', dane_kont[0])):
                 mail = m.group(1).lower()
             return tel, mail
+
+    elif 'InterRisk' in page_1:
+        return tel, mail
 
     elif 'PZU' in page_1:
         tel = re.search(r'Telefon: (\+48|0048)?\s?([0-9.\-\(\)\s]{9})?', page_1).group(2)
@@ -593,44 +596,36 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'AXA' in page_1:
         pdf_str2 = polisa_str(pdf)[500:-1]
-        # print(pdf_str2)
         total = re.search(r'(do\szapłacenia|Składka łącznie:) (\d*\s?\d+)', pdf_str2).group(2)
         if not re.findall(r'(?=.*Rata\s2)(?=.*Nr\skonta).*', pdf_str2, re.I | re.DOTALL):
             termin_I = re.search(r'Termin płatności.*?(\d{4}[-./]\d{2}[-./]\d{2}|\d{2}[-./]\d{2}[-./]\d{4})', pdf_str2, re.I | re.DOTALL)
             termin_I = re.sub('[^0-9]', '-', termin_I.group(1))
             termin_I = re.sub(r'(\d{4}[-./]\d{2}[-./]\d{2}|\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
+
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         if re.findall(r'(?=.*Rata\s2)(?=.*Nr\skonta).*', pdf_str2, re.I | re.DOTALL):
-
             rata_I = re.search(r'(Rata 1:) (\d*\s?\d+)', pdf_str2).group(2)
-            # rata_II = re.search(r'(Rata 2:) (\d*\s?\d+)', pdf_str2).group(2)
-
             termin_I = terminy_pln(re.search(r'Rata 1: (.*) (\d{4}[-./]\d{2}[-./]\d{2}|\d{2}[-./]\d{2}[-./]\d{4})', pdf_str2, re.I | re.DOTALL), 2)
-            # termin_II = terminy_pln(re.search(r'Rata 2: (.*) (\d{4}[-./]\d{2}[-./]\d{2}|\d{2}[-./]\d{2}[-./]\d{4})', pdf_str2, re.I | re.DOTALL), 2)
-            # termin_ = [re.sub('[^0-9]', '-', t) for t in termin_I.group(2) + termin_II.group(2)]
-            # termin_ = [re.sub(r'(\d{4}[-./]\d{2}[-./]\d{2}|\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', t) for t in termin]
+
             return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
     elif 'Compensa' in page_1:
-        box = polisa_box(pdf, 0, 260, 590, 650)
-        (total := re.search(r'Składka ogółem: (\d*\s?\d+)', box, re.I))
+        box = polisa_box(pdf, 0, 260, 590, 700)
+        total = re.search(r'Składka ogółem: (\d*\s?\d+)', box, re.I)
         total = int(re.sub(r'\xa0', '', total.group(1)))
 
-        if re.findall(r'(?=.*przelew)(?=.*jednorazowa).*', pdf_str2, re.I | re.DOTALL):
-            rata_I = re.search(r'I rata -  \d{2}.\d{2}.\d{4} - (\d+)', box, re.I).group(1)
+        if re.findall(r'(?=.*przelew)(?=.*jednorazowa).*', box, re.I | re.DOTALL):
+            termin_I = terminy_pln(re.search(r'I\srata\s-\s+(\d{2}.\d{2}.\d{4})', box, re.I), 1)
+
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         if 'składki: kwartalna' in box:
             (rata_I := re.search(r'I rata -  \d{2}.\d{2}.\d{4} - (\d+)', box, re.I).group(1))
             (rata_II := re.search(r'II rata.* - (\d+)', box, re.I).group(1))
             (rata_III := re.search(r'[|III] rata.* - (\d+)', box, re.I).group(1))
             (rata_IV := re.search(r'\n- (\d+)', box, re.I).group(1))
-
-            """Funkcja wyłączona na zewnątrz. Problem: argument z group(), czy bez group()"""
-            # def terminy(termin):
-            #     zamiana_sep = re.sub('[^0-9]', '-', termin.group(1))
-            #     return re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', zamiana_sep)
 
             termin_I = terminy_pln(re.search(r'I\srata\s-\s+(\d{2}.\d{2}.\d{4})', box, re.I))
             termin_II = terminy_pln(re.search(r'II rata -  (\d{2}.\d{2}.\d{4})', box, re.I))
@@ -813,9 +808,10 @@ def przypis_daty_raty(pdf, page_1):
             termin_II = re.search(r'II\srata\s(\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
 
             rata_I = re.search(rf'{termin_I},\s*(\d*\s?\d+)', box, re.I).group(1)
-            rata_II = re.search(rf'{termin_II},\s*(d*\s?\d+)', box, re.I).group(1)
+            rata_II = re.search(rf'{termin_II},\s*(\d*\s?\d+)', box, re.I).group(1)
 
-            return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+            return total, zamiana_sep(termin_I), rata_I, 'P', 2, 1, zamiana_sep(termin_II), rata_II, termin_III, \
+                                                                                    rata_III, termin_IV, rata_IV
 
 
     elif 'Proama' in page_1:
