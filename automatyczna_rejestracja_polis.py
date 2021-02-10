@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy'
+obj = r'M:\zSkrzynka na polisy\COM AC Policy_22014_7156317.pdf'
 # print(obj)
 
 def words_separately(text):
@@ -201,7 +201,7 @@ def tel_mail(page_1, pdf, nazwisko):
     tel, mail = '', ''
     tel_mail_off = {'tel Robert': '606271169', 'mail Robert': 'ubezpieczenia.magro@gmail.com',
                     'tel Maciej': '602752893', 'mail Maciej': 'magro@ubezpieczenia-magro.pl',
-                    'tel MAGRO': '572810576'}
+                    'tel MAGRO': '572810576', 'mail AXA': 'obsluga@axaubezpieczenia.pl'}
 
     if 'Allianz' in page_1:
         tel = ''.join([tel for tel in re.findall(r'tel.*([0-9 .\-\(\)]{8,}[0-9])', page_1) if tel not in tel_mail_off.values()])
@@ -313,11 +313,9 @@ def przedmiot_ub(page_1, pdf):
 
         elif 'AXA' in page_1:
             pdf_str2 = polisa_str(pdf)[0:-300]
-            # print(pdf_str2)
             if 'Pojazd' in pdf_str2:
                 for make in makes:
                     for line in pdf_str2.split('\n'):
-                        # if line.startswith('Udział'):
                         if make in (lsplt := line.split()):
                             marka = make
                             model = lsplt[lsplt.index(marka) + 1]
@@ -332,6 +330,17 @@ def przedmiot_ub(page_1, pdf):
                 miasto = re.search(f'{kod}\s(\w+)', pdf_str2).group(1)
                 adres = re.search('(Adres:)\s(.*),', pdf_str2).group(2)
                 rok = re.search('(Rok budowy:)\s(\d{4})', pdf_str2).group(2)
+                return marka, kod, model, miasto, nr_rej, adres, rok
+
+
+        if 'Compensa' in page_1:
+            if 'Dane pojazdu' in page_1:
+                for make in makes:
+                    if make in page_1:
+                        marka = make
+                        model = re.search(rf'{marka}\s(\w+)', page_1).group(1)
+                nr_rej = re.search('(Numer rejestracyjny:) ([\w\d.]+),?', page_1).group(2)
+                rok = re.search('(produkcji:)\s(\d+),?', page_1).group(2)
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
 
@@ -608,6 +617,10 @@ def przypis_daty_raty(pdf, page_1):
         box = polisa_box(pdf, 0, 260, 590, 650)
         (total := re.search(r'Składka ogółem: (\d*\s?\d+)', box, re.I))
         total = int(re.sub(r'\xa0', '', total.group(1)))
+
+        if re.findall(r'(?=.*przelew)(?=.*jednorazowa).*', pdf_str2, re.I | re.DOTALL):
+            rata_I = re.search(r'I rata -  \d{2}.\d{2}.\d{4} - (\d+)', box, re.I).group(1)
+
         if 'składki: kwartalna' in box:
             (rata_I := re.search(r'I rata -  \d{2}.\d{2}.\d{4} - (\d+)', box, re.I).group(1))
             (rata_II := re.search(r'II rata.* - (\d+)', box, re.I).group(1))
