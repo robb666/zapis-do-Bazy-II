@@ -114,7 +114,7 @@ def regon(regon_checksum):
 
 
 """Funkcje odpowiadają kolumnom w bazie."""
-def nazwisko_imie(d):
+def nazwisko_imie(d, page_1):
     """Zwraca imię i nazwisko Klienta."""
     agent = {'Robert': 'Grzelak Robert', 'Maciej': 'Grzelak Maciej', 'MAGRO': 'Magro Maciej'}
     with open(path + '\\imiona.txt') as content:
@@ -132,6 +132,8 @@ def nazwisko_imie(d):
             name = [f'{d[k + 1].title()} {v.title()}' for k, v in d.items() if k > 10 and v.title() in all_names]
         elif 'warta' in d.values():
             name = [f'{d[k - 1].title()} {v.title()}' for k, v in d.items() if v.title() in all_names]
+        elif 'Wiener' in page_1 and 'полис' in page_1:
+            name = [f'{name} BRAK!' for name in all_names if re.search(name, page_1, re.I)]
         else:
             name = [f'{d[k + 1].title()} {v.title()}' for k, v in d.items() if v.title() in all_names
                     and f'{d[k + 1].title()} {v.title()}' not in agent.values() and not re.search('\d', d[k + 1])]
@@ -272,7 +274,7 @@ def tel_mail(page_1, pdf, nazwisko):
             tel = re.search(r'(Telefon komórkowy:)\s?(\+48|0048)?\s?([0-9.\-\(\)]{9,})?', page_1).group(3)
         except: pass
         try:
-            mail = re.search(r'(E-mail)\s?([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1).group(2)
+            mail = re.search(r'(E-mail|:)\s?([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', page_1).group(2)
         except: pass
         return tel, mail
 
@@ -296,7 +298,6 @@ def przedmiot_ub(page_1, pdf):
     marka, kod, model, miasto, nr_rej, adres, rok = '', '', '', '', '', '', ''
     with open(path + '\\marki.txt') as content:
         makes = content.read().split('\n')
-        # print(page_1)
         if 'Allianz' in page_1:
             if 'Marka / model pojazdu' in page_1:
                 marka = re.search('(Marka / model pojazdu) (\w+)', page_1, re.I).group(2)
@@ -460,8 +461,8 @@ def przedmiot_ub(page_1, pdf):
 
         elif 'WARTA' in page_1:
             if 'Marka, Model, Typ:' in page_1:
-                marka = re.search(r'Marka, Model, Typ: ([\w./]+)', page_1, re.I).group(1)
-                model = re.search(rf'(?<={marka})\s(\w+)', page_1, re.I).group(1)
+                marka = re.search(r'Marka, Model, Typ: ([\w./-]+)', page_1, re.I).group(1)
+                model = re.search(rf'(?<={marka})\s([\w-]+)', page_1, re.I).group(1)
                 nr_rej = re.search(r'Nr rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
                 rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
                 return marka, kod, model, miasto, nr_rej, adres, rok
@@ -475,7 +476,7 @@ def przedmiot_ub(page_1, pdf):
         elif 'Wiener' in page_1:
             if 'DANE POJAZDU' in page_1:
                 marka = re.search(r'Marka pojazdu: ([\w./]+)', page_1, re.I).group(1)
-                model = re.search(r'Marka pojazdu:\s(\w+) Rok ', page_1, re.I).group(1)
+                model = re.search(r'Marka pojazdu:\s([\w-]+) Rok ', page_1, re.I).group(1)
                 nr_rej = re.search(r'Numer rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
                 rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
                 return marka, kod, model, miasto, nr_rej, adres, rok
@@ -551,7 +552,7 @@ def numer_polisy(page_1, pdf):
         return 'WIE', 'WIE', nr_polisy.group(2)
     else:
         return 'NIE ROZPOZNANE !', '', ''
-# 'Wniosko-polisa nr:43195408'
+
 
 
 def zamiana_sep(termin):
@@ -948,7 +949,6 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'WARTA' in page_1:
         pdf_str = polisa_str(pdf)[100:-300]
-        print(pdf_str)
         total = re.search(r'(SKŁADKA ŁĄCZNA|Kwota\s?:?|w kwocie) (\d*\s?\.?\d+)', pdf_str, re.I)
         total = int(total.group(2).replace('\xa0', '').replace('.', ''))
 
@@ -979,7 +979,14 @@ def przypis_daty_raty(pdf, page_1):
         total = re.search(r'(SKŁADKA\sŁĄCZNA|Kwota\s|оплате):? (\d*\s?\.?\d+)', pdf_str, re.I)
         total = int(total.group(2).replace('\xa0', '').replace('.', ''))
 
-        if re.findall(r'(?=.*przelew)(?=.*II rata).*', pdf_str, re.I | re.DOTALL):
+        if re.findall(r'(?=.*gotówka)(?=.*I\s?rata).*', pdf_str, re.I | re.DOTALL):
+            terminI = re.search(r'(Wysokośćratwzł\n|do\sdnia\s|rata)\s?(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})', pdf_str, re.I)
+            termin_I = terminy_pln(terminI, 2)
+            rata_I = re.search(rf'({terminI.group(2)} - |Raty\n)(\d*\s?\d+)', pdf_str).group(2)
+
+            return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+        elif re.findall(r'(?=.*przelew)(?=.*II rata).*', pdf_str, re.I | re.DOTALL):
             terminI = re.search(r'(Wysokośćratwzł\n|do\sdnia\s|rata)\s?(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})', pdf_str, re.I)
             terminII = re.search(r'(II rata)\s?(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})', pdf_str, re.I)
 
@@ -1011,7 +1018,7 @@ def rozpoznanie_danych(tacka_na_polisy):
 
     pr_j = prawo_jazdy(page_1, pdf)
 
-    nazwisko_imie_ = nazwisko_imie(d)
+    nazwisko_imie_ = nazwisko_imie(d, page_1)
     nazwisko = '' if regon_checksum(p_lub_r[1:]) else nazwisko_imie_[0]
     imie = '' if regon_checksum(p_lub_r[1:]) else nazwisko_imie_[1]
     regon_ = regon(p_lub_r[1:])
