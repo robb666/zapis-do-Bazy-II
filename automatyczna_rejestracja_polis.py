@@ -4,7 +4,7 @@ import pdfplumber
 from datetime import datetime, timedelta
 import win32com.client
 from win32com.client import Dispatch
-# from regon_api import get_regon_data
+from regon_api import get_regon_data
 import time
 
 start_time = time.time()
@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\340026163695.pdf'
+obj = r'M:\zSkrzynka na polisy'
 # print(obj)
 
 def words_separately(text):
@@ -464,7 +464,8 @@ def przedmiot_ub(page_1, pdf):
         elif 'UNIQA' in page_1:
             if 'POJAZD' in page_1:
                 marka = re.search(r'Marka i model: ([\w./]+)', page_1, re.I).group(1)
-                model = re.search(rf'Marka i model: (\w+) ([\w./ \d]+)', page_1, re.I).group(2)
+                print(marka)
+                model = re.search(rf'Marka i model: {marka}\s?/?\s?([\w.\d]+)', page_1, re.I).group(1)
                 nr_rej = re.search(r'Numer rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
                 rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
                 return marka, kod, model, miasto, nr_rej, adres, rok
