@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy'
+obj = r'M:\zSkrzynka na polisy\KOS1503729_oryginał.pdf'
 # print(obj)
 
 def words_separately(text):
@@ -450,6 +450,20 @@ def przedmiot_ub(page_1, pdf):
                 adres = re.search('(Miejsce ubezpieczenia:) ([\w \d/]+),', page_1).group(2)
                 # rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
                 return marka, kod, model, miasto, nr_rej, adres, rok
+
+
+
+        elif 'TUZ' in page_1:
+            pdf_str3 = polisa_str(pdf)[0:6500]
+            print(pdf_str3)
+            if 'pojazdu:' in pdf_str3:
+                nr_rej = re.search(r'numer\s*rejestracyjny:\s*([A-Z0-9]+)', pdf_str3).group(1)
+                marka_model = re.search(rf'{nr_rej}.*?([\w./-]+)', pdf_str3, re.I | re.DOTALL).group(1).split('/')
+                marka, model = marka_model[0], marka_model[1]
+                rok = re.search(r'rok produkcji:\s?(\d{4})', pdf_str3).group(1)
+                return marka, kod, model, miasto, nr_rej, adres, rok
+
+
 
         elif 'UNIQA' in page_1:
             if 'POJAZD' in page_1:
@@ -893,9 +907,9 @@ def przypis_daty_raty(pdf, page_1):
 
 
     elif 'TUZ' in page_1:
-        pdf_str = polisa_str(pdf)[2000:6500]
-        total = re.search(r'[kwota|Składka] do zapłaty .* (\d*\s?\d+)', pdf_str, re.I)
-        total = int(re.sub(r' ', '', total.group(1)))
+        pdf_str = polisa_str(pdf)[1500:6500]
+        total = re.search(r'(kwota|Składka) do zapłaty (.*\D) (\d*\s?\d+)', pdf_str, re.I)
+        total = int(re.sub(r' ', '', total.group(3)))
 
         if re.findall(r'(?=.*JEDNORAZOWA)(?=.*Gotówka).*', pdf_str, re.I | re.DOTALL):
             termin_I = re.search(r'płatn[ey] do dnia (\d{4}-\d{2}-\d{2})', pdf_str, re.I).group(1)
