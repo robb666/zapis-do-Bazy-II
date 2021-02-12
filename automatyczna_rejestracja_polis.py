@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\KOS1503729_oryginał.pdf'
+obj = r'M:\zSkrzynka na polisy\340026163695.pdf'
 # print(obj)
 
 def words_separately(text):
@@ -451,24 +451,20 @@ def przedmiot_ub(page_1, pdf):
                 # rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
-
-
         elif 'TUZ' in page_1:
             pdf_str3 = polisa_str(pdf)[0:6500]
             print(pdf_str3)
-            if 'pojazdu:' in pdf_str3:
-                nr_rej = re.search(r'numer\s*rejestracyjny:\s*([A-Z0-9]+)', pdf_str3).group(1)
-                marka_model = re.search(rf'{nr_rej}.*?([\w./-]+)', pdf_str3, re.I | re.DOTALL).group(1).split('/')
-                marka, model = marka_model[0], marka_model[1]
-                rok = re.search(r'rok produkcji:\s?(\d{4})', pdf_str3).group(1)
+            if 'Dane pojazdu' in pdf_str3:
+                nr_rej = re.search(r'Dane pojazdu\n?([A-Z0-9]+)', pdf_str3).group(1)
+                marka = re.search(rf'{nr_rej}.*?([\w./]+)', page_1, re.I).group(1)
+                model = re.search(rf'{marka}.*?([\w./\d]+)', page_1, re.I).group(1)
+                rok = re.search(r'SAMOCHÓD (\w+) (\d{4})', page_1).group(2)
                 return marka, kod, model, miasto, nr_rej, adres, rok
-
-
 
         elif 'UNIQA' in page_1:
             if 'POJAZD' in page_1:
                 marka = re.search(r'Marka i model: ([\w./]+)', page_1, re.I).group(1)
-                model = re.search(rf'Marka i model: (\w+) ([\w./\d]+)', page_1, re.I).group(2)
+                model = re.search(rf'Marka i model: (\w+) ([\w./ \d]+)', page_1, re.I).group(2)
                 nr_rej = re.search(r'Numer rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
                 rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
                 return marka, kod, model, miasto, nr_rej, adres, rok
