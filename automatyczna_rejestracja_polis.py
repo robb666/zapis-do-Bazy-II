@@ -439,8 +439,8 @@ def przedmiot_ub(page_1, pdf):
             pdf_str3 = polisa_str(pdf)[0:6500]
             if 'pojazdu:' in pdf_str3:
                 nr_rej = re.search(r'numer\s*rejestracyjny:\s*([A-Z0-9]+)', pdf_str3).group(1)
-                marka = re.search(rf'{nr_rej}.*?([\w./]+)', pdf_str3, re.I | re.DOTALL).group(1).split('/')[0]
-                model = re.search(rf'{nr_rej}.*?([\w./]+)', pdf_str3, re.I | re.DOTALL).group(1).split('/')[1]
+                marka_model = re.search(rf'{nr_rej}.*?([\w./-]+)', pdf_str3, re.I | re.DOTALL).group(1).split('/')
+                marka, model = marka_model[0], marka_model[1]
                 rok = re.search(r'rok produkcji:\s?(\d{4})', pdf_str3).group(1)
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
