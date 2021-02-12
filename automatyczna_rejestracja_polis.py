@@ -453,7 +453,6 @@ def przedmiot_ub(page_1, pdf):
 
         elif 'TUZ' in page_1:
             pdf_str3 = polisa_str(pdf)[0:6500]
-            print(pdf_str3)
             if 'Dane pojazdu' in pdf_str3:
                 nr_rej = re.search(r'Dane pojazdu\n?([A-Z0-9]+)', pdf_str3).group(1)
                 marka = re.search(rf'{nr_rej}.*?([\w./]+)', page_1, re.I).group(1)
@@ -464,7 +463,6 @@ def przedmiot_ub(page_1, pdf):
         elif 'UNIQA' in page_1:
             if 'POJAZD' in page_1:
                 marka = re.search(r'Marka i model: ([\w./]+)', page_1, re.I).group(1)
-                print(marka)
                 model = re.search(rf'Marka i model: {marka}\s?/?\s?([\w.\d]+)', page_1, re.I).group(1)
                 nr_rej = re.search(r'Numer rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
                 rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
