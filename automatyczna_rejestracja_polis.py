@@ -236,6 +236,15 @@ def tel_mail(page_1, pdf, nazwisko):
     elif 'InterRisk' in page_1:
         return tel, mail
 
+    elif 'INTER' in page_1:
+        try:
+            tel = re.search(r'Telefon kontaktowy: (\+48|0048)?\s?([0-9.\-\(\)\s]{9})?', page_1).group(2)
+        except: pass
+        try:
+            mail = re.search(r'Adres e-mail: ([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1).group(1)
+        except:pass
+        return tel, mail
+
     elif 'PZU' in page_1:
         tel = re.search(r'Telefon: (\+48|0048)?\s?([0-9.\-\(\)\s]{9})?', page_1).group(2)
         mail = re.search(r'E\s?-\s?mail: ([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1).group(1)
@@ -384,7 +393,7 @@ def przedmiot_ub(page_1, pdf):
 
         elif 'InterRisk' in page_1:
             if 'DANE POJAZDU' in page_1:
-                marka = re.search(r'Marka/typ/model: ([\w./]+)', page_1, re.I).group(1)
+                marka = re.search(r'Marka/typ/model: ([\w./-]+)', page_1, re.I).group(1)
                 model = re.search(rf'(?<={marka})\s(\w+)', page_1, re.I).group(1)
                 nr_rej = re.search(r'Nr rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
                 rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
