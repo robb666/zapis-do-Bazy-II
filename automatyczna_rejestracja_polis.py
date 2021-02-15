@@ -471,10 +471,10 @@ def przedmiot_ub(page_1, pdf):
 
         elif 'UNIQA' in page_1:
             if 'POJAZD' in page_1:
-                marka = re.search(r'Marka i model: ([\w./]+)', page_1, re.I).group(1)
-                model = re.search(rf'Marka i model: {marka}\s?/?\s?([\w.\d]+)', page_1, re.I).group(1)
-                nr_rej = re.search(r'Numer rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
-                rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
+                marka = re.search(r'Marka i model:|Pojazd Symbol ([\w./-]+)', page_1, re.I).group(1)
+                model = re.search(rf'Marka i model:|{marka}\s?/?\s?([\w.\d]+)', page_1, re.I).group(1)
+                nr_rej = re.search(r'Numer rejestracyjny:|Liczba miejsc\n?\s?([A-Z0-9]+)', page_1).group(1)
+                rok = re.search(rf'(Rok produkcji:|{model}).*' + '\D(\d{4})\D', page_1).group(2)
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
         elif 'WARTA' in page_1:
@@ -486,7 +486,7 @@ def przedmiot_ub(page_1, pdf):
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
             if 'WARTA DOM' in page_1:
-                kod = re.search('(Adres:).*\s(\d{2}[-\xad]\d{3})\s', page_1, re.I).group(2) # zamieszkania/korespondencyjny:
+                kod = re.search('(Adres:).*\s(\d{2}[-\xad]\d{3})\s', page_1, re.I).group(2)  # zamieszkania/korespondencyjny:
                 miasto = re.search(f'{kod}\s(\w+)', page_1).group(1)
                 adres = re.search(rf'{miasto},\n?(.*)\n', page_1).group(1)
                 return marka, kod, model, miasto, nr_rej, adres, rok
@@ -525,48 +525,49 @@ def TU():
     """W funkcji numer_polisy(page_1)"""
     pass
 
-
+# 'NUMER POLISY 260-65567756 TWÓJ AGENT'
 def numer_polisy(page_1, pdf):
     nr_polisy = ''
-    if 'Allianz' in page_1 or 'Globtroter' in page_1 and (nr_polisy := re.search('(Polisa nr|NUMER POLISY) (\d*-?\d+)', page_1)):
+    if 'Allianz' in page_1 and (nr_polisy := re.search(r'(Polisa nr|NUMER POLISY) (\d*-?\d+)', page_1)) or \
+            'Globtroter' in page_1 and nr_polisy:
         return 'ALL', 'ALL', nr_polisy.group(2)
-    if 'AXA' in page_1:
+    elif 'AXA' in page_1:
         page_1 = polisa_str(pdf)[0:4600]
         if (nr_polisy := re.search('(\d{4}-\d{5,})', page_1)):
             return 'AXA', 'AXA', nr_polisy.group(1)
-    if 'Compensa' in page_1 and (nr_polisy := re.search('typ polisy: *\s*(\d+),numer: *\s*(\d+)', page_1)):
+    elif 'Compensa' in page_1 and (nr_polisy := re.search('typ polisy: *\s*(\d+),numer: *\s*(\d+)', page_1)):
         return 'COM', 'COM', nr_polisy.group(1) + nr_polisy.group(2)
-    if 'EUROINS' in page_1 and (nr_polisy := re.search('Polisa ubezpieczenia nr: (\d+)', page_1)):
+    elif 'EUROINS' in page_1 and (nr_polisy := re.search('Polisa ubezpieczenia nr: (\d+)', page_1)):
         return 'EIN', 'EIN', nr_polisy.group(1)
-    if 'Generali' in page_1 and not 'Proama' in page_1 and (nr_polisy := re.search('POLISA NR\s*(\d+)', page_1, re.I)):
+    elif 'Generali' in page_1 and not 'Proama' in page_1 and (nr_polisy := re.search('POLISA NR\s*(\d+)', page_1, re.I)):
         return 'GEN', 'GEN', nr_polisy.group(1)
-    if 'HDI' in page_1 and (nr_polisy := re.search('POLISA NR\s?: *(\d+)', page_1)):
+    elif 'HDI' in page_1 and (nr_polisy := re.search('POLISA NR\s?: *(\d+)', page_1)):
         return 'WAR', 'HDI', nr_polisy.group(1)
-    if 'Hestia' in page_1  and not 'MTU' in page_1 and (nr_polisy := re.search('Polisa\s.*\s(\d+)', page_1, re.I)):
+    elif 'Hestia' in page_1  and not 'MTU' in page_1 and (nr_polisy := re.search('Polisa\s.*\s(\d+)', page_1, re.I)):
         return 'HES', 'HES', nr_polisy.group(1)
-    if 'INTER' and (nr_polisy := re.search('polisa\s*seria\s*(\w*)\s*numer\s*(\d*)', page_1)):
+    elif 'INTER' and (nr_polisy := re.search('polisa\s*seria\s*(\w*)\s*numer\s*(\d*)', page_1)):
         return 'INT', 'INT', nr_polisy.group(1) + nr_polisy.group(2)
-    if 'InterRisk' in page_1 and (nr_polisy := re.search('Polisa seria?\s(.*)\snumer\s(\d+)', page_1, re.I)):
+    elif 'InterRisk' in page_1 and (nr_polisy := re.search('Polisa seria?\s(.*)\snumer\s(\d+)', page_1, re.I)):
         return 'RIS', 'RIS', nr_polisy.group(1) + nr_polisy.group(2)
-    if (nr_polisy := re.search('Numer:?\s?\n?(\w\d+)', page_1, re.I)) and not 'Travel' in page_1 and not 'WARTA' in page_1:
+    elif (nr_polisy := re.search('Numer:?\s?\n?(\w\d+)', page_1, re.I)) and not 'Travel' in page_1 and not 'WARTA' in page_1:
         return 'LIN', 'LIN',  nr_polisy.group(1)
-    if 'MTU' in page_1 and (nr_polisy := re.search('Polisa\s.*\s(\d+)', page_1, re.I)):
+    elif 'MTU' in page_1 and (nr_polisy := re.search('Polisa\s.*\s(\d+)', page_1, re.I)):
         return 'AZ', 'MTU', nr_polisy.group(1)
-    if 'Proama' in page_1 and (nr_polisy := re.search('POLISA NR\s*(\d+)', page_1, re.I)):
+    elif 'Proama' in page_1 and (nr_polisy := re.search('POLISA NR\s*(\d+)', page_1, re.I)):
         return 'GEN', 'PRO', nr_polisy.group(1)
-    if 'PZU' in page_1 and (nr_polisy := re.search('Nr *(\d+)', page_1, re.I)):
+    elif 'PZU' in page_1 and (nr_polisy := re.search('Nr *(\d+)', page_1, re.I)):
         return 'PZU', 'PZU', nr_polisy.group(1)
-    if 'TUW' in page_1:
+    elif 'TUW' in page_1:
         page_str3 = polisa_str(pdf)[0:-600]
         if (nr_polisy := re.search('Wniosko-Polisa\snr:?\s?(\d+)', page_str3, re.I)):
             return 'TUW', 'TUW', nr_polisy.group(1)
-    if 'TUZ' in page_1 and (nr_polisy := re.search('WNIOSEK seria (\w+) nr (\d+)', page_1)):
+    elif 'TUZ' in page_1 and (nr_polisy := re.search('WNIOSEK seria (\w+) nr (\d+)', page_1)):
         return 'TUZ', 'TUZ', nr_polisy.group(1) + nr_polisy.group(2)
-    if 'UNIQA' in page_1 and (nr_polisy := re.search('Nr (\d{6,})', page_1)):
+    elif 'UNIQA' in page_1 and (nr_polisy := re.search('Nr (\d{6,})', page_1)):
         return 'UNI', 'UNI', nr_polisy.group(1)
-    if 'WARTA' in page_1 and (nr_polisy := re.search('(POLISA NR\s?:|WARTA DOM.*NR:|PLUS NR:)\s*(\d+)', page_1)):
+    elif 'WARTA' in page_1 and (nr_polisy := re.search('(POLISA NR\s?:|WARTA DOM.*NR:|PLUS NR:)\s*(\d+)', page_1)):
         return 'WAR', 'WAR', nr_polisy.group(2)
-    if 'Wiener' in page_1 and (nr_polisy := re.search('(Seria i numer\s*|полис\s?)(\w+\d+)', page_1)):
+    elif 'Wiener' in page_1 and (nr_polisy := re.search('(Seria i numer\s*|полис\s?)(\w+\d+)', page_1)):
         return 'WIE', 'WIE', nr_polisy.group(2)
     else:
         return 'NIE ROZPOZNANE !', '', ''
@@ -585,11 +586,12 @@ def terminy_pln(termin, group_n):
 def przypis_daty_raty(pdf, page_1):
     total, termin_I, rata_I, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV = \
                                                                            '', '', '', '', '', '', '', '', ''
+
     if 'Allianz' in page_1 or 'Globtroter' in page_1:
-        box = polisa_box(pdf, 0, 320, 590, 760)
+        box = polisa_box(pdf, 0, 320, 590, 780)
         total = re.search(r'(Składka:|łącznie:|za 3 lata:|Razem) (\d*\s?\d+)', box)
         if total:
-            total = int(re.sub(r'\xa0', '', total).group(2))
+            total = int(total.group(2).replace(r'\xa0', ''))
 
         if 'płatność online' in page_1 and 'przelew' in page_1:
 
@@ -613,7 +615,7 @@ def przypis_daty_raty(pdf, page_1):
 
         return total, termin_I, rata_I, '', '', '', termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
-    elif 'AXA' in page_1:
+    if 'AXA' in page_1:
         pdf_str2 = polisa_str(pdf)[500:-1]
         total = re.search(r'(do\szapłacenia|Składka łącznie:) (\d*\s?\d+)', pdf_str2).group(2)
         if not re.findall(r'(?=.*Rata\s2)(?=.*Nr\skonta).*', pdf_str2, re.I | re.DOTALL):
@@ -750,7 +752,6 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'InterRisk' in page_1:
         pdf_str1 = polisa_str(pdf)[1500:-2600]
-        # print(pdf_str1)
         total_match = re.compile(r'(Składka\słączna:\s*|WYSOKOŚĆ\sSKŁADKI\sŁĄCZNEJ:\n)(\d*\s?\d+)')
         (total := re.search(total_match, pdf_str1))
         total = int(re.sub(r'\xa0', '', total.group(2)))
@@ -896,8 +897,9 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'TUW' in page_1 and not 'TUZ' in page_1:
         pdf_str3 = polisa_str(pdf)[1000:6500]
-        total = re.search(r'Składka łączna: (\d*\s?\d+) PLN', pdf_str3, re.I)
-        total = int(re.sub(r'\xa0', '', total.group(1)))
+        print(pdf_str3)
+        total = re.search(r'(Składka łączna:|ubezpieczeniowa razem:) (\d*\s?\d+) PLN', pdf_str3, re.I)
+        total = int(re.sub(r'\xa0', '', total.group(2)))
 
         termin = re.search(r'Termin płatności.*(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})', pdf_str3, re.I | re.DOTALL)
         termin_I = re.sub('[^0-9]', '-', termin.group(1))

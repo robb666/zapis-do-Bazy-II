@@ -9,11 +9,9 @@ import pdfplumber
 
 
 
-pdf_str = """Łączna kwota do zapłaty (składka/rata, wpisowe, udział członkowski) 1 164.00 zł
-    ert ertert ert 123
-
+pdf_str = """Pojazd Symbol FIAT/PZL-Mielec DUCATO 2016 1130
           """
-total = re.search(r'(kwota|Składka) do zapłaty(.*\D) (\d*\s?\d+)', pdf_str).group(3)
+total = re.search(rf'(Rok produkcji:|DUCATO) (\d{4})', pdf_str).group(2)
 
 print(total)
 
