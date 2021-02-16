@@ -9,9 +9,67 @@ import pdfplumber
 
 
 
-pdf_str = """Pojazd Symbol FIAT/PZL-Mielec DUCATO 2016 1130
-          """
-total = re.search(rf'(Rok produkcji:|DUCATO) (\d{4})', pdf_str).group(2)
+# pdf_str = """Pojazd Symbol FIAT/PZL-Mielec DUCATO 2016 1130
+#           """
+# total = re.search(rf'(Rok produkcji:|DUCATO) (\d{4})', pdf_str).group(2)
+#
+# print(total)
+
+
+
+
+
+
+
+
+page_1 = """
+Klauzule i koszty dodatkowe w zakresie ubezpieczenia
+Koszty koszty dodatkowe zgodnie z Tabelą nr 16 pkt 3 OWU
+Składka łączna: 117,00 zł
+Informacje dodatkowe Franszyza w ubezpieczeniu od ognia franszyza zniesiona
+ i innych zdarzeń losowych:
+Franszyza w ubezpieczeniu franszyza zniesiona
+od kradzieży z włamaniem rabunku
+i dewastacji:
+Zniżki składki z tytułu bezszkodowy przebieg ubezpieczenia
+Zabezpieczenie mienia (przeciwkradzieżowe): elektroniczne urządzenia wywoł. alarm w miejscu odległym
+UBEZPIECZENIE SPRZĘTU ELEKTRONICZNEGO OD WSZYSTKICH RYZYK
+Przedmiot ubezpieczenia Wartość System Suma Składka
+ubezpieczeniowa ubezpieczenia ubezpieczenia
+Sprzęt elektroniczny stacjonarny w miejscu ubezpieczenia
+(A1): N* SS* 12 000 zł 39 zł
+Sprzęt elektroniczny przenośny w miejscu ubezpieczenia
+(A1): N* SS* 12 000 zł 41 zł
+Koszty koszty dodatkowe zgodnie z Tabelą nr 16 pkt 3 OWU
+Składka łączna: 80 zł
+UNIQA wz.6879 UNIQA Towarzystwo Ubezpieczeń S.A., 90-520 Łódź, ul. Gdańska 132, tel. 42 66 66 500, www.uniqa.pl 1/3
+Sąd Rejonowy dla Łodzi - Śródmieścia w Łodzi KRS 0000001201, NIP 727-012-63-58, Kapitał zakładowy i wpłacony: 220 308 282 PLNPolisa Nr 642500180249
+Informacje dodatkowe Franszyza: franszyza zniesiona
+Zniżki składki z tytułu bezszkodowy przebieg ubezpieczenia
+Zabezpieczenie mienia: elektronicz.urządz.sygnaliz-alarm.połączone z policją,strażą
+UBEZPIECZENIE OC W ZWIĄZKU Z PROWADZENIEM DZIAŁALNOŚCI LUB POSIADANIEM MIENIA
+Przedmiot ubezpieczenia Suma Składka
+gwarancyjna/Podlimit
+Odpowiedzialność cywilna 50 000,00 zł 103,00 zł
+Zakres ubezpieczenia: podstawowy
+Zakres obejmuje: OC z tytułu posiadania mienia i szkody wodno-kanalizacyjne, OC
+pracodawcy, OC najemcy ruchomości i nieruchomości
+Z zakresu wyłączono: szkody w pojazdach mechanicznych pracowników i osób bliskich
+Składka łączna: 103 zł
+Informacje dodatkowe Udział własny: zniesiony
+OC najemcy: liczba nieruchomości: 1
+OC pracodawcy: liczba pracowników: 5
+Zniżki składki z tytułu bezszkodowy przebieg ubezpieczenia
+PŁATNOŚĆ SKŁADKI Składka łączna: 300,00 zł
+Składka słownie:trzysta złotych, zero groszy
+Płatność:przelewem, jednorazowo
+"""
+
+
+
+total = re.search(r'(Składka łączna) (\d*\s?\d+)', page_1, re.I)  # re.findall("pattern", "target_text")[-1]
+total = int(re.sub(r'\xa0', '', total.group(2)))
+
 
 print(total)
 
@@ -22,41 +80,17 @@ print(total)
 
 
 
-# page_1 = """
-# Auto & Przestrzeń
-# Ubezpieczenia komunikacyjne
-# Nr 340503837970
-# Archiwizacja w POS
-# DRUK POLISY JEST JEDNOCZEŚNIE WNIOSKIEM UBEZPIECZENIOWYM Sygnatura 2304/2021/2/AP/156/2
-# UBEZPIECZENIE nowe
-# UNIQA Towarzystwo Ubezpieczeń Spółka Akcyjna potwierdza zawarcie umowy ubezpieczenia na okres 10.02.2021 - 09.02.2022
-# POŚREDNICY MAGRO UBEZPIECZENIA SP Z OO, UL. AL KOŚCIUSZKI 123 \307 90-441 ŁÓDŹ
-# UBEZPIECZENIOWI
-# Nr Agenta 23040644, MAGRO UBEZPIECZENIA SP. Z O.O., MAGRO@UBEZPIECZENIA-MAGRO.PL, 602752893
-# Nr OFWCA 23040645, GRZELAK MACIEJ, magro@ubezpieczenia-magro.pl, 602752893
-# UBEZPIECZAJĄCY ANDRZEJ KWIATKOWSKI, PESEL 63090511195
-# /UBEZPIECZONY KĄKOLOWA 12 91-171 ŁÓDŹ 502547119 KWIATKOWSKI3@GMAIL.COM
-# POJAZD Numer rejestracyjny: EL2098 Data pierwszej rejestracji: 1973.01.02
-# Numer VIN: 184321 Rok produkcji: 1973
-# Marka i model: URSUS C 355 Pojemność: 3120 ccm
-# Moc: 38 kW
-# Rodzaj pojazdu: CIĄGNIK ROLNICZY Liczba miejsc: 2
-# Wykorzystanie pojazdu: standardowe EC Kod:
-# Rodzaj paliwa: olej napędowy
-# UBEZPIECZENIE ODPOWIEDZIALNOŚCI CYWILNEJ POSIADACZY POJAZDÓW MECHANICZNYCH (KOC)
-# """
-#
-#
-#
-#
-#
-#
+
+
+
+
+
 # tel_dict = {'Maciej': 'magro@ubezpieczenia-magro.pl'}
 # email_list = re.findall(r'([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', page_1)
 # mail = [email for email in email_list if email.casefold() not in tel_dict.values()][0]
 #
 # print(mail)
-
+#
 # for token in page_1.split():
 #     if mail := re.search(r'([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', token):
 #         if mail.group(1).casefold() not in tel_dict.values():
