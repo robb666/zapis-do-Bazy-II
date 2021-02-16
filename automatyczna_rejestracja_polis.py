@@ -471,10 +471,12 @@ def przedmiot_ub(page_1, pdf):
 
         elif 'UNIQA' in page_1:
             if 'POJAZD' in page_1:
-                marka = re.search(r'Marka i model:|Pojazd Symbol ([\w./-]+)', page_1, re.I).group(1)
-                model = re.search(rf'Marka i model:|{marka}\s?/?\s?([\w.\d]+)', page_1, re.I).group(1)
-                nr_rej = re.search(r'Numer rejestracyjny:|Liczba miejsc\n?\s?([A-Z0-9]+)', page_1).group(1)
-                rok = re.search(rf'(Rok produkcji:|{model}).*' + '\D(\d{4})\D', page_1).group(2)
+                marka = re.search(r'(Marka i model:|Pojazd Symbol) ([\w./-]+)', page_1, re.I).group(2)
+                model = re.search(rf'(Marka i model:)?\s?{marka}\s?([\w./\d]+)', page_1, re.I).group(2)
+                nr_rej = re.search(r'(Numer rejestracyjny:|Liczba miejsc)\n?\s?([A-Z0-9]+)', page_1).group(2)
+                try:
+                    rok = re.search(rf'(Rok produkcji:|{model})' + '\D(\d{4})\D', page_1).group(2)
+                except:pass
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
         elif 'WARTA' in page_1:
@@ -528,6 +530,7 @@ def TU():
 # 'NUMER POLISY 260-65567756 TWÓJ AGENT'
 def numer_polisy(page_1, pdf):
     nr_polisy = ''
+    # print(page_1)
     if 'Allianz' in page_1 and (nr_polisy := re.search(r'(Polisa nr|NUMER POLISY) (\d*-?\d+)', page_1)) or \
             'Globtroter' in page_1 and nr_polisy:
         return 'ALL', 'ALL', nr_polisy.group(2)
@@ -557,7 +560,7 @@ def numer_polisy(page_1, pdf):
         return 'GEN', 'PRO', nr_polisy.group(1)
     elif 'PZU' in page_1 and (nr_polisy := re.search('Nr *(\d+)', page_1, re.I)):
         return 'PZU', 'PZU', nr_polisy.group(1)
-    elif 'TUW' in page_1:
+    elif 'TUW' in page_1 and not 'TUZ' in page_1:
         page_str3 = polisa_str(pdf)[0:-600]
         if (nr_polisy := re.search('Wniosko-Polisa\snr:?\s?(\d+)', page_str3, re.I)):
             return 'TUW', 'TUW', nr_polisy.group(1)
@@ -615,7 +618,7 @@ def przypis_daty_raty(pdf, page_1):
 
         return total, termin_I, rata_I, '', '', '', termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
-    if 'AXA' in page_1:
+    elif 'AXA' in page_1:
         pdf_str2 = polisa_str(pdf)[500:-1]
         total = re.search(r'(do\szapłacenia|Składka łącznie:) (\d*\s?\d+)', pdf_str2).group(2)
         if not re.findall(r'(?=.*Rata\s2)(?=.*Nr\skonta).*', pdf_str2, re.I | re.DOTALL):
@@ -897,7 +900,6 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'TUW' in page_1 and not 'TUZ' in page_1:
         pdf_str3 = polisa_str(pdf)[1000:6500]
-        print(pdf_str3)
         total = re.search(r'(Składka łączna:|ubezpieczeniowa razem:) (\d*\s?\d+) PLN', pdf_str3, re.I)
         total = int(re.sub(r'\xa0', '', total.group(2)))
 
