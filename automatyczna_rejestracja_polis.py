@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\WIE POLICYING291787_date=20210202_100452.pdf'
+obj = r'M:\zSkrzynka na polisy\III set'
 # print(obj)
 
 def words_separately(text):
@@ -151,7 +151,6 @@ def pesel_regon(d):
                                                                                              and pesel_checksum(pesel)]
     regon = [regon for k, regon in d.items() if k < 200 and len(regon) == 9 and re.search('\d{9}', regon) and regon
                                                             not in nr_reg_TU.values() and regon_checksum(regon)]
-    # print(regon)
     if pesel:
         return 'p' + pesel[0]
     elif regon:
@@ -471,6 +470,7 @@ def przedmiot_ub(page_1, pdf):
 
         elif 'UNIQA' in page_1:
             if 'POJAZD' in page_1:
+                # print(page_1)
                 marka = re.search(r'(Marka i model:|Pojazd Symbol) ([\w./-]+)', page_1, re.I).group(2)
                 model = re.search(rf'(Marka i model:)?\s?{marka}\s?([\w./\d]+)', page_1, re.I).group(2)
                 nr_rej = re.search(r'(Numer rejestracyjny:|Liczba miejsc)\n?\s?([A-Z0-9]+)', page_1).group(2)
@@ -527,7 +527,7 @@ def TU():
     """W funkcji numer_polisy(page_1)"""
     pass
 
-# 'NUMER POLISY 260-65567756 TWÓJ AGENT'
+
 def numer_polisy(page_1, pdf):
     nr_polisy = ''
     # print(page_1)
@@ -576,7 +576,6 @@ def numer_polisy(page_1, pdf):
         return 'NIE ROZPOZNANE !', '', ''
 
 
-
 def zamiana_sep(termin):
     return re.sub('[^0-9]', '-', termin)
 
@@ -617,6 +616,7 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin_I, rata_I, 'P', 3, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         return total, termin_I, rata_I, '', '', '', termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
 
     elif 'AXA' in page_1:
         pdf_str2 = polisa_str(pdf)[500:-1]
@@ -720,6 +720,7 @@ def przypis_daty_raty(pdf, page_1):
             (termin_II := re.search(r'termin płatności: (\d{4}-\d{2}-\d{2})\s?(\d{4}-\d{2}-\d{2})', box, re.I).group(2))
 
             return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
 
     elif 'Hestia' in page_1 and not 'MTU' in page_1:
         box = polisa_box(pdf, 0, 120, 590, 600)
@@ -858,6 +859,7 @@ def przypis_daty_raty(pdf, page_1):
         if 'została pobrana' in box:
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
+
     elif 'PZU' in page_1:
         pdf_str = polisa_str(pdf)[400:5000]
         total = re.search(r'Składka łączna: (\d*\s?\d+,?\d{2}?)', pdf_str, re.I).group(1)
@@ -905,7 +907,6 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'TUW' in page_1 and not 'TUZ' in page_1:
         pdf_str3 = polisa_str(pdf)[1000:6500]
-        print(pdf_str3)
         total = re.search(r'(Składka łączna:|ubezpieczeniowa razem:) (\d*\s?\d+) PLN', pdf_str3, re.I)
         total = int(re.sub(r'\xa0', '', total.group(2)))
 
@@ -948,10 +949,8 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'UNIQA' in page_1:
         # box = polisa_box(pdf, 0, 300, 590, 700)
-        pdf_str2 = polisa_str(pdf)[1500:4500]
-        print(pdf_str2)
+        pdf_str2 = polisa_str(pdf)[1000:4500]
         total = re.findall(r'Składka łączna: (\d*\s?\d+)', pdf_str2, re.I)[-1]  # re.findall("pattern", "target_text")[-1]
-        print(total)
         total = int(re.sub(r'\xa0', '', total))
 
         if re.findall(r'(?=.*przelewem)(?=.*jednorazowo).*', pdf_str2, re.I | re.DOTALL):
@@ -961,13 +960,15 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         if re.findall(r'(?=.*gotówką)(?=.*jednorazowo).*', pdf_str2, re.I | re.DOTALL):
+
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
         if 'przelewem' in pdf_str2 and 'w ratach' in pdf_str2:
             if 'II.' in pdf_str2:
-                (rata_I := re.search(r'I. (\d+)', pdf_str2, re.I).group(1))
-                (rata_II := re.search(r'II. (\d+)', pdf_str2, re.I).group(1))
+                # print(pdf_str2)
+                (rata_I := re.search(r'\nI. (\d*\s?\d+)', pdf_str2, re.I).group(1))
+                (rata_II := re.search(r'II. (\d*\s?\d+)', pdf_str2, re.I).group(1))
 
                 (termin := re.search(r'/(\d{2}.\d{2}.\d{4})', pdf_str2))
                 termin_I = re.sub('[^0-9]', '-', termin.group(1))
