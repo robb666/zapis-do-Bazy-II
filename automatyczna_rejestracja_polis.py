@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\UNI POLISA 642500180249.pdf'
+obj = r'M:\zSkrzynka na polisy\WIE POLICYING291787_date=20210202_100452.pdf'
 # print(obj)
 
 def words_separately(text):
@@ -950,9 +950,9 @@ def przypis_daty_raty(pdf, page_1):
         # box = polisa_box(pdf, 0, 300, 590, 700)
         pdf_str2 = polisa_str(pdf)[1500:4500]
         print(pdf_str2)
-        total = re.findall(r'(Składka łączna:) (\d*\s?\d+).*', pdf_str2, re.I)[-1]  # re.findall("pattern", "target_text")[-1]
+        total = re.findall(r'Składka łączna: (\d*\s?\d+)', pdf_str2, re.I)[-1]  # re.findall("pattern", "target_text")[-1]
         print(total)
-        total = int(re.sub(r'\xa0', '', total.group(2)))
+        total = int(re.sub(r'\xa0', '', total))
 
         if re.findall(r'(?=.*przelewem)(?=.*jednorazowo).*', pdf_str2, re.I | re.DOTALL):
             (termin_I := re.search(r'do dnia: (\d{2}.\d{2}.\d{4})', pdf_str2))
@@ -1012,11 +1012,7 @@ def przypis_daty_raty(pdf, page_1):
         total = re.search(r'(SKŁADKA\sŁĄCZNA|Kwota\s|оплате):? (\d*\s?\.?\d+)', pdf_str, re.I)
         total = int(total.group(2).replace('\xa0', '').replace('.', ''))
 
-        if re.findall(r'(?=.*gotówka)(?=.*I\s?rata).*', pdf_str, re.I | re.DOTALL):
-            terminI = re.search(r'(Wysokośćratwzł\n|do\sdnia\s|rata)\s?(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})', pdf_str, re.I)
-            termin_I = terminy_pln(terminI, 2)
-            rata_I = re.search(rf'({terminI.group(2)} - |Raty\n)(\d*\s?\d+)', pdf_str).group(2)
-
+        if re.search(r'(?=.*gotówka)', pdf_str, re.I | re.DOTALL):
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         elif re.findall(r'(?=.*przelew)(?=.*II rata).*', pdf_str, re.I | re.DOTALL):

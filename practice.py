@@ -65,10 +65,11 @@ Składka słownie:trzysta złotych, zero groszy
 Płatność:przelewem, jednorazowo
 """
 
+# (\bblack\b)(?!.*\1)
 
-
-total = re.search(r'(Składka łączna) (\d*\s?\d+)', page_1, re.I)  # re.findall("pattern", "target_text")[-1]
-total = int(re.sub(r'\xa0', '', total.group(2)))
+total = re.findall(r'Składka łączna: (\d*\s?\d+)', page_1, re.I)[-1]  # re.findall("pattern", "target_text")[-1]
+print(total)
+total = int(re.sub(r'\xa0', '', total))
 
 
 print(total)
