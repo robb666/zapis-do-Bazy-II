@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\III set'
+obj = r'M:\zSkrzynka na polisy\I set\WIE_2.pdf'
 # print(obj)
 
 def words_separately(text):
@@ -318,8 +318,8 @@ def przedmiot_ub(page_1, pdf):
                 kod = re.search('(Miejsce ubezpieczenia).*\n?.*,\s?(\d{2}-\d{3})', page_1).group(2)
                 miasto = re.search(f'{kod} (\w+)', page_1).group(1)
                 adres = re.search('(Miejsce ubezpieczenia) (ul.) ([\w ]+)\s?(,|UBEZPIECZAJĄCY)', page_1).group(3)
-                if rok := re.search('(Rok budowy) (\d+)', page_1):
-                    rok.group(2)
+                if re.search('(Rok budowy) (\d+)', page_1):
+                    rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
 
@@ -581,8 +581,9 @@ def zamiana_sep(termin):
 
 
 def terminy_pln(termin, group_n):
-    zamiana_sep = re.sub('[^0-9]', '-', termin.group(group_n))
-    return re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', zamiana_sep)
+    if termin:
+        zamiana_sep = re.sub('[^0-9]', '-', termin.group(group_n))
+        return re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', zamiana_sep)
 
 
 def przypis_daty_raty(pdf, page_1):
@@ -592,8 +593,9 @@ def przypis_daty_raty(pdf, page_1):
     if 'Allianz' in page_1 or 'Globtroter' in page_1:
         box = polisa_box(pdf, 0, 320, 590, 780)
         total = re.search(r'(Składka:|łącznie:|za 3 lata:|Razem) (\d*\s?\d+)', box)
+        print(total)
         if total:
-            total = int(total.group(2).replace(r'\xa0', ''))
+            total = int(re.sub(r'\xa0', '', total.group(2)))
 
         if 'płatność online' in page_1 and 'przelew' in page_1:
 
@@ -601,6 +603,11 @@ def przypis_daty_raty(pdf, page_1):
             termin_I = re.sub('[^0-9]', '-', termin_I.group(1))
             termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+
+        if 'Twoja składka za 3 lata' in page_1 and not 'III rata' in page_1:
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
 
         if 'Twoja składka za 3 lata' in page_1:
             termin = re.search('do (\d{2}.\d{2}.\d{4}).*\n?do (\d{2}.\d{2}.\d{4}).*\n?do (\d{2}.\d{2}.\d{4})', box, re.I)
