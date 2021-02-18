@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\I set\WIE_2.pdf'
+obj = r'M:\zSkrzynka na polisy\0 set\axa.pdf'
 # print(obj)
 
 def words_separately(text):
@@ -282,7 +282,7 @@ def tel_mail(page_1, pdf, nazwisko):
             tel = re.search(r'(Telefon komórkowy:)\s?(\+48|0048)?\s?([0-9.\-\(\)]{9,})?', page_1).group(3)
         except: pass
         try:
-            mail = re.search(r'(E-mail|:)\s?([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', page_1).group(2)
+            mail = re.search(r'(E-mail)\s?([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', page_1).group(2)
         except: pass
         return tel, mail
 
@@ -1022,6 +1022,14 @@ def przypis_daty_raty(pdf, page_1):
 
         if re.search(r'(?=.*gotówka)', pdf_str, re.I | re.DOTALL):
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+        elif re.search(r'(?=.*przelew)(?!.*II rata).*', pdf_str, re.I | re.DOTALL):
+            terminI = re.search(r'(Wysokośćratwzł\n|do\sdnia\s|rata)\s?(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})', pdf_str,
+                                re.I)
+            termin_I = terminy_pln(terminI, 2)
+
+            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
 
         elif re.findall(r'(?=.*przelew)(?=.*II rata).*', pdf_str, re.I | re.DOTALL):
             terminI = re.search(r'(Wysokośćratwzł\n|do\sdnia\s|rata)\s?(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})', pdf_str, re.I)
