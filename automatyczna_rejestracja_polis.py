@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\0 set\axa.pdf'
+obj = r'M:\zSkrzynka na polisy\0 set\Polisa_pdf.pdf'
 # print(obj)
 
 def words_separately(text):
@@ -32,14 +32,12 @@ def polisa_str(pdf):
     """Tekst 3 str. polisy."""
     page_1, page_2, page_3 = '', '', ''
     with pdfplumber.open(pdf) as policy:
-        if policy.pages[0].extract_text():
-            page_1 = policy.pages[0].extract_text()
-        else:
-            pass
-        if policy.pages[1].extract_text():
-            page_2 = policy.pages[1].extract_text()
-        else:
-            pass
+        try: (page_1 := policy.pages[0].extract_text())
+        except: pass
+        try:
+            if policy.pages[1].extract_text():
+                page_2 = policy.pages[1].extract_text()
+        except: pass
         try: (page_3 := policy.pages[2].extract_text())
         except:pass
     return page_1 + page_2 + page_3
@@ -202,7 +200,8 @@ def tel_mail(page_1, pdf, nazwisko):
     tel, mail = '', ''
     tel_mail_off = {'tel Robert': '606271169', 'mail Robert': 'ubezpieczenia.magro@gmail.com',
                     'tel Maciej': '602752893', 'mail Maciej': 'magro@ubezpieczenia-magro.pl',
-                    'tel MAGRO': '572810576', 'mail AXA': 'obsluga@axaubezpieczenia.pl'}
+                    'tel MAGRO': '572810576', 'mail AXA': 'obsluga@axaubezpieczenia.pl',
+                    'mail UNIQA': 'centrala@uniqa.pl'}
     # print(page_1)
     if 'Allianz' in page_1:
         tel = ''.join([tel for tel in re.findall(r'tel.*([0-9 .\-\(\)]{8,}[0-9])', page_1) if tel not in tel_mail_off.values()])
@@ -325,19 +324,25 @@ def przedmiot_ub(page_1, pdf):
 
         elif 'AXA' in page_1:
             pdf_str2 = polisa_str(pdf)[0:-300]
+            # print(pdf_str2)
             if 'Pojazd' in pdf_str2:
                 for make in makes:
                     for line in pdf_str2.split('\n'):
+                        print(line)
                         if make in (lsplt := line.split()):
                             marka = make
-                            model = lsplt[lsplt.index(marka) + 1]
-                        if line.startswith('Zakres Suma'):
-                            nr_rej = line.split()[-1]
-                        if line.startswith('Rok produkcji'):
-                            rok = line.split()[-1]
+                            model = lsplt[lsplt.index(marka) + 1] if not 'Model:' else lsplt[lsplt.index(marka) + 2]
+
+                            nr_rej = line.split()[-1] if line.startswith('Zakres Suma') else \
+                                re.search('er rejestracyjny: ([\w\d]+)', pdf_str2).group(1)
+
+                            rok = line.split()[-1] if line.startswith('Rok produkcji') else \
+                                re.search('Rok produkcji: (\d{4})', pdf_str2).group(1)
+
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
-            if 'Przedmiot ubezpieczenia: Mieszkanie' in pdf_str2:
+            elif 'Przedmiot ubezpieczenia: Mieszkanie' in pdf_str2:
+                # print(pdf_str2)
                 kod = re.search('(Adres:).*\s(\d{2}[-\xad]\d{3})\s', pdf_str2, re.I).group(2)
                 miasto = re.search(f'{kod}\s(\w+)', pdf_str2).group(1)
                 adres = re.search('(Adres:)\s(.*),', pdf_str2).group(2)
@@ -593,7 +598,7 @@ def przypis_daty_raty(pdf, page_1):
     if 'Allianz' in page_1 or 'Globtroter' in page_1:
         box = polisa_box(pdf, 0, 320, 590, 780)
         total = re.search(r'(Składka:|łącznie:|za 3 lata:|Razem) (\d*\s?\d+)', box)
-        print(total)
+        # print(total)
         if total:
             total = int(re.sub(r'\xa0', '', total.group(2)))
 
@@ -627,11 +632,11 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'AXA' in page_1:
         pdf_str2 = polisa_str(pdf)[500:-1]
-        total = re.search(r'(do\szapłacenia|Składka łącznie:) (\d*\s?\d+)', pdf_str2).group(2)
+        total = re.search(r'(do\szapłacenia|Składka łącznie:|Składka:|Płatność:) (\d*\s?\d+)', pdf_str2).group(2)
         if not re.findall(r'(?=.*Rata\s2)(?=.*Nr\skonta).*', pdf_str2, re.I | re.DOTALL):
             termin_I = re.search(r'Termin płatności.*?(\d{4}[-./]\d{2}[-./]\d{2}|\d{2}[-./]\d{2}[-./]\d{4})', pdf_str2, re.I | re.DOTALL)
-            termin_I = re.sub('[^0-9]', '-', termin_I.group(1))
-            termin_I = re.sub(r'(\d{4}[-./]\d{2}[-./]\d{2}|\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
+            termin_I = terminy_pln(termin_I, 1)
+            # termin_I = re.sub(r'(\d{4}[-./]\d{2}[-./]\d{2}|\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
 
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
@@ -658,10 +663,10 @@ def przypis_daty_raty(pdf, page_1):
             (rata_III := re.search(r'[|III] rata.* - (\d+)', box, re.I).group(1))
             (rata_IV := re.search(r'\n- (\d+)', box, re.I).group(1))
 
-            termin_I = terminy_pln(re.search(r'I\srata\s-\s+(\d{2}.\d{2}.\d{4})', box, re.I))
-            termin_II = terminy_pln(re.search(r'II rata -  (\d{2}.\d{2}.\d{4})', box, re.I))
-            termin_III = terminy_pln(re.search(r',   rata -  (\d{2}.\d{2}.\d{4})', box, re.I))
-            termin_IV = terminy_pln(re.search(r'IV rata -  (\d{2}.\d{2}.\d{4})', box, re.I))
+            termin_I = terminy_pln(re.search(r'I\srata\s-\s+(\d{2}.\d{2}.\d{4})', box, re.I), 1)
+            termin_II = terminy_pln(re.search(r'II rata -  (\d{2}.\d{2}.\d{4})', box, re.I), 1)
+            termin_III = terminy_pln(re.search(r',   rata -  (\d{2}.\d{2}.\d{4})', box, re.I), 1)
+            termin_IV = terminy_pln(re.search(r'IV rata -  (\d{2}.\d{2}.\d{4})', box, re.I), 1)
             return total, termin_I, rata_I, 'P', 4, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
@@ -869,6 +874,7 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'PZU' in page_1:
         pdf_str = polisa_str(pdf)[400:5000]
+        # print(pdf_str)
         total = re.search(r'Składka łączna: (\d*\s?\d+,?\d{2}?)', pdf_str, re.I).group(1)
         # total = float(re.sub(r' ', '', total.group(1)))
         total = float(total.replace(' ', '').replace(',', '.'))
@@ -926,7 +932,7 @@ def przypis_daty_raty(pdf, page_1):
 
         # if 'JEDNORAZOWO' in pdf_str3 and 'PRZELEW' in pdf_str3:
         if re.findall(r'(?=.*PRZELEW)(?=.*(I raty|1 rata|JEDNORAZOWO)).*', pdf_str3, re.I | re.DOTALL):
-            print(pdf_str3)
+            # print(pdf_str3)
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
