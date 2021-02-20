@@ -408,7 +408,7 @@ def przedmiot_ub(page_1, pdf):
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
 
-        elif 'HDI' in page_1 or '„WARTA” S.A. POTWIERDZA' in page_1:
+        elif 'HDI' in page_1 and not 'PZU' in page_1 or '„WARTA” S.A. POTWIERDZA' in page_1:
             if 'Marka, Model, Typ:' in page_1:
                 marka = re.search(r'Marka, Model, Typ: ([\w./]+)', page_1, re.I).group(1)
                 model = re.search(rf'(?<={marka})\s(\w+)', page_1, re.I).group(1)
@@ -437,9 +437,10 @@ def przedmiot_ub(page_1, pdf):
 
 
         elif 'PZU' in page_1:
+            # print(page_1)
             if 'Ubezpieczony pojazd' in page_1:
-                marka = re.search(r'Marka: ([\w./]+)', page_1, re.I).group(1)
-                model = re.search(rf'typ pojazdu:|Model: (\w+)', page_1, re.I).group(1)
+                marka = re.search(r'Marka: ([\w./-]+)', page_1, re.I).group(1)
+                model = re.search(r'(typ pojazdu:|Model:|Typ:) ((?!Model:)(?!Typ:)\w+)', page_1, re.I).group(2)
                 if re.search(r'nr rejestracyjny ([A-Z0-9]+)', page_1):
                     nr_rej = re.search(r'nr rejestracyjny ([A-Z0-9]+)', page_1).group(1)
                 rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
@@ -456,8 +457,12 @@ def przedmiot_ub(page_1, pdf):
         elif 'TUW' in page_1 and not 'TUZ' in page_1:
             pdf_str3 = polisa_str(pdf)[0:6500]
             if 'pojazdu:' in pdf_str3:
+                # print(pdf_str3)
                 nr_rej = re.search(r'numer\s*rejestracyjny:\s*([A-Z0-9]+)', pdf_str3).group(1)
-                marka_model = re.search(rf'{nr_rej}.*?([\w./-]+)', pdf_str3, re.I | re.DOTALL).group(1).split('/')
+                # print(nr_rej)
+                marka_model = re.search(rf'({nr_rej}).*?((?<=marka/model/ typ: ).*?([\w/]*))', pdf_str3, re.I | re.DOTALL).group(2).split('/')
+                                           # '(EL238JC).*?((?<=marka/model/ typ: )([\w/])*)'
+                # print(marka_model)
                 marka, model = marka_model[0], marka_model[1]
                 rok = re.search(r'rok produkcji:\s?(\d{4})', pdf_str3).group(1)
                 return marka, kod, model, miasto, nr_rej, adres, rok
@@ -713,11 +718,10 @@ def przypis_daty_raty(pdf, page_1):
             termin_III = datetime.strptime(termin(terminy, 3), '%Y-%m-%d') + one_day
             return total, termin_I, rata_I, 'P', 3, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
-
-    elif 'HDI' in page_1 or '„WARTA” S.A. POTWIERDZA' in page_1:
+    elif 'HDI' in page_1 and not 'PZU' in page_1 or '„WARTA” S.A. POTWIERDZA' in page_1:
         box = polisa_box(pdf, 0, 200, 590, 530)
         (total := re.search(r'(ŁĄCZNA SKŁADKA|Składka łączna) (\d*\s?\d+)', box, re.I))
-        total = int(re.sub(r' ', '', total.group(2)))
+        total = int(re.sub(r'\xa0', '', total.group(2)))
 
         if 'JEDNORAZOWO' in box and 'GOTÓWKA' in box:
             rata_I = re.search(r'kwota: (\d*\s?\d+)', box, re.I).group(1)

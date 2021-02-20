@@ -7,77 +7,39 @@ import pdfplumber
 
 
 
-
-
-# pdf_str = """Pojazd Symbol FIAT/PZL-Mielec DUCATO 2016 1130
-#           """
-# total = re.search(rf'(Rok produkcji:|DUCATO) (\d{4})', pdf_str).group(2)
-#
-# print(total)
-
-
-
-
-
-
-
-
 page_1 = """
-Klauzule i koszty dodatkowe w zakresie ubezpieczenia
-Koszty koszty dodatkowe zgodnie z Tabelą nr 16 pkt 3 OWU
-Składka łączna: 117,00 zł
-Informacje dodatkowe Franszyza w ubezpieczeniu od ognia franszyza zniesiona
- i innych zdarzeń losowych:
-Franszyza w ubezpieczeniu franszyza zniesiona
-od kradzieży z włamaniem rabunku
-i dewastacji:
-Zniżki składki z tytułu bezszkodowy przebieg ubezpieczenia
-Zabezpieczenie mienia (przeciwkradzieżowe): elektroniczne urządzenia wywoł. alarm w miejscu odległym
-UBEZPIECZENIE SPRZĘTU ELEKTRONICZNEGO OD WSZYSTKICH RYZYK
-Przedmiot ubezpieczenia Wartość System Suma Składka
-ubezpieczeniowa ubezpieczenia ubezpieczenia
-Sprzęt elektroniczny stacjonarny w miejscu ubezpieczenia
-(A1): N* SS* 12 000 zł 39 zł
-Sprzęt elektroniczny przenośny w miejscu ubezpieczenia
-(A1): N* SS* 12 000 zł 41 zł
-Koszty koszty dodatkowe zgodnie z Tabelą nr 16 pkt 3 OWU
-Składka łączna: 80 zł
-UNIQA wz.6879 UNIQA Towarzystwo Ubezpieczeń S.A., 90-520 Łódź, ul. Gdańska 132, tel. 42 66 66 500, www.uniqa.pl 1/3
-Sąd Rejonowy dla Łodzi - Śródmieścia w Łodzi KRS 0000001201, NIP 727-012-63-58, Kapitał zakładowy i wpłacony: 220 308 282 PLNPolisa Nr 642500180249
-Informacje dodatkowe Franszyza: franszyza zniesiona
-Zniżki składki z tytułu bezszkodowy przebieg ubezpieczenia
-Zabezpieczenie mienia: elektronicz.urządz.sygnaliz-alarm.połączone z policją,strażą
-UBEZPIECZENIE OC W ZWIĄZKU Z PROWADZENIEM DZIAŁALNOŚCI LUB POSIADANIEM MIENIA
-Przedmiot ubezpieczenia Suma Składka
-gwarancyjna/Podlimit
-Odpowiedzialność cywilna 50 000,00 zł 103,00 zł
-Zakres ubezpieczenia: podstawowy
-Zakres obejmuje: OC z tytułu posiadania mienia i szkody wodno-kanalizacyjne, OC
-pracodawcy, OC najemcy ruchomości i nieruchomości
-Z zakresu wyłączono: szkody w pojazdach mechanicznych pracowników i osób bliskich
-Składka łączna: 103 zł
-Informacje dodatkowe Udział własny: zniesiony
-OC najemcy: liczba nieruchomości: 1
-OC pracodawcy: liczba pracowników: 5
-Zniżki składki z tytułu bezszkodowy przebieg ubezpieczenia
-PŁATNOŚĆ SKŁADKI Składka łączna: 300,00 zł
-Składka słownie:trzysta złotych, zero groszy
-Płatność:przelewem, jednorazowo
+1 Okres ubezpieczenia: od 13.12.2019 r. godz. 12:14 do 12.12.2020 r.
+Ubezpieczający: AGNIESZKA SKUPIŃSKA PESEL: 90042211742
+2 Adres: BOROWIEC 1, 99-120 PIĄTEK
+E-mail: Klient odmówił Telefon: Klient odmówił
+Ubezpieczony pojazd
+3 Marka: IVECO Model: ML80E Typ: -
+Rok produkcji: 1997 Numer VIN/nadwozia/podwozia: ZCFA80A0002210420 Pojemność silnika: 5861
+Właściciel pojazdu: AGNIESZKA SKUPIŃSKA
+4 Adres: BOROWIEC 1, 99-120 PIĄTEK PESEL: 90042211742
+E-mail: Klient odmówił Telefon: Klient odmówił
+Zakres ubezpieczenia PZU Auto: PZU Auto OC, PZU Auto NNW
+Legenda: þ wybrane opcje ubezpieczenia o inne dostępne opcje nieobjęte ofertą
+Suma Składka
+ubezpieczenia/gwarancyjna
+þ PZU Auto OC (Odpowiedzialność cywilna posiadaczy pojazdów mechanicznych) 1 209,00 zł
+Opcje dodatkowe: szkody na osobie 5 210 000 euro
+þ Wykluczenie szkody z OC szkody w mieniu 1 050 000 euro
+o PZU Auto Zielona Karta
+o PZU Auto AC (Autocasco) - ochrona pojazdu, jego części lub wyposażenia
 """
 
-# (\bblack\b)(?!.*\1)
-
-total = re.findall(r'Składka łączna: (\d*\s?\d+)', page_1, re.I)[-1]  # re.findall("pattern", "target_text")[-1]
-print(total)
-total = int(re.sub(r'\xa0', '', total))
-
-
-print(total)
+marka = re.search(r'Marka: ([\w./]+)', page_1, re.I).group(1)
+model = re.search(r'(typ pojazdu:|Model:|Typ:) ((?!Model:)(?!Typ:)\w+)', page_1, re.I).group(2)
+# if re.search(r'nr rejestracyjny ([A-Z0-9]+)', page_1):
+nr_rej = re.search(r'(nr rejestracyjny)? ([A-Z0-9]+)?', page_1).group(2)
+rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
 
 
-
-
-
+print(marka)
+print(model)
+print(nr_rej)
+print(rok)
 
 
 
