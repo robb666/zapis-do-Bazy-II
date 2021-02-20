@@ -12,7 +12,7 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy\0 set\Polisa_pdf.pdf'
+obj = r'M:\zSkrzynka na polisy\0 set'
 # print(obj)
 
 def words_separately(text):
@@ -324,21 +324,25 @@ def przedmiot_ub(page_1, pdf):
 
         elif 'AXA' in page_1:
             pdf_str2 = polisa_str(pdf)[0:-300]
-            # print(pdf_str2)
             if 'Pojazd' in pdf_str2:
                 for make in makes:
                     for line in pdf_str2.split('\n'):
-                        print(line)
                         if make in (lsplt := line.split()):
                             marka = make
-                            model = lsplt[lsplt.index(marka) + 1] if not 'Model:' else lsplt[lsplt.index(marka) + 2]
-
-                            nr_rej = line.split()[-1] if line.startswith('Zakres Suma') else \
-                                re.search('er rejestracyjny: ([\w\d]+)', pdf_str2).group(1)
-
-                            rok = line.split()[-1] if line.startswith('Rok produkcji') else \
-                                re.search('Rok produkcji: (\d{4})', pdf_str2).group(1)
-
+                            model = lsplt[lsplt.index(marka) + 1] if model not in ('Model:', '-') else \
+                                                                                        lsplt[lsplt.index(marka) + 2]
+                        if line.startswith('Zakres Suma'):
+                            nr_rej = line.split()[-1]
+                        elif re.search('er rejestracyjny: ([\w\d]+)', pdf_str2):
+                            nr_rej = re.search('er rejestracyjny: ([\w\d]+)', pdf_str2).group(1)
+                        else:
+                            pass
+                        if line.startswith('Rok produkcji'):
+                            rok = line.split()[-1]
+                        elif re.search('Rok produkcji: (\d{4})', pdf_str2):
+                            rok = re.search('Rok produkcji: (\d{4})', pdf_str2).group(1)
+                        else:
+                            pass
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
             elif 'Przedmiot ubezpieczenia: Mieszkanie' in pdf_str2:
@@ -436,7 +440,8 @@ def przedmiot_ub(page_1, pdf):
             if 'Ubezpieczony pojazd' in page_1:
                 marka = re.search(r'Marka: ([\w./]+)', page_1, re.I).group(1)
                 model = re.search(rf'typ pojazdu:|Model: (\w+)', page_1, re.I).group(1)
-                nr_rej = re.search(r'nr rejestracyjny ([A-Z0-9]+)', page_1).group(1)
+                if re.search(r'nr rejestracyjny ([A-Z0-9]+)', page_1):
+                    nr_rej = re.search(r'nr rejestracyjny ([A-Z0-9]+)', page_1).group(1)
                 rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
