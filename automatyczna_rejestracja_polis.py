@@ -420,9 +420,7 @@ def przedmiot_ub(page_1, pdf):
         # Link4
         elif re.search('Numer:?\s\n?(\w\d+)', page_1, re.I) and not 'WARTA' in page_1:
             if 'Marka / Model' in page_1 or 'DANE POJAZDU' in page_1:
-                print(page_1)
                 marka = re.search(r'(Marka / Model|Marka) ([\w./]+)', page_1, re.I).group(2)
-                print(marka)
                 model = re.search(rf'({marka})\n?\s*(\w+)', page_1, re.I).group(2)
                 nr_rej = re.search(r'rejestracyjny ([A-Z0-9]+)', page_1).group(1)
                 rok = re.search(r'Rok produkcji (\d{4})', page_1).group(1)
