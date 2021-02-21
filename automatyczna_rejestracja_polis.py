@@ -12,8 +12,8 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\zSkrzynka na polisy'
-# print(obj)
+obj = r'M:\Agent baza\Skrzynka na polisy'
+
 
 def words_separately(text):
     """Tokenizuje tekst całej polisy."""
@@ -1155,16 +1155,14 @@ def tacka_na_polisy(obj):
 """Jeżeli arkusz jest zamknięty, otwiera go."""
 try:
     ExcelApp = win32com.client.GetActiveObject('Excel.Application')
-    wb = ExcelApp.Workbooks("DTESTY.xlsx")
+    wb = ExcelApp.Workbooks("2014 BAZA MAGRO.xlsx")
     ws = wb.Worksheets("BAZA 2014")
     # workbook = ExcelApp.Workbooks("Baza.xlsx")
 
 except:
     ExcelApp = Dispatch("Excel.Application")
-    wb = ExcelApp.Workbooks.Open(path + "\\DTESTY.xlsx")
+    wb = ExcelApp.Workbooks.Open(path + "\\2014 BAZA MAGRO.xlsx")
     ws = wb.Worksheets("BAZA 2014")
-
-
 
 
 """Jesienne Bazie"""
@@ -1232,7 +1230,6 @@ for dane_polisy in tacka_na_polisy(obj):
         ExcelApp.Cells(row_to_write, 55).Value = przypis
     ExcelApp.Cells(row_to_write, 60).Value = tow_ub_tor
 
-
     if rata_II:
         ws.Range(f'A{row_to_write}:BH{row_to_write}').Copy()
         ws.Range(f'A{row_to_write + 1}').PasteSpecial()
@@ -1261,16 +1258,14 @@ for dane_polisy in tacka_na_polisy(obj):
                 ExcelApp.Cells(row_to_write + 3, 53).Value = 4
 
 
-
 # except:
 #     ExcelApp.Cells(row_to_write, 12).Value = 'POLISA NIEZAREJESTROWANA !'
 
-
 """Opcje zapisania"""
-# ExcelApp.DisplayAlerts = False
-# wb.SaveAs(path + "\\DTESTY.xlsx")
-# wb.Close()
-# ExcelApp.DisplayAlerts = True
+ExcelApp.DisplayAlerts = False
+wb.SaveAs(path + "\\2014 BAZA MAGRO.xlsx")
+wb.Close()
+ExcelApp.DisplayAlerts = True
 
 end_time = time.time() - start_time
 print('Czas wykonania: {:.2f} sekund'.format(end_time))
