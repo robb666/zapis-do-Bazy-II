@@ -420,8 +420,10 @@ def przedmiot_ub(page_1, pdf):
         # Link4
         elif re.search('Numer:?\s\n?(\w\d+)', page_1, re.I) and not 'WARTA' in page_1:
             if 'Marka / Model' in page_1 or 'DANE POJAZDU' in page_1:
-                marka = re.search(r'Marka / Model|Marka ([\w./]+)', page_1, re.I).group(1)
-                model = re.search(rf'({marka}|\n?Model) (\w+)', page_1, re.I).group(2)
+                print(page_1)
+                marka = re.search(r'(Marka / Model|Marka) ([\w./]+)', page_1, re.I).group(2)
+                print(marka)
+                model = re.search(rf'({marka})\n?\s*(\w+)', page_1, re.I).group(2)
                 nr_rej = re.search(r'rejestracyjny ([A-Z0-9]+)', page_1).group(1)
                 rok = re.search(r'Rok produkcji (\d{4})', page_1).group(1)
                 return marka, kod, model, miasto, nr_rej, adres, rok
@@ -728,8 +730,7 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'HDI' in page_1 and not 'PZU' in page_1 or '„WARTA” S.A. POTWIERDZA' in page_1:
         box = polisa_box(pdf, 0, 200, 590, 530)
-        total = zam_spacji(re.search(r'(ŁĄCZNA SKŁADKA|Składka łączna) (\d*\s?\d+)', box, re.I))
-        # total = int(re.sub(r'\xa0', '', total.group(2)))
+        total = zam_spacji(re.search(r'(ŁĄCZNA SKŁADKA|Składka łączna) (\d*\s?\d+)', box, re.I).group(2))
 
         if 'JEDNORAZOWO' in box and 'GOTÓWKA' in box:
             rata_I = zam_spacji(re.search(r'kwota: (\d*\s?\d+)', box, re.I).group(1))
