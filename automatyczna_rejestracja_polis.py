@@ -12,7 +12,9 @@ path = os.getcwd()
 one_day = timedelta(1)
 
 # obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\Agent baza\Skrzynka na polisy'
+
+# obj = r'M:\Agent baza\Skrzynka na polisy'
+obj = r'M:\zSkrzynka na polisy\Polisa_NNW_80132155797.pdf'
 
 
 def words_separately(text):
@@ -325,11 +327,13 @@ def przedmiot_ub(page_1, pdf):
         elif 'AXA' in page_1:
             pdf_str2 = polisa_str(pdf)[0:-300]
             if 'Pojazd' in pdf_str2:
+                # print(pdf_str2)
                 for make in makes:
                     for line in pdf_str2.split('\n'):
                         if make in (lsplt := line.split()):
+                            print(lsplt)
                             marka = make
-                            model = lsplt[lsplt.index(marka) + 1] if model not in ('Model:', '-') else \
+                            model = lsplt[lsplt.index(marka) + 1] if model and model not in ('Model:', '-') else \
                                                                                         lsplt[lsplt.index(marka) + 2]
                         if line.startswith('Zakres Suma'):
                             nr_rej = line.split()[-1]
@@ -615,7 +619,6 @@ def przypis_daty_raty(pdf, page_1):
     if 'Allianz' in page_1 or 'Globtroter' in page_1:
         box = polisa_box(pdf, 0, 320, 590, 780)
         total = re.search(r'(Składka:|łącznie:|za 3 lata:|Razem) (\d*\s?\d+)', box)
-        # print(total)
         if total:
             total = int(re.sub(r'\xa0', '', total.group(2)))
 
@@ -649,8 +652,10 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'AXA' in page_1:
         pdf_str2 = polisa_str(pdf)[500:-1]
+
         total = re.search(r'(do\szapłacenia|Składka łącznie:|Składka:|Płatność:) (\d*\s?\d+)', pdf_str2).group(2)
         if not re.findall(r'(?=.*Rata\s2)(?=.*Nr\skonta).*', pdf_str2, re.I | re.DOTALL):
+
             termin_I = re.search(r'Termin płatności.*?(\d{4}[-./]\d{2}[-./]\d{2}|\d{2}[-./]\d{2}[-./]\d{4})', pdf_str2, re.I | re.DOTALL)
             termin_I = term_pln(termin_I, 1)
             # termin_I = re.sub(r'(\d{4}[-./]\d{2}[-./]\d{2}|\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
@@ -659,7 +664,10 @@ def przypis_daty_raty(pdf, page_1):
 
         if re.findall(r'(?=.*Rata\s2)(?=.*Nr\skonta).*', pdf_str2, re.I | re.DOTALL):
             rata_I = re.search(r'(Rata 1:) (\d*\s?\d+)', pdf_str2).group(2)
-            termin_I = term_pln(re.search(r'Rata 1: (.*) (\d{4}[-./]\d{2}[-./]\d{2}|\d{2}[-./]\d{2}[-./]\d{4})', pdf_str2, re.I | re.DOTALL), 2)
+            rata_II = re.search(r'(Rata 2:) (\d*\s?\d+)', pdf_str2).group(2)
+
+            termin_I = term_pln(re.search(r'Rata 1:(.*)zł (\d{4}[-./]\d{2}[-./]\d{2}|\d{2}[-./]\d{2}[-./]\d{4})', pdf_str2, re.I), 2)
+            termin_II = term_pln(re.search(r'Rata 2:(.*)zł (\d{4}[-./]\d{2}[-./]\d{2}|\d{2}[-./]\d{2}[-./]\d{4})', pdf_str2, re.I | re.DOTALL), 2)
 
             return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
@@ -698,10 +706,10 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'Generali' in page_1 and not 'Proama' in page_1:
         box = polisa_box(pdf, 0, 300, 590, 530)
-        total = re.search(r'(RAZEM:|Składka) (\d*\s?\d+)', box, re.I)
-        total = int(re.sub(r' ', '', total.group(2)))
+        total = re.search(r'(RAZEM:|Składka).*(?!GRUPĘ) (\d*\s?\d+,\d\d)', box, re.I)
+        total = float(total.group(2).replace(' ', '').replace(',', '.'))
         if 'przelewem' in box and not 'III rata' in box:
-            (termin := re.search(r'płatna\s?do\s?(\d{2}.\d{2}.\d{4})', box, re.I))
+            termin = re.search(r'płatna\s?do\s?(\d{2}.\d{2}.\d{4})', box, re.I)
             termin_I = re.sub('[^0-9]', '-', termin.group(1))
             termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
@@ -1261,11 +1269,11 @@ for dane_polisy in tacka_na_polisy(obj):
 # except:
 #     ExcelApp.Cells(row_to_write, 12).Value = 'POLISA NIEZAREJESTROWANA !'
 
-"""Opcje zapisania"""
-ExcelApp.DisplayAlerts = False
-wb.SaveAs(path + "\\2014 BAZA MAGRO.xlsx")
-wb.Close()
-ExcelApp.DisplayAlerts = True
+# """Opcje zapisania"""
+# ExcelApp.DisplayAlerts = False
+# wb.SaveAs(path + "\\2014 BAZA MAGRO.xlsx")
+# wb.Close()
+# ExcelApp.DisplayAlerts = True
 
 end_time = time.time() - start_time
 print('Czas wykonania: {:.2f} sekund'.format(end_time))
