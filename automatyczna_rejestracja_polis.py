@@ -330,8 +330,8 @@ def przedmiot_ub(page_1, pdf):
                     for line in pdf_str2.split('\n'):
                         if make in (lsplt := line.split()):
                             marka = make
-                            model = lsplt[lsplt.index(marka) + 1] if model and model not in ('Model:', '-') else \
-                                                                                        lsplt[lsplt.index(marka) + 2]
+                            model = lsplt[lsplt.index(marka) + 1] if lsplt[lsplt.index(marka) + 1] not in \
+                                                                     ('Model:', '-') else lsplt[lsplt.index(marka) + 2]
                         if line.startswith('Zakres Suma'):
                             nr_rej = line.split()[-1]
                         elif re.search('er rejestracyjny: ([\w\d]+)', pdf_str2):
@@ -703,11 +703,9 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'Generali' in page_1 and not 'Proama' in page_1:
         box = polisa_box(pdf, 0, 300, 590, 530)
-        # print(box)
         total = re.search(r'(RAZEM:|Składka).*(?!GRUPĘ) (\d*\s?\d+,\d\d)', box, re.I)
         total = float(total.group(2).replace(' ', '').replace(',', '.'))
         if re.findall(r'(?=.*jednorazow[o|a])(?=.*przele[w|em]).*', box, re.I | re.DOTALL) and not 'III rata' in box:
-            print(box)
             termin = re.search(r'(płatna\s?do|płatności)\s?(\d{2}.\d{2}.\d{4})', box, re.I)
             termin_I = re.sub('[^0-9]', '-', termin.group(2))
             termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
@@ -1268,11 +1266,11 @@ for dane_polisy in tacka_na_polisy(obj):
 # except:
 #     ExcelApp.Cells(row_to_write, 12).Value = 'POLISA NIEZAREJESTROWANA !'
 
-# """Opcje zapisania"""
-# ExcelApp.DisplayAlerts = False
-# wb.SaveAs(path + "\\2014 BAZA MAGRO.xlsx")
-# wb.Close()
-# ExcelApp.DisplayAlerts = True
+"""Opcje zapisania"""
+ExcelApp.DisplayAlerts = False
+wb.SaveAs(path + "\\2014 BAZA MAGRO.xlsx")
+wb.Close()
+ExcelApp.DisplayAlerts = True
 
 end_time = time.time() - start_time
 print('Czas wykonania: {:.2f} sekund'.format(end_time))
