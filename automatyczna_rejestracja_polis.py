@@ -4,7 +4,7 @@ import pdfplumber
 from datetime import datetime, timedelta
 import win32com.client
 from win32com.client import Dispatch
-from regon_api import get_regon_data
+# from regon_api import get_regon_data
 import time
 
 start_time = time.time()
@@ -627,11 +627,23 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
-        if 'Twoja składka za 3 lata' in page_1 and not 'III rata' in page_1:
+        elif 'Twoja składka za 3 lata' in page_1 and not 'III rata' in page_1:
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
-        if 'Twoja składka za 3 lata' in page_1:
+        elif 'przelew' in page_1 and 'II rata' in page_1 and not 'III rata' in page_1:
+
+            termin = re.search(r'Dane płatności:\ndo (\d{2}.\d{2}.\d{4}).*\ndo\s?(\d{2}.\d{2}.\d{4}).*', box, re.I | re.DOTALL)
+
+            termin_I = term_pln(termin, 1)
+            termin_II = term_pln(termin, 2)
+            rata_I = re.search(r'Dane płatności:\ndo (\d{2}.\d{2}.\d{4}) r. (\d*\s?\d+)', box, re.I).group(2)
+            rata_II = re.search(rf'{termin.group(2)}.* (\d*\s?\d+)', box, re.I).group(1)
+
+            return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+
+        elif 'Twoja składka za 3 lata' in page_1:
             termin = re.search('do (\d{2}.\d{2}.\d{4}).*\n?do (\d{2}.\d{2}.\d{4}).*\n?do (\d{2}.\d{2}.\d{4})', box, re.I)
 
             termin_I = term_pln(termin, 1)
