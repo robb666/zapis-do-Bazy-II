@@ -145,7 +145,6 @@ def nazwisko_imie(d, page_1):
 def pesel_regon(d):
     """Zapisuje pesel/regon."""
     nr_reg_TU = {'AXA': '140806789'}
-
     pesel = [pesel for k, pesel in d.items() if k < 200 and len(pesel) == 11 and re.search('\d{11}', pesel)
                                                                                              and pesel_checksum(pesel)]
     regon = [regon for k, regon in d.items() if k < 200 and len(regon) == 9 and re.search('\d{9}', regon) and regon
@@ -419,7 +418,7 @@ def przedmiot_ub(page_1, pdf):
 
 
         # Link4
-        elif re.search('Numer:?\s\n?(\w\d+)', page_1, re.I) and not 'WARTA' in page_1:
+        elif re.search('Numer:?\s\n?(\w\d+)', page_1, re.I) and not 'WARTA' in page_1 or 'LINK4' in page_1:
             if 'Marka / Model' in page_1 or 'DANE POJAZDU' in page_1:
                 marka = re.search(r'(Marka / Model|Marka) ([\w./]+)', page_1, re.I).group(2)
                 model = re.search(rf'({marka})\n?\s*(\w+)', page_1, re.I).group(2)
@@ -571,8 +570,9 @@ def numer_polisy(page_1, pdf):
         return 'INT', 'INT', nr_polisy.group(1) + nr_polisy.group(2)
     elif 'InterRisk' in page_1 and (nr_polisy := re.search('Polisa seria?\s(.*)\snumer\s(\d+)', page_1, re.I)):
         return 'RIS', 'RIS', nr_polisy.group(1) + nr_polisy.group(2)
-    elif (nr_polisy := re.search('Numer:?\s?\n?(\w\d+)', page_1, re.I)) and not 'Travel' in page_1 and not 'WARTA' in page_1:
-        return 'LIN', 'LIN',  nr_polisy.group(1)
+    elif (nr_polisy := re.search('(Numer:?|POLISA NR)\s?\n?(\w\d+)', page_1, re.I)) and not 'Travel' in page_1 and \
+                                                                                                 not 'WARTA' in page_1:
+        return 'LIN', 'LIN',  nr_polisy.group(2)
     elif 'MTU' in page_1 and (nr_polisy := re.search('Polisa\s.*\s(\d+)', page_1, re.I)):
         return 'AZ', 'MTU', nr_polisy.group(1)
     elif 'Proama' in page_1 and (nr_polisy := re.search('POLISA NR\s*(\d+)', page_1, re.I)):
@@ -816,19 +816,20 @@ def przypis_daty_raty(pdf, page_1):
 
 
     # Link4
-    elif (nr_polisy := re.search('Numer:?\s?\n?(\w\d+)', page_1, re.I)) and not 'WARTA' in page_1:
-        pdf_str2 = polisa_str(pdf)[400:4600]
+    elif (nr_polisy := re.search('(Numer:?|POLISA NR)\s?\n?(\w\d+)', page_1, re.I)) and not 'WARTA' in page_1 or \
+                                                                                                    'LINK4' in page_1:
+        pdf_str2 = polisa_str(pdf)[400:4800]
 
         total = re.search(r'(\(w złotych\)|ŁĄCZNIE)\s?(\d*\s?\d+,\d+)', pdf_str2, re.I)
         total = float(total.group(2).replace(',', '.').replace(' ', ''))
 
-        if 'Metoda płatności Karta' in pdf_str2 or 'Przelew' in pdf_str2:
+        if re.search('(Metoda płatności Karta|rachunku bankowego)', pdf_str2, re.I) or 'Przelew' in pdf_str2:
             termin = re.search(r'Termin płatności (\d{2}/\d{2}/\d{4})', pdf_str2, re.I)
             try:
                 termin_I = re.sub('[^0-9]', '-', termin.group(1))
                 termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
             except Exception:
-                pass
+                termin_I = data_wystawienia() + timedelta(7)
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         if re.findall(r'(?=.*Przelew)(?=.*Kolejne raty).*', pdf_str2, re.I | re.DOTALL):
