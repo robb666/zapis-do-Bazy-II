@@ -4,7 +4,7 @@ import pdfplumber
 from datetime import datetime, timedelta
 import win32com.client
 from win32com.client import Dispatch
-# from regon_api import get_regon_data
+from regon_api import get_regon_data
 import time
 
 start_time = time.time()
@@ -1033,8 +1033,9 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'WARTA' in page_1:
         pdf_str = polisa_str(pdf)[100:-300]
+        # print(pdf_str)
         total = re.search(r'(SKŁADKA ŁĄCZNA|Kwota\s?:?|w kwocie) (\d*\s?\.?\d+)', pdf_str, re.I)
-        total = int(total.group(2).replace('\xa0', '').replace('.', ''))
+        total = int(total.group(2).replace('\xa0', '').replace('.', '').replace(' ', ''))
 
         if re.findall(r'(?=.*JEDNORAZOWO)(?=.*GOTÓWKA).*', pdf_str, re.I | re.DOTALL):
             termin_I = re.search(r'Termin:|DO DNIA.*(\d{4}-\d{2}-\d{2})', pdf_str).group(1)
@@ -1050,11 +1051,18 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin.group(1), raty.group(1), 'G', 2, 1, termin.group(2), raty.group(2), \
                    termin_III, rata_III, termin_IV, rata_IV
 
-        if re.findall(r'(?=.*3 rata)(?=.*PRZELEW).*', pdf_str, re.I | re.DOTALL):
+        if re.findall(r'(?=.*3 rata)(?=.*PRZELEW).*', pdf_str, re.I | re.DOTALL) and not '4 rata' in pdf_str:
             termin = re.search(r'3 RATACH Termin: (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2})', pdf_str)
             raty = re.search(r'Kwota: (\d+) zł (\d+) zł (\d+)', pdf_str)
             return total, termin.group(1), raty.group(1), 'P', 3, 1, termin.group(2), raty.group(2), \
                    termin.group(3), raty.group(3), termin_IV, rata_IV
+
+        if re.findall(r'(?=.*3 rata)(?=.*PRZELEW).*', pdf_str, re.I | re.DOTALL) and '4 rata' in pdf_str:
+            termin = re.search(r'4 RATACH Termin: (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2}) '
+                                                                                        r'(\d{4}-\d{2}-\d{2})', pdf_str)
+            raty = re.search(r'Kwota: (\d+) zł (\d+) zł (\d+) zł (\d+)', pdf_str)
+            return total, termin.group(1), raty.group(1), 'P', 4, 1, termin.group(2), raty.group(2), \
+                   termin.group(3), raty.group(3), termin.group(4), raty.group(4)
 
 
     # Wiener
@@ -1279,11 +1287,11 @@ for dane_polisy in tacka_na_polisy(obj):
 # except:
 #     ExcelApp.Cells(row_to_write, 12).Value = 'POLISA NIEZAREJESTROWANA !'
 
-"""Opcje zapisania"""
-ExcelApp.DisplayAlerts = False
-wb.SaveAs(path + "\\2014 BAZA MAGRO.xlsx")
-wb.Close()
-ExcelApp.DisplayAlerts = True
+# """Opcje zapisania"""
+# ExcelApp.DisplayAlerts = False
+# wb.SaveAs(path + "\\2014 BAZA MAGRO.xlsx")
+# wb.Close()
+# ExcelApp.DisplayAlerts = True
 
 end_time = time.time() - start_time
 print('Czas wykonania: {:.2f} sekund'.format(end_time))
