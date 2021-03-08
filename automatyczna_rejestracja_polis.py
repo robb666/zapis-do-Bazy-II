@@ -1287,11 +1287,11 @@ for dane_polisy in tacka_na_polisy(obj):
 # except:
 #     ExcelApp.Cells(row_to_write, 12).Value = 'POLISA NIEZAREJESTROWANA !'
 
-# """Opcje zapisania"""
-# ExcelApp.DisplayAlerts = False
-# wb.SaveAs(path + "\\2014 BAZA MAGRO.xlsx")
-# wb.Close()
-# ExcelApp.DisplayAlerts = True
+"""Opcje zapisania"""
+ExcelApp.DisplayAlerts = False
+wb.SaveAs(path + "\\2014 BAZA MAGRO.xlsx")
+wb.Close()
+ExcelApp.DisplayAlerts = True
 
 end_time = time.time() - start_time
 print('Czas wykonania: {:.2f} sekund'.format(end_time))
