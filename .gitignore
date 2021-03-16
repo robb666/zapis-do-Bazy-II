@@ -1,4 +1,7 @@
-
+__pycache__
+build
+dist
+polisy
 *.xlsx
 __pycache__/regon_api.cpython-39.pyc
 build/automatyczna_rejestracja_polis/EXE-00.toc
@@ -19,6 +22,6 @@ practice.py
 practice.py
 *.pdf
 practice.py
-practice.py
-practice.py
+ocry.py
 zrobić input z imieniem.txt
+pyinstaller --hiddenimport win32timezone -F automatyczna_rejestracja_polis.py
