@@ -23,5 +23,4 @@ practice.py
 *.pdf
 practice.py
 ocry.py
-zrobić input z imieniem.txt
 pyinstaller --hiddenimport win32timezone -F automatyczna_rejestracja_polis.py
