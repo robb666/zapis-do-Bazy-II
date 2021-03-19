@@ -860,16 +860,11 @@ def przypis_daty_raty(pdf, page_1):
 
             (raty := re.search(r'Termin Kwota raty.* (\d*\s?\d+,\d{2}).* (\d*\s?\d+,\d{2}).* (\d*\s?\d+,\d{2}).* '
                                                    r'(\d*\s?\d+,\d{2})', pdf_str2, re.I | re.DOTALL))
-            # print(raty.group(2))
+
             rata_I = float(raty.group(1).replace(',', '.').replace(' ', ''))
             rata_II = float(raty.group(2).replace(',', '.').replace(' ', ''))
             rata_III = float(raty.group(3).replace(',', '.').replace(' ', ''))
             rata_IV = float(raty.group(4).replace(',', '.').replace(' ', ''))
-
-            """Do skasowania po sprawdzeniu"""
-            # def termin(terminy, n):
-            #     zamiana_sep = re.sub('[^0-9]', '-', terminy.group(n))
-            #     return re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', zamiana_sep)
 
             terminy = re.search(r'Termin Kwota raty\n(\d{2}/\d{2}/\d{4}).*(\d{2}/\d{2}/\d{4}).*(\d{2}/\d{2}/\d{4}).*'
                                                      r'(\d{2}/\d{2}/\d{4}).*', pdf_str2, re.I | re.DOTALL)
