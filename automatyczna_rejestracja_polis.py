@@ -4,7 +4,7 @@ import pdfplumber
 from datetime import datetime, timedelta
 import win32com.client
 from win32com.client import Dispatch
-# from regon_api import get_regon_data
+from regon_api import get_regon_data
 import time
 
 start_time = time.time()
@@ -392,11 +392,13 @@ def przedmiot_ub(page_1, pdf):
 
         elif 'Hestia' in page_1 and not 'MTU' in page_1:
             if 'Ubezpieczony pojazd' in page_1:
-                marka = re.search(r'pojazd (\w+)\s?,\s?(\w+)', page_1, re.I).group(2)
-                model = re.search(rf'(?<={marka}) (\w+)', page_1, re.I).group(1)
-                nr_rej = re.search(rf'([A-Z0-9]+)\s?(?=, ROK)', page_1).group(1)
-                rok = re.search(r'(ROK PRODUKCJI:?) (\d{4})', page_1).group(2)
-                return marka, kod, model, miasto, nr_rej, adres, rok
+                try:
+                    marka = re.search(r'pojazd (\w+)\s?,\s?([\w-]+)', page_1, re.I).group(2)
+                    model = re.search(rf'(?<={marka}),? (\w+)', page_1, re.I).group(1)
+                    nr_rej = re.search(rf'([A-Z0-9]+)\s?(?=, ROK)', page_1).group(1)
+                    rok = re.search(r'(ROK PRODUKCJI:?) (\d{4})', page_1).group(2)
+                    return marka, kod, model, miasto, nr_rej, adres, rok
+                except: pass
 
 
         elif 'InterRisk' in page_1:
@@ -773,18 +775,18 @@ def przypis_daty_raty(pdf, page_1):
     elif 'Hestia' in page_1 and not 'MTU' in page_1:
         box = polisa_box(pdf, 0, 120, 590, 600)
         total = re.search(r'DO ZAPŁATY (\d*\s?\d+)', box, re.I)
-        total = int(re.sub(r' ', '', total.group(1)))
+        total = int(re.sub(r'([\xa0 ])', '', total.group(1)))
 
         if not 'II rata' in box and 'gotówka' in box:
             termin_I = re.search(r'płatności (\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
-        if not re.findall(r'(?=.*II\srata)(?=.*przelew|przelewem).*', box, re.I | re.DOTALL):
+        elif not re.findall(r'(?=.*II\srata)(?=.*przelew|przelewem).*', box, re.I | re.DOTALL):
         # if not 'II rata' in box and 'przelew' in box:
             termin_I = re.search(r'płatności (\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
-        if re.findall(r'(?=.*II\srata)(?=.*przelew|przelewem).*', box, re.I | re.DOTALL):
+        elif re.findall(r'(?=.*II\srata)(?=.*przelew|przelewem).*', box, re.I | re.DOTALL):
             termin_I = re.search(r'płatności I\srata\s(\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
             termin_II = re.search(r'II\srata\s(\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
             rata_I = re.search(rf'{termin_I},\s*(\d*\s?\d+)', box, re.I).group(1)
@@ -1205,8 +1207,6 @@ def tacka_na_polisy(obj):
             if file.endswith('.pdf'):
                 pdf = obj + '\\' + file
                 yield rozpoznanie_danych(pdf)
-
-
 
 
 """Sprawdza czy arkusz jest otwarty."""
