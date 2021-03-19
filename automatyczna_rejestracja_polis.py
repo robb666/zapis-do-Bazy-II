@@ -354,7 +354,7 @@ def przedmiot_ub(page_1, pdf):
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
 
-        if 'Compensa' in page_1:
+        elif 'Compensa' in page_1:
             if 'Dane pojazdu' in page_1:
                 for make in makes:
                     if make in page_1:
