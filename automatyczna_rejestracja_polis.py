@@ -4,7 +4,7 @@ import pdfplumber
 from datetime import datetime, timedelta
 import win32com.client
 from win32com.client import Dispatch
-from regon_api import get_regon_data
+# from regon_api import get_regon_data
 import time
 
 start_time = time.time()
@@ -812,12 +812,24 @@ def przypis_daty_raty(pdf, page_1):
         total_match = re.compile(r'(Składka\słączna:\s*|WYSOKOŚĆ\sSKŁADKI\sŁĄCZNEJ:\n)(\d*\s?\d+)')
         (total := re.search(total_match, pdf_str1))
         total = int(re.sub(r'\xa0', '', total.group(2)))
+
         if re.findall(r'(?=.*jednorazow[o|a])(?=.*płatności:\s*przelewem).*', pdf_str1, re.I | re.DOTALL):
             (termin_I := re.search(r'płatna\sdo\sdnia:\s(\d{4}-\d{2}-\d{2})', pdf_str1, re.I).group(1))
 
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
-        if re.findall(r'(?=.*Płatność: 2\sraty)(?=.*płatności:\s*przelewem).*', pdf_str1, re.I | re.DOTALL):
+
+        elif re.findall(r'(?=.*Płatność: 2\sraty)(?=.*płatności:\s*gotówką).*', pdf_str1, re.I | re.DOTALL):
+            rata_I = re.search(r'1\srata: (\d*\s?\d+,?\d*)', pdf_str1, re.I).group(1).replace(',', '.').replace('\xa0', '')
+            rata_II = re.search(r'2\srata: (\d*\s?\d+)', pdf_str1, re.I).group(1).replace(',', '.').replace('\xa0', '')
+
+            termin_I = re.search(r'płatna\sdo\sdnia:\s(\d{4}-\d{2}-\d{2})', pdf_str1, re.I).group(1)
+            termin_II = re.search(r'2\srata: (.*)(\d{4}-\d{2}-\d{2})', pdf_str1, re.I).group(2)
+
+            return total, termin_I, rata_I, 'G', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+
+        elif re.findall(r'(?=.*Płatność: 2\sraty)(?=.*płatności:\s*przelewem).*', pdf_str1, re.I | re.DOTALL):
             rata_I = re.search(r'1\srata: (\d*\s?\d+,?\d*)', pdf_str1, re.I).group(1).replace(',', '.').replace('\xa0', '')
             rata_II = re.search(r'2\srata: (\d*\s?\d+)', pdf_str1, re.I).group(1).replace(',', '.').replace('\xa0', '')
 
@@ -992,21 +1004,26 @@ def przypis_daty_raty(pdf, page_1):
         total = re.search(r'(kwota|Składka) do zapłaty (.*\D) (\d*\s?\d+)', pdf_str, re.I)
         total = int(re.sub(r' ', '', total.group(3)))
 
+        if wpisowe := re.search('wysokość wpisowego 10 zł\): (TAK)', pdf_str):
+            total = total - 20
+
         if re.findall(r'(?=.*JEDNORAZOWA)(?=.*Gotówka).*', pdf_str, re.I | re.DOTALL):
             termin_I = re.search(r'płatn[ey] do dnia (\d{4}-\d{2}-\d{2})', pdf_str, re.I).group(1)
 
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
-        if re.findall(r'(?=.*JEDNORAZOWA)(?=.*Przelew).*', pdf_str, re.I | re.DOTALL):
+        elif re.findall(r'(?=.*JEDNORAZOWA)(?=.*Przelew).*', pdf_str, re.I | re.DOTALL):
             termin_I = re.search(r'płatn[ey] do dnia (\d{4}-\d{2}-\d{2})', pdf_str, re.I).group(1)
 
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
-        if 'PÓŁROCZNA' in pdf_str and 'Przelew' in pdf_str:
+        elif 'PÓŁROCZNA' in pdf_str and 'Przelew' in pdf_str:
             rata_I = re.search(r'Kwota wpłaty w zł (\d+)', pdf_str, re.I).group(1)
             rata_II = re.search(r'Kwota wpłaty w zł (.+) (\d*)', pdf_str, re.I).group(2)
             termin_I = re.search(r'Termin płatności (\d{4}-\d{2}-\d{2})', pdf_str, re.I).group(1)
             termin_II = re.search(r'Termin płatności (.*)(\d{4}-\d{2}-\d{2})', pdf_str, re.I).group(2)
+            if wpisowe:
+                rata_I = int(rata_I) - 20
 
             return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
