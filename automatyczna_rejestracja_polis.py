@@ -4,8 +4,12 @@ import pdfplumber
 from datetime import datetime, timedelta
 import win32com.client
 from win32com.client import Dispatch
-from regon_api import get_regon_data
 import time
+try:
+    from regon_api import get_regon_data
+except ImportError as e:
+    print(f'Sprawdź czy baza REGON jest dostępna. \n\n{e}')
+
 
 start_time = time.time()
 path = os.getcwd()
@@ -1316,13 +1320,12 @@ for dane_polisy in tacka_na_polisy(obj):
                 ExcelApp.Cells(row_to_write + 3, 53).Value = 4
 
 
-# except:
-#     ExcelApp.Cells(row_to_write, 12).Value = 'POLISA NIEZAREJESTROWANA !'
-
 """Opcje zapisania"""
 ExcelApp.DisplayAlerts = False
 wb.SaveAs(path + "\\2014 BAZA MAGRO.xlsx")
-wb.Close()
+
+"""Zamknięcie narazie wyłączone..."""
+# wb.Close()
 ExcelApp.DisplayAlerts = True
 
 end_time = time.time() - start_time
