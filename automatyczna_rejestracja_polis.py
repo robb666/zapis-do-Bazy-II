@@ -750,7 +750,7 @@ def przypis_daty_raty(pdf, page_1):
 
 
     elif 'HDI' in page_1 and not 'PZU' in page_1 or '„WARTA” S.A. POTWIERDZA' in page_1:
-        box = polisa_box(pdf, 0, 200, 590, 530)
+        box = polisa_box(pdf, 0, 200, 590, 630)
         total = zam_spacji(re.search(r'(ŁĄCZNA SKŁADKA|Składka łączna) (\d*\s?\d+)', box, re.I).group(2))
 
         if 'JEDNORAZOWO' in box and 'GOTÓWKA' in box:
@@ -763,9 +763,9 @@ def przypis_daty_raty(pdf, page_1):
             termin_I = re.search(r'(termin płatności:|Termin:) (\d{4}-\d{2}-\d{2})', box, re.I).group(2)
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
-        if '2 RATACH' in box:
+        if '2 RATACH' and 'PRZELEW' in box:
             rata_I = zam_spacji(re.search(r'kwota: (\d*\s?\d+)', box, re.I).group(1))
-            rata_II = zam_spacji(re.search(r'kwota: (\d*\s?\d+) PLN|zł (\d*\s?\d+)', box, re.I).group(2))
+            rata_II = zam_spacji(re.search(r'kwota: (\d*\s?\d+) (PLN|zł) (\d*\s?\d+)', box, re.I).group(3))
             try:
                 termin_I = re.search(r'termin płatności: (\d{4}-\d{2}-\d{2})', box, re.I).group(1)
                 termin_II = re.search(r'termin płatności: (\d{4}-\d{2}-\d{2})\s?(\d{4}-\d{2}-\d{2})', box, re.I).group(2)
@@ -1226,6 +1226,7 @@ except:
     wb = ExcelApp.Workbooks.Open(path + "\\2014 BAZA MAGRO.xlsx")
     ws = wb.Worksheets("BAZA 2014")
 
+ExcelApp.Visible = True
 
 """Jesienne Bazie"""
 # try:
@@ -1327,6 +1328,8 @@ wb.SaveAs(path + "\\2014 BAZA MAGRO.xlsx")
 """Zamknięcie narazie wyłączone..."""
 # wb.Close()
 ExcelApp.DisplayAlerts = True
+
+# ExcelApp.Application.Quit()
 
 end_time = time.time() - start_time
 print('Czas wykonania: {:.2f} sekund'.format(end_time))

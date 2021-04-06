@@ -3,7 +3,11 @@ from RegonAPI import RegonAPI
 import pprint as pp
 
 API_KEY = "f98f22f8c4cc439ca677"
-api = RegonAPI(bir_version="bir1.1", is_production=True) # BIR version 1.1
+api = ''
+try:
+    api = RegonAPI(bir_version="bir1.1", is_production=True) # BIR version 1.1
+except:
+    print(f'Sprawdź czy baza REGON jest dostępna. \n\n{e}')
 api.authenticate(key=API_KEY)
 
 
