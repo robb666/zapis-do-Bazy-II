@@ -415,10 +415,10 @@ def przedmiot_ub(page_1, pdf):
 
 
         elif 'HDI' in page_1 and not 'PZU' in page_1 or '„WARTA” S.A. POTWIERDZA' in page_1:
-            if 'Marka, Model, Typ:' in page_1:
-                marka = re.search(r'Marka, Model, Typ: ([\w./-]+)', page_1, re.I).group(1)
+            if re.search(r'Marka, Model, (Typ|wersja)', page_1, re.I):
+                marka = re.search(r'Marka, Model, (Typ|wersja): ([\w./-]+)', page_1, re.I).group(2)
                 model = re.search(rf'(?<={marka})\s(\w+)', page_1, re.I).group(1)
-                nr_rej = re.search(r'Nr rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
+                nr_rej = re.search(r'(Nr|Numer) rejestracyjny: ([A-Z0-9]+)', page_1).group(2)
                 rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
