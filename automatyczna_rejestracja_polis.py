@@ -486,11 +486,15 @@ def przedmiot_ub(page_1, pdf):
         elif 'TUZ' in page_1:
             pdf_str3 = polisa_str(pdf)[0:6500]
             if 'Dane pojazdu' in pdf_str3:
-                nr_rej = re.search(r'Dane pojazdu\n?([A-Z0-9]+)', pdf_str3).group(1)
-                marka = re.search(rf'{nr_rej}.*?([\w./]+)', page_1, re.I).group(1)
-                model = re.search(rf'{marka}.*?([\w./\d]+)', page_1, re.I).group(1)
-                rok = re.search(r'SAMOCHÓD (\w+) (\d{4})', page_1).group(2)
+                try:
+                    nr_rej = re.search(r'Dane pojazdu\n?([A-Z0-9]+)', pdf_str3, re.DOTALL).group(1)
+                    marka = re.search(rf'{nr_rej}.*?([\w./]+)', page_1, re.I).group(1)
+                    model = re.search(rf'{marka}.*?([\w./\d]+)', page_1, re.I).group(1)
+                    rok = re.search(r'SAMOCHÓD (\w+) (\d{4})', page_1).group(2)
+                except Exception:
+                    print(f'TUZ błąd w danych pojazdu {Exception}')
                 return marka, kod, model, miasto, nr_rej, adres, rok
+
             """Uniqa sie z AXA"""
         # elif 'UNIQA' in page_1:
         #     if 'POJAZD' in page_1:
@@ -720,11 +724,12 @@ def przypis_daty_raty(pdf, page_1):
 
 
     elif 'Generali' in page_1 and not 'Proama' in page_1:
-        box = polisa_box(pdf, 0, 300, 590, 530)
+        box = polisa_box(pdf, 0, 300, 590, 730)
         total = re.search(r'(RAZEM:|Składka)(?!GRUPĘ) (\d*\s?\d+,\d*)\s?zł', box, re.I)
         total = float(total.group(2).replace(' ', '').replace(',', '.'))
 
-        if re.findall(r'(?=.*jednorazow[o|a])(?=.*przele[w|em]).*', box, re.I | re.DOTALL) and not 'III rata' in box:
+        if re.findall(r'(?=.*jednorazow[o|a])(?=.*przele[w|wem]).*', box, re.I | re.DOTALL) and not 'III rata' in box \
+                or re.search(r'przelew[em]', box, re.I) and not 'II rata' in box:
             termin = re.search(r'(płatna\s?do|płatności)\s?(\d{2}.\d{2}.\d{4})', box, re.I)
             termin_I = re.sub('[^0-9]', '-', termin.group(2))
             termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
@@ -761,7 +766,8 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin_I, rata_I, 'P', 3, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
-    elif 'HDI' in page_1 and not 'PZU' in page_1 or '„WARTA” S.A. POTWIERDZA' in page_1:
+    elif 'HDI' and not 'PZU' in page_1 and not 'PEUGEOT' in page_1 and not 'TUZ' in page_1 \
+            or '„WARTA” S.A. POTWIERDZA' in page_1 and not 'PEUGEOT' in page_1:
         box = polisa_box(pdf, 0, 200, 590, 630)
         total = zam_spacji(re.search(r'(ŁĄCZNA SKŁADKA|Składka łączna) (\d*\s?\d+)', box, re.I).group(2))
 
