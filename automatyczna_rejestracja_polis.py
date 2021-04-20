@@ -182,7 +182,8 @@ def adres():
 
 
 def kod_pocztowy(page_1, pdf):
-    kod = re.compile('(adres\w*|(?<!InterRisk) kontakt\w*|pocztowy|ubezpiecz[ony|ający])', re.I)
+
+    kod = re.compile('(adres\w*|(?<!InterRisk) kontakt\w*|pocztowy|ubezpiecz(ony|ający))', re.I)
     if 'UNIQA' in page_1 or 'TUW' in page_1 and not 'TUZ' in page_1:
         page_1 = polisa_str(pdf)[0:-200]
 
@@ -194,6 +195,7 @@ def kod_pocztowy(page_1, pdf):
         adres = f.group().strip()
         data = page_1.split()
         dystans = [data[data.index(split) - 10: data.index(split) + 33] for split in data if adres in split][0]
+
         if kod_pocztowy := [kod for kod in dystans if re.search('^\d{2}[-\xad]\d{3}$', kod)]:
 
             return kod_pocztowy[0]
@@ -483,17 +485,27 @@ def przedmiot_ub(page_1, pdf):
                 # rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
+
         elif 'TUZ' in page_1:
             pdf_str3 = polisa_str(pdf)[0:6500]
             if 'Dane pojazdu' in pdf_str3:
                 try:
                     nr_rej = re.search(r'Dane pojazdu\n?([A-Z0-9]+)', pdf_str3, re.DOTALL).group(1)
-                    marka = re.search(rf'{nr_rej}.*?([\w./]+)', page_1, re.I).group(1)
-                    model = re.search(rf'{marka}.*?([\w./\d]+)', page_1, re.I).group(1)
+                    # marka = re.search(rf'{nr_rej}.*?([\w./]+)', page_1, re.I).group(1)
+                    for make in makes:
+                        for line in pdf_str3.split('\n'):
+                            if make in line.split() or make[:8] in line.split():
+                                marka = make if make else make[:8]
+                                try:
+                                    model = re.search(rf'{marka}.*([\w./\d]+)', page_1, re.I | re.DOTALL).group(1)
+                                except Exception:
+                                    print(f'TUZ krótka "wersja" marki {Exception}')
+                                    model = re.search(rf'{make[:8]}.*([\w./\d]+)', page_1, re.I | re.DOTALL).group(1)
                     rok = re.search(r'SAMOCHÓD (\w+) (\d{4})', page_1).group(2)
                 except Exception:
                     print(f'TUZ błąd w danych pojazdu {Exception}')
                 return marka, kod, model, miasto, nr_rej, adres, rok
+
 
             """Uniqa sie z AXA"""
         # elif 'UNIQA' in page_1:
@@ -507,9 +519,10 @@ def przedmiot_ub(page_1, pdf):
         #         except:pass
         #         return marka, kod, model, miasto, nr_rej, adres, rok
 
+
         elif 'WARTA' in page_1:
-            if 'Marka, Model, Typ:' in page_1:
-                marka = re.search(r'Marka, Model, Typ: ([\w./-]+)', page_1, re.I).group(1)
+            if re.search('Marka, Model(, Typ)?:', page_1):
+                marka = re.search(r'Marka, Model(, Typ)?: ([\w./-]+)', page_1, re.I).group(2)
                 model = re.search(rf'(?<={marka})\s([\w-]+)', page_1, re.I).group(1)
                 nr_rej = re.search(r'Nr rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
                 rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
@@ -562,10 +575,6 @@ def numer_polisy(page_1, pdf):
     if 'Allianz' in page_1 and (nr_polisy := re.search(r'(Polisa nr|NUMER POLISY) (\d*-?\d+)', page_1)) or \
             'Globtroter' in page_1 and nr_polisy:
         return 'ALL', 'ALL', nr_polisy.group(2)
-    elif 'UNIQA' in page_1:
-        page_1 = polisa_str(pdf)[0:4600]
-        if (nr_polisy := re.search('(\d{4}-\d{5,})', page_1)):
-            return 'UNI', 'UNI', nr_polisy.group(1)
     elif 'Compensa' in page_1 and (nr_polisy := re.search('typ polisy: *\s*(\d+),numer: *\s*(\d+)', page_1)):
         return 'COM', 'COM', nr_polisy.group(1) + nr_polisy.group(2)
     elif 'EUROINS' in page_1 and (nr_polisy := re.search('Polisa ubezpieczenia nr: (\d+)', page_1)):
@@ -580,8 +589,8 @@ def numer_polisy(page_1, pdf):
         return 'INT', 'INT', nr_polisy.group(1) + nr_polisy.group(2)
     elif 'InterRisk' in page_1 and (nr_polisy := re.search('Polisa seria?\s(.*)\snumer\s(\d+)', page_1, re.I)):
         return 'RIS', 'RIS', nr_polisy.group(1) + nr_polisy.group(2)
-    elif (nr_polisy := re.search('(Numer:?|POLISA NR)\s?\n?(\w\d+)', page_1, re.I)) and not 'Travel' in page_1 and \
-                                                                                                 not 'WARTA' in page_1:
+    elif (nr_polisy := re.search('^(?!.*-).*(Numer:?|POLISA NR)\s?\n?(\w\d+)', page_1, re.I)) and \
+                                                                    not 'Travel' in page_1 and not 'WARTA' in page_1:
         return 'LIN', 'LIN',  nr_polisy.group(2)
     elif 'MTU' in page_1 and (nr_polisy := re.search('Polisa\s.*\s(\d+)', page_1, re.I)):
         return 'AZ', 'MTU', nr_polisy.group(1)
@@ -595,6 +604,10 @@ def numer_polisy(page_1, pdf):
             return 'TUW', 'TUW', nr_polisy.group(1)
     elif 'TUZ' in page_1 and (nr_polisy := re.search('WNIOSEK seria (\w+) nr (\d+)', page_1)):
         return 'TUZ', 'TUZ', nr_polisy.group(1) + nr_polisy.group(2)
+    elif 'UNIQA' in page_1:
+        page_1 = polisa_str(pdf)[0:4600]
+        if (nr_polisy := re.search('(\d{4}-\d{5,})', page_1)):
+            return 'UNI', 'UNI', nr_polisy.group(1)
     # elif 'UNIQA' in page_1 and (nr_polisy := re.search('Nr (\d{6,})', page_1)):
     #     return 'UNI', 'UNI', nr_polisy.group(1)
     elif 'WARTA' in page_1 and (nr_polisy := re.search('(POLISA NR\s?:|WARTA DOM.*NR:|PLUS NR:)\s*(\d+)', page_1)):
@@ -865,10 +878,11 @@ def przypis_daty_raty(pdf, page_1):
 
 
     # Link4
-    elif (nr_polisy := re.search('(Numer:?|POLISA NR)\s?\n?(\w\d+)', page_1, re.I)) and not 'WARTA' in page_1 or \
-                                                                                                    'LINK4' in page_1:
-        pdf_str2 = polisa_str(pdf)[400:4800]
+    elif (nr_polisy := re.search('^(?!.*-).*(Numer:?|POLISA NR)\s?\n?(\w\d+)', page_1, re.I)) and \
+                                                                        not 'WARTA' in page_1 or 'LINK4' in page_1:
 
+        pdf_str2 = polisa_str(pdf)[400:4800]
+        print(pdf_str2)
         total = re.search(r'(\(w złotych\)|ŁĄCZNIE)\s?(\d*\s?\d+,\d+)', pdf_str2, re.I)
         total = float(total.group(2).replace(',', '.').replace(' ', ''))
 
@@ -1192,6 +1206,7 @@ def rozpoznanie_danych(tacka_na_polisy):
     tel_mail_ = tel_mail(page_1, pdf, nazwisko)
     tel = tel_mail_[0].replace('\n', '') if tel_mail_[0] else ''
     email = tel_mail_[1]
+
     przedmiot_ub_ = przedmiot_ub(page_1, pdf)
 
     marka = przedmiot_ub_[0]
@@ -1201,6 +1216,22 @@ def rozpoznanie_danych(tacka_na_polisy):
     nr_rej = przedmiot_ub_[4]
     adres = przedmiot_ub_[5]
     rok = przedmiot_ub_[6]
+
+
+    # przedmiot_ub_ = ['', '', '', '', '', '', '']
+    # try:
+    #     przedmiot_ub_ = przedmiot_ub(page_1, pdf)
+    # except:
+    #     pass
+    # marka = przedmiot_ub_[0] if przedmiot_ub_[0] else ''
+    # kod = przedmiot_ub_[1] if przedmiot_ub_[1] else ''
+    # model = przedmiot_ub_[2] if przedmiot_ub_[2] else ''
+    # miasto = przedmiot_ub_[3] if przedmiot_ub_[3] else ''
+    # nr_rej = przedmiot_ub_[4] if przedmiot_ub_[4] else ''
+    # adres = przedmiot_ub_[5] if przedmiot_ub_[5] else ''
+    # rok = przedmiot_ub_[6] if przedmiot_ub_[6] else ''
+
+
 
     data_wyst = data_wystawienia()
     data_konca = koniec_ochrony(page_1, pdf)
