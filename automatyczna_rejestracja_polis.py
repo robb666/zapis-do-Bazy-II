@@ -767,7 +767,7 @@ def przypis_daty_raty(pdf, page_1):
 
 
     elif re.search('^(?!.*PEUGEOT).*HDI.*$', page_1, re.I) and not 'PZU' in page_1 and not 'TUZ' in page_1 \
-            or re.search('^(?!.*PEUGEOT).*„WARTA” S.A. POTWIERDZA.*$', page_1, re.I) :
+            or re.search('^(?!.*PEUGEOT).*HDI.*$', page_1, re.I) and '„WARTA” S.A. POTWIERDZA':
 
         box = polisa_box(pdf, 0, 200, 590, 630)
         total = zam_spacji(re.search(r'(ŁĄCZNA SKŁADKA|Składka łączna) (\d*\s?\d+)', box, re.I).group(2))
