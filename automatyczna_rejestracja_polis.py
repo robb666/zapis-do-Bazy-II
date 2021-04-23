@@ -140,7 +140,10 @@ def nazwisko_imie(d, page_1):
         else:
             name = [f'{d[k + 1].title()} {v.title()}' for k, v in d.items() if v.title() in all_names
                     and f'{d[k + 1].title()} {v.title()}' not in agent.values() and not re.search('\d', d[k + 1])]
+
     if name:
+        last_name = name[0].split()[0]
+        first_name = name[0].split()[1]
         return name[0].split()[0], name[0].split()[1]
     else:
         return '', ''
@@ -714,6 +717,15 @@ def przypis_daty_raty(pdf, page_1):
 
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
+        if re.findall(r'(?=.*przelew)(?=.*półroczna).*', box, re.I | re.DOTALL):
+            rata_I = re.search(r'I rata -  \d{2}.\d{2}.\d{4} - (\d*\s?\d+)', box, re.I).group(1)
+            rata_II = re.search(r'II rata.* - (\d*\s*\d+)', box, re.I).group(1)
+
+            termin_I = term_pln(re.search(r'I\srata\s-\s+(\d{2}.\d{2}.\d{4})', box, re.I), 1)
+            termin_II = term_pln(re.search(r'II\srata\s-\s+(\d{2}.\d{2}.\d{4})', box, re.I), 1)
+            return total, termin_I, zam_spacji(rata_I), 'P', 2, 1, termin_II, zam_spacji(rata_II), \
+                                                                        termin_III, rata_III, termin_IV, rata_IV
+
         if 'składki: kwartalna' in box:
             (rata_I := re.search(r'I rata -  \d{2}.\d{2}.\d{4} - (\d+)', box, re.I).group(1))
             (rata_II := re.search(r'II rata.* - (\d+)', box, re.I).group(1))
@@ -1098,8 +1110,8 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'WARTA' in page_1:
         pdf_str = polisa_str(pdf)[100:-300]
-        # print(pdf_str)
-        total = re.search(r'(SKŁADKA ŁĄCZNA|Kwota\s?:?|w kwocie) (\d*\s?\.?\d+)', pdf_str, re.I)
+        print(pdf_str)
+        total = re.search(r'(SKŁADKA ŁĄCZNA|Kwota\s?:?|w kwocie|do zapłaty \(zł\):) (\d*.\d+)', pdf_str, re.I)
         total = int(total.group(2).replace('\xa0', '').replace('.', '').replace(' ', ''))
 
         if re.findall(r'(?=.*JEDNORAZOWO)(?=.*GOTÓWKA).*', pdf_str, re.I | re.DOTALL):
@@ -1136,7 +1148,7 @@ def przypis_daty_raty(pdf, page_1):
                 raty = re.search(r'Kwota: (\d+) zł (\d+) zł (\d+) zł (\d+)', pdf_str)
                 return total, termin.group(1), raty.group(1), 'P', 4, 1, termin.group(2), raty.group(2), \
                        termin.group(3), raty.group(3), termin.group(4), raty.group(4)
-            elif transportowe:
+            elif transportowe and not 'Pakiet Przedsiębiorca' in pdf_str:
                 total = (re.search('zawartej umowy ubezpieczenia : (\d*.?\d+)', pdf_str).group(1)).replace('.', '')
                 termin = re.search(r'Termin płatności\s?: 1. (\d{4}-\d{2}-\d{2}) 2. (\d{4}-\d{2}-\d{2}) '
                                    r'3. (\d{4}-\d{2}-\d{2}) 4. (\d{4}-\d{2}-\d{2})', pdf_str)
@@ -1144,6 +1156,17 @@ def przypis_daty_raty(pdf, page_1):
                 return total, termin.group(1), raty.group(1), 'P', 4, 1, termin.group(2), raty.group(2), \
                        termin.group(3), raty.group(3), termin.group(4), raty.group(4)
 
+            elif 'Pakiet Przedsiębiorca' in pdf_str:
+                raty = re.search(r'Kwota\s?:\s*(\d*.\d+),?\d*\s*(\d*.\d+),?\d*\s*(\d*\.\d+),?\d*\s*(\d*\.?\d+),?\d*', pdf_str)
+                rata_I = raty.group(1).replace(',', '').replace('.', '')
+                rata_II = raty.group(2).replace(',', '').replace('.', '')
+                rata_III = raty.group(3).replace(',', '').replace('.', '')
+                rata_IV = raty.group(4).replace(',', '').replace('.', '')
+                termin = re.search(r'4 RATACH Termin płatności\s?: 1. (\d{4}-\d{2}-\d{2}) 2. (\d{4}-\d{2}-\d{2}) 3. '\
+                                     '(\d{4}-\d{2}-\d{2}) 4. (\d{4}-\d{2}-\d{2})', pdf_str)
+
+                return total, termin.group(1), rata_I, 'P', 4, 1, termin.group(2), rata_II, \
+                       termin.group(3), rata_III, termin.group(4), rata_IV
 
     # Wiener
     elif re.search('wiener', page_1, re.I):
@@ -1175,8 +1198,6 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
     return total, termin_I, rata_I, '', '', '', termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
-
-
 
 
 """Koniec arkusza EXCEL"""
