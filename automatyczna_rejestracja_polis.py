@@ -799,16 +799,19 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'Hestia' in page_1 and not 'MTU' in page_1:
         box = polisa_box(pdf, 0, 120, 590, 600)
-        total = re.search(r'DO ZAPŁATY (\d*\s?\d+)', box, re.I)
-        total = int(re.sub(r'([\xa0 ])', '', total.group(1)))
+        total = re.search(r'DO ZAPŁATY(/ TOTAL PREMIUM)? (\d*\s?\d+)', box, re.I)
+        total = int(re.sub(r'([\xa0 ])', '', total.group(2)))
 
         if not 'II rata' in box and 'gotówka' in box:
             termin_I = re.search(r'płatności (\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         elif not re.findall(r'(?=.*II\srata)(?=.*przelew|przelewem).*', box, re.I | re.DOTALL):
-        # if not 'II rata' in box and 'przelew' in box:
-            termin_I = re.search(r'płatności (\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
+            try:
+                termin_I = re.search(r'płatności (\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
+            except Exception as e:
+                termin_I = re.search(r'(\d{4}[-‑]\d{2}[-‑]\d{2}).*\n.*płatności', box, re.I).group(1)
+                print(f'Termin płatności - Hestia {e}')
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         elif re.findall(r'(?=.*II\srata)(?=.*przelew|przelewem).*', box, re.I | re.DOTALL):
