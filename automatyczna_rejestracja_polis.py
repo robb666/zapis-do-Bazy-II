@@ -274,6 +274,15 @@ def tel_mail(page_1, pdf, nazwisko):
         except: pass
         return tel, mail
 
+    elif 'UNIQA' in page_1:
+        try:
+            mail = re.search(r'([A-Za-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', page_1).group(1)
+        except:pass
+        try:
+            tel = re.search(r'\n?([0-9]{9})\s?\n?' + fr'(?={mail})', page_1).group(1)
+        except:pass
+        return tel, mail
+
     elif 'WARTA' in page_1:
         pdf_str3 = polisa_str(pdf)[0:-3000]
         try:
@@ -294,7 +303,10 @@ def tel_mail(page_1, pdf, nazwisko):
         except: pass
         return tel, mail
 
+
+
     else:
+        print(page_1)
         tel_comp, email_comp = re.compile(r' ([0-9]{9})\n? '), re.compile(r'([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)')
         tel_list = re.findall(tel_comp, page_1)
         email_list = re.findall(email_comp, page_1)
