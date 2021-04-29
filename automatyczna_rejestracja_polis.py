@@ -211,7 +211,7 @@ def tel_mail(page_1, pdf, nazwisko):
                     'tel Maciej': '602752893', 'mail Maciej': 'magro@ubezpieczenia-magro.pl',
                     'tel MAGRO': '572810576', 'mail AXA': 'obsluga@axaubezpieczenia.pl',
                     'mail UNIQA': 'centrala@uniqa.pl'}
-    # print(page_1)
+    print(page_1)
     if 'Allianz' in page_1:
         tel = ''.join([tel for tel in re.findall(r'tel.*([0-9 .\-\(\)]{8,}[0-9])', page_1) if tel not in tel_mail_off.values()])
         mail = ''.join([mail for mail in re.findall(r'([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', page_1) if mail not in tel_mail_off.values()])
@@ -224,7 +224,7 @@ def tel_mail(page_1, pdf, nazwisko):
             mail = mail.group(1)
         return tel, mail
 
-    elif 'Generali' in page_1:
+    elif 'Generali' in page_1 and not 'Proama' in page_1:
         try: tel = re.search(r'telefon: (\+48|0048)?\s?([0-9.\-\(\)\s]{9,})?', page_1).group(2)
         except: pass
         try: mail = re.search(r'email: ([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1).group(1)
@@ -250,6 +250,13 @@ def tel_mail(page_1, pdf, nazwisko):
         try:
             mail = re.search(r'Adres e-mail: ([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1).group(1)
         except:pass
+        return tel, mail
+
+    elif 'Proama' in page_1:
+        try: tel = re.search(r'telefon:\s*(\+48|0048)\s?([0-9.\-\(\)\s]{9,})', page_1).group(2)
+        except: pass
+        try: mail = re.search(r'email:\s*([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', page_1).group(1)
+        except: pass
         return tel, mail
 
     elif 'PZU' in page_1:
@@ -961,20 +968,29 @@ def przypis_daty_raty(pdf, page_1):
 
 
     elif 'Proama' in page_1:
-        box = polisa_box(pdf, 0, 250, 590, 450)
-
+        box = polisa_box(pdf, 0, 250, 590, 650)
         total = re.search(r'RAZEM: (\d*\s?\d+)', box, re.I)
         total = int(re.sub(r'\xa0', '', total.group(1)))
 
-        if 'przelewem' in box:
+        if 'przelewem' in box and not 'II rata' in box:
             termin = re.search(r'płatna\s?do (\d{2}.\d{2}.\d{4})', box, re.I)
             termin_I = re.sub('[^0-9]', '-', termin.group(1))
             termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
 
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
-        if 'została pobrana' in box:
+        elif 'została pobrana' in box:
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+        elif re.search('(?=.*II\srata)(?!.*III\srata).*', box, re.I):
+            rata_I = float(re.search(r'I\srata\s(\d*\s?\d+,?\d*)', box, re.I).group(1).replace(' ', '').replace(',', '.'))
+            rata_II = float(re.search(r'II\srata\s(\d*\s?\d+,?\d*)', box, re.I).group(1).replace(' ', '').replace(',', '.'))
+
+            terminy = re.search(r'I\srata\s.*\spłatna\sdo\s(\d{2}.\d{2}.\d{4}).*(\d{2}.\d{2}.\d{4})', box, re.I)
+            termin_I = datetime.strptime(term_pln(terminy, 1), '%Y-%m-%d') + one_day
+            termin_II = datetime.strptime(term_pln(terminy, 2), '%Y-%m-%d') + one_day
+
+            return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
     elif 'PZU' in page_1:
