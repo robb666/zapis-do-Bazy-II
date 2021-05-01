@@ -211,7 +211,7 @@ def tel_mail(page_1, pdf, nazwisko):
                     'tel Maciej': '602752893', 'mail Maciej': 'magro@ubezpieczenia-magro.pl',
                     'tel MAGRO': '572810576', 'mail AXA': 'obsluga@axaubezpieczenia.pl',
                     'mail UNIQA': 'centrala@uniqa.pl'}
-    print(page_1)
+
     if 'Allianz' in page_1:
         tel = ''.join([tel for tel in re.findall(r'tel.*([0-9 .\-\(\)]{8,}[0-9])', page_1) if tel not in tel_mail_off.values()])
         mail = ''.join([mail for mail in re.findall(r'([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', page_1) if mail not in tel_mail_off.values()])
@@ -563,7 +563,7 @@ def przedmiot_ub(page_1, pdf):
         elif 'Wiener' in page_1:
             if 'DANE POJAZDU' in page_1:
                 marka = re.search(r'Marka pojazdu: ([\w./]+)', page_1, re.I).group(1)
-                model = re.search(r'Marka pojazdu:\s([\w-]+) Rok ', page_1, re.I).group(1)
+                model = re.search(rf'{marka}.*\nMarka pojazdu:\s*([\w-]+)', page_1, re.I).group(1)
                 nr_rej = re.search(r'Numer rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
                 rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
                 return marka, kod, model, miasto, nr_rej, adres, rok
@@ -1213,7 +1213,7 @@ def przypis_daty_raty(pdf, page_1):
     elif re.search('wiener', page_1, re.I):
         pdf_str = polisa_str(pdf)[100:5000]
         total = re.search(r'(SKŁADKA\sŁĄCZNA|Kwota\s|оплате):? (\d*\s?\.?\d+)', pdf_str, re.I)
-        total = int(total.group(2).replace('\xa0', '').replace('.', ''))
+        total = int(total.group(2).replace('\xa0', '').replace('.', '').replace(' ', ''))
 
         if re.search(r'(?=.*gotówka)', pdf_str, re.I | re.DOTALL):
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
