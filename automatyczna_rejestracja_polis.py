@@ -310,10 +310,7 @@ def tel_mail(page_1, pdf, nazwisko):
         except: pass
         return tel, mail
 
-
-
     else:
-        print(page_1)
         tel_comp, email_comp = re.compile(r' ([0-9]{9})\n? '), re.compile(r'([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)')
         tel_list = re.findall(tel_comp, page_1)
         email_list = re.findall(email_comp, page_1)
@@ -614,9 +611,9 @@ def numer_polisy(page_1, pdf):
         return 'INT', 'INT', nr_polisy.group(1) + nr_polisy.group(2)
     elif 'InterRisk' in page_1 and (nr_polisy := re.search('Polisa seria?\s(.*)\snumer\s(\d+)', page_1, re.I)):
         return 'RIS', 'RIS', nr_polisy.group(1) + nr_polisy.group(2)
-    elif (nr_polisy := re.search('^(?!.*-).*(Numer:?|POLISA NR)\s?\n?(\w\d+)', page_1, re.I)) and \
+    elif (nr_polisy := re.search('(Numer:?|POLISA NR:?)\s?\n?(\w\d+)', page_1, re.I)) and \
                                                                     not 'Travel' in page_1 and not 'WARTA' in page_1:
-        return 'LIN', 'LIN',  nr_polisy.group(2)
+        return 'ULIN', 'LIN',  nr_polisy.group(2)
     elif 'MTU' in page_1 and (nr_polisy := re.search('Polisa\s.*\s(\d+)', page_1, re.I)):
         return 'AZ', 'MTU', nr_polisy.group(1)
     elif 'Proama' in page_1 and (nr_polisy := re.search('POLISA NR\s*(\d+)', page_1, re.I)):
@@ -898,7 +895,6 @@ def przypis_daty_raty(pdf, page_1):
                                                                         not 'WARTA' in page_1 or 'LINK4' in page_1:
 
         pdf_str2 = polisa_str(pdf)[400:4800]
-        print(pdf_str2)
         total = re.search(r'(\(w złotych\)|ŁĄCZNIE)\s?(\d*\s?\d+,\d+)', pdf_str2, re.I)
         total = float(total.group(2).replace(',', '.').replace(' ', ''))
 
