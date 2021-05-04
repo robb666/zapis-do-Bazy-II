@@ -663,11 +663,12 @@ def przypis_daty_raty(pdf, page_1):
 
     if 'Allianz' in page_1 or 'Globtroter' in page_1:
         box = polisa_box(pdf, 0, 320, 590, 780)
+
         total = re.search(r'(Składka:|łącznie:|za 3 lata:|Razem) (\d*\s?\d+)', box)
         if total:
             total = int(re.sub(r'\xa0', '', total.group(2)))
 
-        if 'płatność online' in page_1 and 'przelew' in page_1:
+        if 'I rata przelew' in page_1:
 
             termin_I = re.search(r'Dane płatności:\ndo (\d{2}.\d{2}.\d{4})', box, re.I)
             termin_I = re.sub('[^0-9]', '-', termin_I.group(1))
@@ -1041,7 +1042,6 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'TUW' in page_1 and not 'TUZ' in page_1:
         pdf_str3 = polisa_str(pdf)[1000:6500]
-        # print(pdf_str3)
         total = re.search(r'(Składka łączna:|ubezpieczeniowa razem:) (\d*\s?\d+) PLN', pdf_str3, re.I)
         total = int(re.sub(r'\xa0', '', total.group(2)))
 
@@ -1052,13 +1052,11 @@ def przypis_daty_raty(pdf, page_1):
         if re.findall(r'(?=.*GOTÓWKA)(?=.*(I raty|1 rata|JEDNORAZOWO)).*', pdf_str3, re.I | re.DOTALL):
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
-        # if 'JEDNORAZOWO' in pdf_str3 and 'PRZELEW' in pdf_str3:
         elif re.findall(r'(?=.*PRZELEW)(?=.*JEDNORAZOWO).*', pdf_str3, re.I | re.DOTALL):
-            # print(pdf_str3)
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         elif re.findall(r'(?=.*PRZELEW)(?=.*2 rata).*', pdf_str3, re.I | re.DOTALL):
-            rata_I = re.search(r'Kwota (\d*\s?\d+) PLN (\d*\s?\d+)', pdf_str3, re.I).group(1)
+            rata_I = zam_spacji(re.search(r'Kwota (\d*\s?\d+) PLN (\d*\s?\d+)', pdf_str3, re.I).group(1)) - 10
             rata_II = re.search(r'Kwota (\d*\s?\d+) PLN (\d*\s?\d+)', pdf_str3, re.I).group(2)
 
             termin_I = re.search(r'Termin płatności (\d{2}-\d{2}-\d{4})', pdf_str3, re.I).group(1)
@@ -1421,6 +1419,7 @@ for dane_polisy in tacka_na_polisy(obj):
         ExcelApp.Cells(row_to_write, 55).Value = rata_I
     else:
         ExcelApp.Cells(row_to_write, 55).Value = przypis
+    ExcelApp.Cells(row_to_write, 58).Value = 'aut'
     ExcelApp.Cells(row_to_write, 60).Value = tow_ub_tor
 
     if rata_II:
