@@ -493,7 +493,7 @@ def przedmiot_ub(page_1, pdf):
             if 'pojazdu:' in pdf_str3:
                 nr_rej = re.search(r'numer\s*rejestracyjny:\s*([A-Z0-9]+)', pdf_str3).group(1)
                 try:
-                    marka_model = re.search(rf'({nr_rej})\n?.*?((?<=marka/model/ typ: )?.*?([\w/]*))',
+                    marka_model = re.search(rf'({nr_rej})\n?.*?((?<=marka/model/ typ: )?.*?([\w-/]*))',
                                                                         pdf_str3, re.I | re.DOTALL).group(2).split('/')
                     marka, model = marka_model[0], marka_model[1]
                 except Exception:
@@ -1041,6 +1041,7 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'TUW' in page_1 and not 'TUZ' in page_1:
         pdf_str3 = polisa_str(pdf)[1000:6500]
+        # print(pdf_str3)
         total = re.search(r'(Składka łączna:|ubezpieczeniowa razem:) (\d*\s?\d+) PLN', pdf_str3, re.I)
         total = int(re.sub(r'\xa0', '', total.group(2)))
 
@@ -1052,9 +1053,17 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         # if 'JEDNORAZOWO' in pdf_str3 and 'PRZELEW' in pdf_str3:
-        if re.findall(r'(?=.*PRZELEW)(?=.*(I raty|1 rata|JEDNORAZOWO)).*', pdf_str3, re.I | re.DOTALL):
+        elif re.findall(r'(?=.*PRZELEW)(?=.*JEDNORAZOWO).*', pdf_str3, re.I | re.DOTALL):
             # print(pdf_str3)
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+        elif re.findall(r'(?=.*PRZELEW)(?=.*2 rata).*', pdf_str3, re.I | re.DOTALL):
+            rata_I = re.search(r'Kwota (\d*\s?\d+) PLN (\d*\s?\d+)', pdf_str3, re.I).group(1)
+            rata_II = re.search(r'Kwota (\d*\s?\d+) PLN (\d*\s?\d+)', pdf_str3, re.I).group(2)
+
+            termin_I = re.search(r'Termin płatności (\d{2}-\d{2}-\d{4})', pdf_str3, re.I).group(1)
+            termin_II = re.search(r'Termin płatności (\d{2}-\d{2}-\d{4}) (\d{2}-\d{2}-\d{4})', pdf_str3, re.I).group(2)
+            return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
     elif 'TUZ' in page_1:
