@@ -1055,8 +1055,10 @@ def przypis_daty_raty(pdf, page_1):
             rata_I = zam_spacji(re.search(r'Kwota (\d*\s?\d+) PLN (\d*\s?\d+)', pdf_str3, re.I).group(1)) - 10
             rata_II = re.search(r'Kwota (\d*\s?\d+) PLN (\d*\s?\d+)', pdf_str3, re.I).group(2)
 
-            termin_I = re.search(r'Termin płatności (\d{2}-\d{2}-\d{4})', pdf_str3, re.I).group(1)
-            termin_II = re.search(r'Termin płatności (\d{2}-\d{2}-\d{4}) (\d{2}-\d{2}-\d{4})', pdf_str3, re.I).group(2)
+            terminy = re.search(r'Termin płatności (\d{2}-\d{2}-\d{4}) (\d{2}-\d{2}-\d{4})', pdf_str3, re.I)
+            termin_I = term_pln(terminy, 1)
+            termin_II = term_pln(terminy, 2)
+
             return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
