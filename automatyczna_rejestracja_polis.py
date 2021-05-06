@@ -63,10 +63,10 @@ def polisa_box(pdf, left, top, right, bottom):
 def pesel_checksum(p):
     """Suma kontrolna nr pesel."""
     l = int(p[10])
-    suma = ((1*int(p[0])) + 3*int(p[1]) + (7*int(p[2])) + (9*int(p[3])) + (1*int(p[4])) + (3*int(p[5])) +
-            (7*int(p[6])) + (9*int(p[7])) + (1*int(p[8])) + (3*int(p[9])))
-    lm = (suma % 10)  # dzielenie wyniku modulo 10
-    kontrola = (10 - lm)  # sprawdzenie ostatniej liczby kontrolnej
+    suma = 1*int(p[0]) + 3*int(p[1]) + 7*int(p[2]) + 9*int(p[3]) + 1*int(p[4]) + 3*int(p[5]) + \
+           7*int(p[6]) + 9*int(p[7]) + 1*int(p[8]) + 3*int(p[9]) + 1*int(p[10])
+    lm = suma % 10  # dzielenie wyniku modulo 10
+    kontrola = 10 - lm  # sprawdzenie ostatniej liczby kontrolnej
     # w przypadku liczby kontrolnej 10 i 0 sa jednoznaczne a 0 moze byc wynikiem odejmowania
     if (kontrola == 10 or l == kontrola) and p[2:4] != '00':
         return 1
@@ -152,7 +152,7 @@ def nazwisko_imie(d, page_1):
 def pesel_regon(d):
     """Zapisuje pesel/regon."""
     nr_reg_TU = {'AXA': '140806789'}
-    pesel = [pesel for k, pesel in d.items() if k < 200 and len(pesel) == 11 and re.search('\d{11}', pesel)
+    pesel = [pesel for k, pesel in d.items() if k < 200 and len(pesel) == 11 and re.search('(?<!\+)\d{11}', pesel)
                                                                                              and pesel_checksum(pesel)]
     regon = [regon for k, regon in d.items() if k < 200 and len(regon) == 9 and re.search('\d{9}', regon) and regon
                                                             not in nr_reg_TU.values() and regon_checksum(regon)]
@@ -706,9 +706,12 @@ def przypis_daty_raty(pdf, page_1):
 
 
     elif 'Compensa' in page_1:
-        box = polisa_box(pdf, 0, 260, 590, 700)
-        total = re.search(r'Składka ogółem: (\d*\s?\d+)', box, re.I)
-        total = int(re.sub(r'\xa0', '', total.group(1)))
+        print(page_1)
+        box = polisa_box(pdf, 0, 260, 590, 750)
+        try:
+            total = re.search(r'Składka ogółem: (\d*\s?\d+)', box, re.I)
+            total = int(re.sub(r'\xa0', '', total.group(1)))
+        except:pass
 
         if re.findall(r'(?=.*przelew)(?=.*jednorazowa).*', box, re.I | re.DOTALL):
             termin_I = term_pln(re.search(r'I\srata\s-\s+(\d{2}.\d{2}.\d{4})', box, re.I), 1)
@@ -758,7 +761,7 @@ def przypis_daty_raty(pdf, page_1):
             termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
-        elif ('została pobrana' in box or 'została opłacona' in box) and not 'III rata' in page_1:
+        elif ('została pobrana' in box or 'została opłacona' in box) and not 'II rata' in page_1:
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         elif re.findall(r'(?=.*przele[w|em])(?=.*II rata)(?!.III rata).*', box, re.I | re.DOTALL):# and not 'III rata' in box:
