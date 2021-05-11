@@ -151,7 +151,7 @@ def nazwisko_imie(d, page_1):
 
 def pesel_regon(d):
     """Zapisuje pesel/regon."""
-    nr_reg_TU = {'AXA': '140806789'}
+    nr_reg_TU = {'AXA': '140806789', 'PKO BP': '016298263'}
     pesel = [pesel for k, pesel in d.items() if k < 200 and len(pesel) == 11 and re.search('(?<!\+)\d{11}', pesel)
                                                                                              and pesel_checksum(pesel)]
     regon = [regon for k, regon in d.items() if k < 200 and len(regon) == 9 and re.search('\d{9}', regon) and regon
@@ -441,8 +441,8 @@ def przedmiot_ub(page_1, pdf):
 
 
         elif 'HDI' in page_1 and not 'PZU' in page_1 or '„WARTA” S.A. POTWIERDZA' in page_1:
-            if re.search(r'Marka, Model, (Typ|wersja)', page_1, re.I):
-                marka = re.search(r'Marka, Model, (Typ|wersja): ([\w./-]+)', page_1, re.I).group(2)
+            if re.search(r'Marka, Model(, Typ|wersja)?:', page_1, re.I):
+                marka = re.search(r'Marka, Model(, Typ|wersja)?: ([\w./-]+)', page_1, re.I).group(2)
                 model = re.search(rf'(?<={marka})\s(\w+)', page_1, re.I).group(1)
                 nr_rej = re.search(r'(Nr|Numer) rejestracyjny: ([A-Z0-9]+)', page_1).group(2)
                 rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
@@ -546,7 +546,7 @@ def przedmiot_ub(page_1, pdf):
 
 
         elif 'WARTA' in page_1:
-            if re.search('Marka, Model(, Typ)?:', page_1):
+            if re.search('Marka, Model, Typ:', page_1) or re.search('Marka, Model:', page_1):
                 marka = re.search(r'Marka, Model(, Typ)?: ([\w./-]+)', page_1, re.I).group(2)
                 model = re.search(rf'(?<={marka})\s([\w-]+)', page_1, re.I).group(1)
                 nr_rej = re.search(r'Nr rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
