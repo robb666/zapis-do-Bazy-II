@@ -850,8 +850,9 @@ def przypis_daty_raty(pdf, page_1):
                    rata_III, termin_IV, rata_IV
 
 
-    elif 'INTER' in page_1 and not 'InterRisk' in page_1:
+    elif 'INTER ' in page_1 and not 'InterRisk' in page_1:
         box = polisa_box(pdf, 0, 220, 590, 490)
+        print(page_1)
         (total := re.search(r'kwota składki: (\d*\s?\d+)', box, re.I))
         total = int(re.sub(r' ', '', total.group(1)))
 
