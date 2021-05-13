@@ -302,7 +302,6 @@ def tel_mail(page_1, pdf, nazwisko):
         return tel, mail
 
     elif 'Wiener' in page_1:
-        print(page_1)
         try:
             tel = re.search(r'(Telefon kontaktowy|Telefon komórkowy:)\s?(\+48|0048)?\s?([0-9.\-\(\)]{9,})?', page_1).group(3)
         except: pass
