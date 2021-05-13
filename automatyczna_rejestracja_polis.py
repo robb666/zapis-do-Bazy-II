@@ -661,46 +661,42 @@ def przypis_daty_raty(pdf, page_1):
                                                                            '', '', '', '', '', '', '', '', ''
 
     if 'Allianz' in page_1 or 'Globtroter' in page_1:
-        box = polisa_box(pdf, 0, 320, 590, 780)
-
-        total = re.search(r'(Składka:|łącznie:|za 3 lata:|Razem) (\d*\s?\d+)', box)
+        # box = polisa_box(pdf, 0, 320, 590, 780)
+        pdf_str2 = polisa_str(pdf)[0:-2600]
+        total = re.search(r'(Składka:|łącznie:|za 3 lata:|Razem) (\d*\s?\d+)', pdf_str2)
         if total:
             total = int(re.sub(r'\xa0', '', total.group(2)))
 
         if 'I rata przelew' in page_1:
 
-            termin_I = re.search(r'Dane płatności:\ndo (\d{2}.\d{2}.\d{4})', box, re.I)
+            termin_I = re.search(r'Dane płatności:\ndo (\d{2}.\d{2}.\d{4})', pdf_str2, re.I)
             termin_I = re.sub('[^0-9]', '-', termin_I.group(1))
             termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
-        elif 'Twoja składka za 3 lata' in page_1 and not 'III rata' in page_1:
-            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
-
-
         elif 'przelew' in page_1 and 'II rata' in page_1 and not 'III rata' in page_1:
 
-            termin = re.search(r'Dane płatności:\ndo (\d{2}.\d{2}.\d{4}).*\ndo\s?(\d{2}.\d{2}.\d{4}).*', box, re.I | re.DOTALL)
+            termin = re.search(r'Dane płatności:\ndo (\d{2}.\d{2}.\d{4}).*\ndo\s?(\d{2}.\d{2}.\d{4}).*', pdf_str2, re.I | re.DOTALL)
 
             termin_I = term_pln(termin, 1)
             termin_II = term_pln(termin, 2)
-            rata_I = re.search(r'Dane płatności:\ndo (\d{2}.\d{2}.\d{4}) r. (\d*\s?\d+)', box, re.I).group(2)
-            rata_II = re.search(rf'{termin.group(2)}.* (\d*\s?\d+)', box, re.I).group(1)
+            rata_I = re.search(r'Dane płatności:\ndo (\d{2}.\d{2}.\d{4}) r. (\d*\s?\d+)', pdf_str2, re.I).group(2)
+            rata_II = re.search(rf'{termin.group(2)}.* (\d*\s?\d+)', pdf_str2, re.I).group(1)
 
             return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
         elif 'Twoja składka za 3 lata' in page_1:
-            termin = re.search('do (\d{2}.\d{2}.\d{4}).*\n?do (\d{2}.\d{2}.\d{4}).*\n?do (\d{2}.\d{2}.\d{4})', box, re.I)
+            termin = re.search('do (\d{2}.\d{2}.\d{4}).*\n?do (\d{2}.\d{2}.\d{4}).*\n?do (\d{2}.\d{2}.\d{4})', pdf_str2, re.I)
 
             termin_I = term_pln(termin, 1)
             termin_II = term_pln(termin, 2)
             termin_III = term_pln(termin, 3)
 
-            rata_I = re.search(f'{termin.group(1)} r. (\d*\s?\d+)', box, re.I).group(1)
-            rata_II = re.search(f'{termin.group(2)} r. (\d*\s?\d+)', box, re.I).group(1)
-            rata_III = re.search(f'{termin.group(3)} r. (\d*\s?\d+)', box, re.I).group(1)
+            rata_I = re.search(f'{termin.group(1)} r. (\d*\s?\d+)', pdf_str2, re.I).group(1)
+            rata_II = re.search(f'{termin.group(2)} r. (\d*\s?\d+)', pdf_str2, re.I).group(1)
+            rata_III = re.search(f'{termin.group(3)} r. (\d*\s?\d+)', pdf_str2, re.I).group(1)
 
             return total, termin_I, rata_I, 'P', 3, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
@@ -720,7 +716,7 @@ def przypis_daty_raty(pdf, page_1):
 
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
-        if re.findall(r'(?=.*przelew)(?=.*półroczna).*', box, re.I | re.DOTALL):
+        elif re.findall(r'(?=.*przelew)(?=.*półroczna).*', box, re.I | re.DOTALL):
             rata_I = re.search(r'I rata -  \d{2}.\d{2}.\d{4} - (\d*\s?\d+)', box, re.I).group(1)
             rata_II = re.search(r'II rata.* - (\d*\s*\d+)', box, re.I).group(1)
 
@@ -729,7 +725,7 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin_I, zam_spacji(rata_I), 'P', 2, 1, termin_II, zam_spacji(rata_II), \
                                                                         termin_III, rata_III, termin_IV, rata_IV
 
-        if 'składki: kwartalna' in box:
+        elif 'składki: kwartalna' in box:
             (rata_I := re.search(r'I rata -  \d{2}.\d{2}.\d{4} - (\d+)', box, re.I).group(1))
             (rata_II := re.search(r'II rata.* - (\d+)', box, re.I).group(1))
             (rata_III := re.search(r'[|III] rata.* - (\d+)', box, re.I).group(1))
@@ -1229,7 +1225,8 @@ def przypis_daty_raty(pdf, page_1):
         if re.search(r'(?=.*gotówka)', pdf_str, re.I | re.DOTALL):
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
-        elif re.search(r'(?=.*przelew)(?!.*II rata).*', pdf_str, re.I | re.DOTALL):
+        elif re.search(r'(?=.*przelew)(?!.*II\srata).*', pdf_str, re.I | re.DOTALL):
+
             terminI = re.search(r'(Wysokośćratwzł\n|do\sdnia\s|rata)\s?(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})', pdf_str,
                                 re.I)
             termin_I = term_pln(terminI, 2)
@@ -1237,15 +1234,19 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
-        elif re.findall(r'(?=.*przelew)(?=.*II rata).*', pdf_str, re.I | re.DOTALL):
-            terminI = re.search(r'(Wysokośćratwzł\n|do\sdnia\s|rata)\s?(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})', pdf_str, re.I)
-            terminII = re.search(r'(II rata)\s?(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})', pdf_str, re.I)
+        elif re.findall(r'(?=.*przelew)(?=.*II\srata).*', pdf_str, re.I | re.DOTALL):
+            print(pdf_str)
+            terminI = re.search(r'(Wysokośćratwzł\n|kwoty płatności|do\sdnia\s|rata)\s?(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})', pdf_str, re.I)
+            print(terminI)
+            terminII = re.search(r'(II\srata)\s?(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})', pdf_str, re.I)
 
             termin_I = term_pln(terminI, 2)
             termin_II = term_pln(terminII, 2)
 
-            rata_I = re.search(rf'{terminI.group(2)} - (\d*\s?\d+)', pdf_str).group(1)
-            rata_II = re.search(rf'{terminII.group(2)} - (\d*\s?\d+)', pdf_str).group(1)
+            rata_I = re.search(r'I\srata\s(\d{2}­\d{2}­\d{4})?\s–\s(\d*\s?\d+,\d{2})', pdf_str).group(2)
+            rata_II = re.search(r'II\srata\s(\d{2}­\d{2}­\d{4})?\s–\s(\d*\s?\d+,\d{2})', pdf_str).group(2)
+            rata_I = rata_I.replace(',', '.')
+            rata_II = rata_II.replace(',', '.')
 
             return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
