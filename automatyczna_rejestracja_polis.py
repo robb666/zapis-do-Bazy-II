@@ -302,8 +302,9 @@ def tel_mail(page_1, pdf, nazwisko):
         return tel, mail
 
     elif 'Wiener' in page_1:
+        print(page_1)
         try:
-            tel = re.search(r'(Telefon komórkowy:)\s?(\+48|0048)?\s?([0-9.\-\(\)]{9,})?', page_1).group(3)
+            tel = re.search(r'(Telefon kontaktowy|Telefon komórkowy:)\s?(\+48|0048)?\s?([0-9.\-\(\)]{9,})?', page_1).group(3)
         except: pass
         try:
             mail = re.search(r'(E-mail)\s?([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', page_1).group(2)
@@ -1235,9 +1236,7 @@ def przypis_daty_raty(pdf, page_1):
 
 
         elif re.findall(r'(?=.*przelew)(?=.*II\srata).*', pdf_str, re.I | re.DOTALL):
-            print(pdf_str)
             terminI = re.search(r'(Wysokośćratwzł\n|kwoty płatności|do\sdnia\s|rata)\s?(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})', pdf_str, re.I)
-            print(terminI)
             terminII = re.search(r'(II\srata)\s?(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})', pdf_str, re.I)
 
             termin_I = term_pln(terminI, 2)
