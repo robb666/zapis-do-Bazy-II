@@ -149,13 +149,13 @@ def nazwisko_imie(d, page_1):
         return '', ''
 
 
-def pesel_regon(d):
+def pesel_regon(d, page_1):
     """Zapisuje pesel/regon."""
     nr_reg_TU = {'AXA': '140806789', 'PKO BP': '016298263'}
     pesel = [pesel for k, pesel in d.items() if k < 200 and len(pesel) == 11 and re.search('(?<!\+)\d{11}', pesel)
                                                                                              and pesel_checksum(pesel)]
     regon = [regon for k, regon in d.items() if k < 200 and len(regon) == 9 and re.search('\d{9}', regon) and regon
-                                                            not in nr_reg_TU.values() and regon_checksum(regon)]
+                                not in nr_reg_TU.values() and regon_checksum(regon) and not 'INTER PARTNER' in page_1]
     if pesel:
         return 'p' + pesel[0]
     elif regon:
@@ -282,11 +282,12 @@ def tel_mail(page_1, pdf, nazwisko):
         return tel, mail
 
     elif 'UNIQA' in page_1:
+        pdf_str2 = polisa_str(pdf)
         try:
-            mail = re.search(r'([A-Za-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', page_1).group(1)
+            mail = re.search(r'([A-Za-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', pdf_str2).group(1)
         except:pass
         try:
-            tel = re.search(r'\n?([0-9]{9})\s?\n?' + fr'(?={mail})', page_1).group(1)
+            tel = re.search(r'(komórkowy:)?\n?(?<![-\w])([0-9]{9})', pdf_str2, re.M).group(2)
         except:pass
         return tel, mail
 
@@ -365,7 +366,7 @@ def przedmiot_ub(page_1, pdf):
                         else:
                             pass
                         if line.startswith('Rok produkcji'):
-                            rok = line.split()[-1]
+                            rok = re.search('\d{4}', line).group()
                         elif re.search('Rok produkcji: (\d{4})', pdf_str2):
                             rok = re.search('Rok produkcji: (\d{4})', pdf_str2).group(1)
                         elif re.search('\d{4}-\d{2}-\d{2} (\d{4})', pdf_str2):
@@ -596,6 +597,7 @@ def TU():
 
 def numer_polisy(page_1, pdf):
     nr_polisy = ''
+
     if 'Allianz' in page_1 and (nr_polisy := re.search(r'(Polisa nr|NUMER POLISY) (\d*-?\d+)', page_1)) or \
             'Globtroter' in page_1 and nr_polisy:
         return 'ALL', 'ALL', nr_polisy.group(2)
@@ -630,11 +632,11 @@ def numer_polisy(page_1, pdf):
         return 'TUZ', 'TUZ', nr_polisy.group(1) + nr_polisy.group(2)
     elif 'UNIQA' in page_1:
         page_1 = polisa_str(pdf)[0:4600]
-        if (nr_polisy := re.search('(|Nr) (\d{4}-\d{5,}|\d{8,14})', page_1)):
-            return 'UNI', 'UNI', nr_polisy.group(2)
+        if (nr_polisy := re.search('Numer\spolisy:?\s(\d{4}-\d{5,}|\d{8,14})', page_1)):
+            return 'UNI', 'UNI', nr_polisy.group(1)
     # elif 'UNIQA' in page_1 and (nr_polisy := re.search('Nr (\d{6,})', page_1)):
     #     return 'UNI', 'UNI', nr_polisy.group(1)
-    elif 'WARTA' in page_1 and (nr_polisy := re.search('(POLISA NR\s?:|WARTA DOM \w* NR:|PLUS NR:)\s*(\d+)', page_1)):
+    elif 'WARTA' in page_1 and (nr_polisy := re.search('(POLISA NR\s?:|WARTA DOM\s\w*\s?NR:|PLUS NR:)\s*(\d+)', page_1)):
         return 'WAR', 'WAR', nr_polisy.group(2)
     elif 'Wiener' in page_1 and (nr_polisy := re.search('(Seria i numer\s*|полис\s?)(\w+\d+)', page_1)):
         return 'WIE', 'WIE', nr_polisy.group(2)
@@ -1095,10 +1097,10 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'UNIQA' in page_1:
         pdf_str2 = polisa_str(pdf)[500:-1]
-        total = re.search(r'(do\szapłacenia|(?s:.*)Składka łączn[ie|a]:|Składka:|Płatność:) (\d*\s?\d+)',
-                          pdf_str2).group(2)
+        total = re.search(r'(do\szapłacenia|(?:.*)Składka łączn[ie|a]+:|Składk[a|i]+:|Płatność:) (\d*\s?\d+)',
+                          pdf_str2, re.I).group(2)
 
-        if re.findall(r'(?=.*jednorazow[o|a])(?=.*gotówka).*', pdf_str2, re.I | re.DOTALL):
+        if re.findall(r'(?=.*jednorazow[o|a]+)(?=.*gotówka).*', pdf_str2, re.I | re.DOTALL):
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         if not re.findall(r'(?=.*Rata\s2)(?=.*Nr\skonta).*', pdf_str2, re.I | re.DOTALL):
@@ -1262,7 +1264,7 @@ def rozpoznanie_danych(tacka_na_polisy):
         page_123_ = polisa_str(pdf)[:]
         page_123 = words_separately(page_123_)
         d = dict(enumerate(page_123))
-    p_lub_r = pesel_regon(d)
+    p_lub_r = pesel_regon(d, page_1)
 
     pr_j = prawo_jazdy(page_1, pdf)
 
