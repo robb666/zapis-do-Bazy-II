@@ -91,35 +91,38 @@ def regon_checksum(r: int):
 def regon(regon_checksum):
     """API Regon"""
     if len(regon_checksum) == 9:
-        print('\nCzekam na dane z bazy REGON...')
+        try:
+            print('\nCzekam na dane z bazy REGON...')
+            osoba = get_regon_data(regon_checksum)['forma']
+            imie, nazwisko = '', ''
+            if osoba == 'Jednoosobowa dz.g.':
+                imie = get_regon_data(regon_checksum)['imie']
+                nazwisko = get_regon_data(regon_checksum)['nazwisko']
+            nazwa_firmy = get_regon_data(regon_checksum)['nazwa'].title()
+            nip = get_regon_data(regon_checksum)['nip']
+            ulica_f = get_regon_data(regon_checksum)['ul'].lstrip('ul. ')
+            nr_ulicy_f = get_regon_data(regon_checksum)['nr_ul']
+            nr_lok = get_regon_data(regon_checksum)['nr_lok']
+            kod_poczt_f = get_regon_data(regon_checksum)['kod_poczt']
+            miasto_f = get_regon_data(regon_checksum)['miasto']
+            pkd = get_regon_data(regon_checksum)['pkd']
+            opis_pkd = get_regon_data(regon_checksum)['opis pkd']
+            data_rozp = get_regon_data(regon_checksum)['data rozpoczęcia']
+            tel = get_regon_data(regon_checksum)['tel']
+            email = get_regon_data(regon_checksum)['email'].lower()
 
-        osoba = get_regon_data(regon_checksum)['forma']
-        imie, nazwisko = '', ''
-        if osoba == 'Jednoosobowa dz.g.':
-            imie = get_regon_data(regon_checksum)['imie']
-            nazwisko = get_regon_data(regon_checksum)['nazwisko']
-        nazwa_firmy = get_regon_data(regon_checksum)['nazwa'].title()
-        nip = get_regon_data(regon_checksum)['nip']
-        ulica_f = get_regon_data(regon_checksum)['ul'].lstrip('ul. ')
-        nr_ulicy_f = get_regon_data(regon_checksum)['nr_ul']
-        nr_lok = get_regon_data(regon_checksum)['nr_lok']
-        kod_poczt_f = get_regon_data(regon_checksum)['kod_poczt']
-        miasto_f = get_regon_data(regon_checksum)['miasto']
-        pkd = get_regon_data(regon_checksum)['pkd']
-        opis_pkd = get_regon_data(regon_checksum)['opis pkd']
-        data_rozp = get_regon_data(regon_checksum)['data rozpoczęcia']
-        tel = get_regon_data(regon_checksum)['tel']
-        email = get_regon_data(regon_checksum)['email'].lower()
-
-        return nazwa_firmy, ulica_f, nr_ulicy_f, nr_lok, kod_poczt_f, miasto_f, tel, email
+            return nazwa_firmy, ulica_f, nr_ulicy_f, nr_lok, kod_poczt_f, miasto_f, tel, email
+        except Exception as e:
+            print('Wystąpił błąd numeru REGON.')
+            return '', '', '', '', '', '', '', ''
     else:
         return '', '', '', '', '', '', '', ''
 
 
 """Funkcje odpowiadają kolumnom w bazie."""
-def nazwisko_imie(d, page_1):
+def nazwisko_imie(d, page_1, pdf):
     """Zwraca imię i nazwisko Klienta."""
-    agent = {'Robert': 'Grzelak Robert', 'Maciej': 'Grzelak Maciej', 'MAGRO': 'Magro Maciej'}
+    agent = {'Robert': 'Grzelak Robert', 'Maciej': 'Grzelak Maciej', 'MAGRO': 'Magro Maciej', }
     with open(path + '\\imiona.txt') as content:
         all_names = content.read().split('\n')
         if 'euroins' in d.values():
@@ -139,7 +142,8 @@ def nazwisko_imie(d, page_1):
             name = [f'{name} BRAK!' for name in all_names if re.search(name, page_1, re.I)]
         else:
             name = [f'{d[k + 1].title()} {v.title()}' for k, v in d.items() if v.title() in all_names
-                    and f'{d[k + 1].title()} {v.title()}' not in agent.values() and not re.search('\d', d[k + 1])]
+                    and f'{d[k + 1].title()} {v.title()}' not in agent.values() and not re.search('\d', d[k + 1])
+                    and v.title() not in przedmiot_ub(page_1, pdf)]
 
     if name:
         last_name = name[0].split()[0]
@@ -151,7 +155,7 @@ def nazwisko_imie(d, page_1):
 
 def pesel_regon(d, page_1):
     """Zapisuje pesel/regon."""
-    nr_reg_TU = {'AXA': '140806789', 'PKO BP': '016298263'}
+    nr_reg_TU = {'AXA': '140806789', 'PKO BP': '016298263', 'Marian Toś': '602776660'}
     pesel = [pesel for k, pesel in d.items() if k < 200 and len(pesel) == 11 and re.search('(?<!\+)\d{11}', pesel)
                                                                                              and pesel_checksum(pesel)]
     regon = [regon for k, regon in d.items() if k < 200 and len(regon) == 9 and re.search('\d{9}', regon) and regon
@@ -1305,7 +1309,7 @@ def rozpoznanie_danych(tacka_na_polisy):
 
     pr_j = prawo_jazdy(page_1, pdf)
 
-    nazwisko_imie_ = nazwisko_imie(d, page_1)
+    nazwisko_imie_ = nazwisko_imie(d, page_1, pdf)
     nazwisko = '' if regon_checksum(p_lub_r[1:]) else nazwisko_imie_[0]
     imie = '' if regon_checksum(p_lub_r[1:]) else nazwisko_imie_[1]
     regon_ = regon(p_lub_r[1:])
