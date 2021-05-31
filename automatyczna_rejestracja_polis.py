@@ -605,7 +605,6 @@ def koniec_ochrony(page_1, pdf):
         page_1 = polisa_str(pdf)[0:-1]
     lista_dat = [re.sub('[^0-9]', '-', data) for data in daty.findall(page_1)]
     jeden_format = [re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', date) for date in lista_dat]
-    print(jeden_format)
     koniec = max(datetime.strptime(data, '%Y-%m-%d') for data in jeden_format)
     koniec_absolutny = datetime.strptime(datetime.strftime(koniec, '%y-%m-%d'), '%y-%m-%d') + one_day
     if koniec_absolutny:
@@ -660,7 +659,8 @@ def numer_polisy(page_1, pdf):
             return 'UNI', 'UNI', nr_polisy.group(1)
     if 'UNIQA' in page_1 and (nr_polisy := re.search('Nr (\d{6,})', page_1)):  # było skomentowane po AXA
         return 'UNI', 'UNI', nr_polisy.group(1)
-    elif 'WARTA' in page_1 and (nr_polisy := re.search('(POLISA NR\s?:|WARTA DOM\s\w*\s?NR:|PLUS NR:)\s*(\d+)', page_1)):
+    elif 'WARTA' in page_1 and (nr_polisy := re.search(
+            '(POLISA NR\s?:|WARTA DOM\s\w*\s?NR:|PLUS NR:|TRAVEL NR:)\s*(\d+)', page_1)):
         return 'WAR', 'WAR', nr_polisy.group(2)
     elif 'Wiener' in page_1 and (nr_polisy := re.search('(Seria i numer\s*|полис\s?)(\w+\d+)', page_1)):
         return 'WIE', 'WIE', nr_polisy.group(2)
