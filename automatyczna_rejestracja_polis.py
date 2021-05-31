@@ -620,7 +620,6 @@ def TU():
 
 def numer_polisy(page_1, pdf):
     nr_polisy = ''
-
     if 'Allianz' in page_1 and (nr_polisy := re.search(r'(Polisa nr|NUMER POLISY) (\d*-?\d+)', page_1)) or \
             'Globtroter' in page_1 and nr_polisy:
         return 'ALL', 'ALL', nr_polisy.group(2)
@@ -655,10 +654,10 @@ def numer_polisy(page_1, pdf):
         return 'TUZ', 'TUZ', nr_polisy.group(1) + nr_polisy.group(2)
     elif 'UNIQA' in page_1:
         page_1 = polisa_str(pdf)[0:4600]
-        if (nr_polisy := re.search('Numer\spolisy:?\s(\d{4}-\d{5,}|\d{8,14})', page_1)):
-            return 'UNI', 'UNI', nr_polisy.group(1)
-    if 'UNIQA' in page_1 and (nr_polisy := re.search('Nr (\d{6,})', page_1)):  # było skomentowane po AXA
-        return 'UNI', 'UNI', nr_polisy.group(1)
+        if (nr_polisy := re.search('(Numer\spolisy:)?\s(\d{4}-\d{7,}|\d{8,14})', page_1)):
+            return 'UNI', 'UNI', nr_polisy.group(2)
+    # if 'UNIQA' in page_1 and (nr_polisy := re.search('Nr (\d{6,})', page_1)):  # było skomentowane po AXA
+    #     return 'UNI', 'UNI', nr_polisy.group(1)
     elif 'WARTA' in page_1 and (nr_polisy := re.search(
             '(POLISA NR\s?:|WARTA DOM\s\w*\s?NR:|PLUS NR:|TRAVEL NR:)\s*(\d+)', page_1)):
         return 'WAR', 'WAR', nr_polisy.group(2)
@@ -1131,7 +1130,7 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         if not re.findall(r'(?=.*Rata\s2)(?=.*Nr\skonta).*', pdf_str2, re.I | re.DOTALL):
-            termin_I = re.search(r'(Termin płatności|opłacona do dnia:)\s*'
+            termin_I = re.search(r'(Termin płatności:?|opłacona do dnia:)\s*'
                                  r'(\d{4}[-\./]\d{2}[-\./]\d{2}|\d{2}[-\./]\d{2}[-\./]\d{4})', pdf_str2,
                                  re.I | re.DOTALL)
             termin_I = term_pln(termin_I, 2)
