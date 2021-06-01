@@ -771,7 +771,7 @@ def przypis_daty_raty(pdf, page_1):
         (total := re.search(r'Łączna składka do zapłaty ([\d ]+,\d*)', box, re.I))
         total = float(total.group(1).replace(r',', '.').replace(' ', ''))
         (termin_I := re.search(r'1. (\d{4}-\d{2}-\d{2})', box, re.I).group(1))
-        if 'jednorazowo' in box and 'przelew' in box:
+        if 'I Rata' in box and not 'II Rata' in box and re.search('przelew', box, re.I):
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
