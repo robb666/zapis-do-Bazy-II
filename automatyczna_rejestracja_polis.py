@@ -5,10 +5,7 @@ from datetime import datetime, timedelta
 import win32com.client
 from win32com.client import Dispatch
 import time
-# try:
-#     from regon_api import get_regon_data
-# except ImportError as e:
-#     print(f'Sprawdź czy baza REGON jest dostępna. \n\n{e}')
+from regon_api import get_regon_data
 
 
 start_time = time.time()
