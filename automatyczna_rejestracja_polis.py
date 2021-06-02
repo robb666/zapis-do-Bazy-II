@@ -5,10 +5,10 @@ from datetime import datetime, timedelta
 import win32com.client
 from win32com.client import Dispatch
 import time
-try:
-    from regon_api import get_regon_data
-except ImportError as e:
-    print(f'Sprawdź czy baza REGON jest dostępna. \n\n{e}')
+# try:
+#     from regon_api import get_regon_data
+# except ImportError as e:
+#     print(f'Sprawdź czy baza REGON jest dostępna. \n\n{e}')
 
 
 start_time = time.time()
@@ -122,7 +122,8 @@ def regon(regon_checksum):
 """Funkcje odpowiadają kolumnom w bazie."""
 def nazwisko_imie(d, page_1, pdf):
     """Zwraca imię i nazwisko Klienta."""
-    agent = {'Robert': 'Grzelak Robert', 'Maciej': 'Grzelak Maciej', 'MAGRO': 'Magro Maciej', }
+    agent = {'Robert': 'Grzelak Robert', 'Maciej': 'Grzelak Maciej', 'MAGRO': 'Magro Maciej',
+             'Wpierdalata': 'Kozłowska-Chyła Beata'}
     with open(path + '\\imiona.txt') as content:
         all_names = content.read().split('\n')
         if 'euroins' in d.values():
@@ -266,8 +267,8 @@ def tel_mail(page_1, pdf, nazwisko):
         return tel, mail
 
     elif 'PZU' in page_1:
-        tel = re.search(r'Telefon: (\+48|0048)?\s?([0-9.\-\(\)\s]{9})?', page_1).group(2)
-        mail = re.search(r'E\s?-\s?mail: ([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1).group(1)
+        tel = re.search(r'Telefon: (\+48|0048)?\s?([0-9.\-\(\)\s]{9})?', page_1, re.I).group(2)
+        mail = re.search(r'E\s?-\s?mail: ([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1, re.I).group(1)
         return tel, mail
 
     elif 'TUW' in page_1 and not 'TUZ' in page_1:
@@ -493,13 +494,12 @@ def przedmiot_ub(page_1, pdf):
 
 
         elif 'PZU' in page_1:
-            # print(page_1)
             if 'Ubezpieczony pojazd' in page_1:
-                marka = re.search(r'Marka: ([\w./-]+)', page_1, re.I).group(1)
-                model = re.search(r'(typ pojazdu:|Model:|Typ:) ((?!Model:)(?!Typ:)\w+)', page_1, re.I).group(2)
-                if re.search(r'nr rejestracyjny ([A-Z0-9]+)', page_1):
-                    nr_rej = re.search(r'nr rejestracyjny ([A-Z0-9]+)', page_1).group(1)
-                rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
+                marka = re.search(r'Marka:\s([\w./-]+)', page_1, re.I).group(1)
+                model = re.search(r'(typ pojazdu:|Model:|Typ:)\s((?!Model:)(?!Typ:)\w+)', page_1, re.I).group(2)
+                if nr_rej := re.search(r'nr\srejestracyjny:?\s([A-Z0-9]+)', page_1, re.I):
+                    nr_rej = nr_rej.group(1)
+                rok = re.search(r'Rok\sprodukcji:\s(\d{4})', page_1, re.I).group(1)
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
             if 'Miejsce ubezpieczenia:' in page_1:
@@ -1021,14 +1021,25 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'PZU' in page_1:
         pdf_str = polisa_str(pdf)[200:5000]
-        total = re.search(r'Składka łączna: (\d*\s?\d+,?\d{2}?)', pdf_str, re.I).group(1)
+        total = re.search(r'(Składka łączna:|kwota:) (\d*\s?\d+,?\d{2}?)', pdf_str, re.I).group(2)
         total = zam_spacji(total)
 
-        if 'została opłacona w całości.' in pdf_str:
+        if 'została opłacona w całości.' in pdf_str and 'zapłacono gotówką:' in pdf_str:
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
+        if not 'została opłacona w całości.' in pdf_str and 'płatność: półroczna' in pdf_str and \
+                'zapłacono gotówką:' in pdf_str:
+
+            rata_I = re.search(r'zapłacono gotówką:\s(\d*\s?\d+,?\d{2}?)', pdf_str, re.I).group(1)
+            rata_II = re.search(r'(\d{2}\.\d{2}\.\d{4}.*)\s(\d*\s?\d+,?\d{2}?)', pdf_str, re.I).group(2)
+
+            termin_I = datetime.today()
+            termin_II = term_pln(re.search(r'odbiorca: PZU SA (\d{2}\.\d{2}\.\d{4})', pdf_str), 1)
+
+            return total, termin_I, rata_I, 'G', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
         if 'Jednorazowo' in pdf_str and 'tytule przelewu' in pdf_str or 'Osoba wnioskująca o zmiany' in pdf_str:
-            raty = re.search(r'Kwota w złotych (\d*\s?\d+,\d{2})', pdf_str, re.I).group(1)
+            raty = re.search(r'(Kwota w złotych|PLN)\s*(\d*\s?\d+,\d{2})', pdf_str, re.I).group(2)
             rata_I = zam_spacji(raty)
 
             termin_I = re.search(r'Termin płatności (\d{2}.\d{2}.\d{4})', pdf_str, re.I)
