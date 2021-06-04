@@ -616,6 +616,8 @@ def TU():
 
 
 def numer_polisy(page_1, pdf):
+    print(page_1)
+    print(page_1)
     nr_polisy = ''
     if 'Allianz' in page_1 and (nr_polisy := re.search(r'(Polisa nr|NUMER POLISY) (\d*-?\d+)', page_1)) or \
             'Globtroter' in page_1 and nr_polisy:
@@ -628,8 +630,8 @@ def numer_polisy(page_1, pdf):
         return 'GEN', 'GEN', nr_polisy.group(1)
     elif 'HDI' in page_1 and (nr_polisy := re.search('POLISA NR\s?: *(\d+)', page_1)):
         return 'WAR', 'HDI', nr_polisy.group(1)
-    elif 'Hestia' in page_1  and not 'MTU' in page_1 and (nr_polisy := re.search('Polisa\s.*\s(\d+)', page_1, re.I)):
-        return 'HES', 'HES', nr_polisy.group(1)
+    elif 'Hestia' in page_1  and not 'MTU' in page_1 and (nr_polisy := re.search('Polisa[^0-9]+(\d+)', page_1, re.I)):
+        return 'HES', 'HES', nr_polisy.group(1) #'Polisa /Policy  ERGO Podróż909007099916 '
     elif 'INTER' and (nr_polisy := re.search('polisa\s*seria\s*(\w*)\s*numer\s*(\d*)', page_1)):
         return 'INT', 'INT', nr_polisy.group(1) + nr_polisy.group(2)
     elif 'InterRisk' in page_1 and (nr_polisy := re.search('Polisa seria?\s(.*)\snumer\s(\d+)', page_1, re.I)):
