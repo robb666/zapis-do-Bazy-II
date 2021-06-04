@@ -597,7 +597,7 @@ def data_wystawienia():
 
 
 def koniec_ochrony(page_1, pdf):
-    daty = re.compile(r'(?<!\w)(\d{2}[-|.|/]\d{2}[-|.|/]\d{4}|\d{4}[-|.|/]\d{2}[-|.|/]\d{2})')
+    daty = re.compile(r'(?<!\w)(\d{2}[-\./]\d{2}[-\./]\d{4}|t?o?\d{4}[-\./]\d{2}[-\./]\d{2})')
     if 'UNIQA' in page_1 or 'TUW' in page_1 and not 'TUZ' in page_1:
         page_1 = polisa_str(pdf)[0:-1]
     lista_dat = [re.sub('[^0-9]', '-', data) for data in daty.findall(page_1)]
@@ -616,8 +616,7 @@ def TU():
 
 
 def numer_polisy(page_1, pdf):
-    print(page_1)
-    print(page_1)
+
     nr_polisy = ''
     if 'Allianz' in page_1 and (nr_polisy := re.search(r'(Polisa nr|NUMER POLISY) (\d*-?\d+)', page_1)) or \
             'Globtroter' in page_1 and nr_polisy:
@@ -775,7 +774,7 @@ def przypis_daty_raty(pdf, page_1):
 
 
     elif 'Generali' in page_1 and not 'Proama' in page_1:
-        box = polisa_box(pdf, 0, 300, 590, 730)
+        box = polisa_box(pdf, 0, 200, 590, 730)
         total = re.search(r'(RAZEM:|Składka|\(TOTAL\))(?!GRUPĘ) (\d*\s?\d+,\d*)\s?zł', box, re.I)
         total = float(total.group(2).replace(' ', '').replace(',', '.'))
 
