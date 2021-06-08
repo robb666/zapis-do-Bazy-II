@@ -126,12 +126,13 @@ def nazwisko_imie(d, page_1, pdf):
         if 'euroins' in d.values():
             name = []
             for k, v in d.items():
-                if v.title() in all_names and d[k + 1] != 'pesel':
+                if v.title() in all_names and not re.search('pesel', d[k + 1], re.I):
                     name.append(f'{d[k + 1].title()} {v.title()}')
-                if v.title() in all_names and not re.search('\d|telefon$', d[k + 4]):
-                    name.append(f'{d[k + 4].title()} {v.title()}')
                 if v.title() in all_names and re.search('\d', d[k + 4]):
                     name.append(f'{d[k + 5].title()} {v.title()}')
+                if v.title() in all_names and not re.search('(\d|telefon$|Adres:?)', d[k + 4]):
+                    name.append(f'{d[k + 4].title()} {v.title()}')
+
         elif 'tuz' in d.values():
             name = [f'{d[k + 1].title()} {v.title()}' for k, v in d.items() if k > 10 and v.title() in all_names]
         elif 'warta' in d.values():
@@ -187,13 +188,13 @@ def adres():
 
 
 def kod_pocztowy(page_1, pdf):
-
+    # print(page_1)
     kod = re.compile('(adres\w*|(?<!InterRisk) kontakt\w*|pocztowy|ubezpiecz(ony|ający))', re.I)
     if 'UNIQA' in page_1 or 'TUW' in page_1 and not 'TUZ' in page_1:
         page_1 = polisa_str(pdf)[0:-200]
 
     if (wiener := re.search('wiener', page_1, re.I)):
-        kod_pocztowy = re.search('(Adres.*|Siedziba.*)(\d{2}[-\xad]\d{3})', page_1)
+        kod_pocztowy = re.search('(Adres.*|Siedziba.*|ŁÓDŹ)\s?(\d{2}[-\xad]\d{3})', page_1)
         return kod_pocztowy.group(2)
 
     if (f := kod.search(page_1)):
@@ -264,8 +265,12 @@ def tel_mail(page_1, pdf, nazwisko):
         return tel, mail
 
     elif 'PZU' in page_1:
-        tel = re.search(r'Telefon: (\+48|0048)?\s?([0-9.\-\(\)\s]{9})?', page_1, re.I).group(2)
-        mail = re.search(r'E\s?-\s?mail: ([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1, re.I).group(1)
+        try:
+            tel = re.search(r'Telefon:\s*(\+48|0048)?\s?([0-9.\-\(\)\s]{9})?', page_1, re.I).group(2)
+        except:pass
+        try:
+            mail = re.search(r'E\s?-\s?mail:\s*([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1, re.I).group(1)
+        except:pass
         return tel, mail
 
     elif 'TUW' in page_1 and not 'TUZ' in page_1:
@@ -412,7 +417,7 @@ def przedmiot_ub(page_1, pdf):
                         marka = make
                         model = re.search(rf'{marka}\s(\w+)', page_1).group(1)
                 nr_rej = re.search('(Numer rejestracyjny:) ([\w\d.]+),?', page_1).group(2)
-                rok = re.search('(produkcji:)\s(\d+),?', page_1).group(2)
+                rok = re.search('(produkcji:).*\n?([0-9]{4}),', page_1, re.M).group(2)
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
 
@@ -475,7 +480,7 @@ def przedmiot_ub(page_1, pdf):
         elif re.search('Numer:?\s\n?(\w\d+)', page_1, re.I) and not 'WARTA' in page_1 or 'LINK4' in page_1:
             if 'Marka / Model' in page_1 or 'DANE POJAZDU' in page_1:
                 marka = re.search(r'(Marka / Model|Marka) ([\w./]+)', page_1, re.I).group(2)
-                model = re.search(rf'({marka})\n?\s*(\w+)', page_1, re.I).group(2)
+                model = re.search(rf'({marka})\n?\s?[A-z]+\s?(\w+)', page_1, re.I).group(2)
                 nr_rej = re.search(r'rejestracyjny ([A-Z0-9]+)', page_1).group(1)
                 rok = re.search(r'Rok produkcji (\d{4})', page_1).group(1)
                 return marka, kod, model, miasto, nr_rej, adres, rok
@@ -483,6 +488,7 @@ def przedmiot_ub(page_1, pdf):
 
         elif 'MTU' in page_1:
             if 'Ubezpieczony pojazd' in page_1:
+
                 marka = re.search(r'(Ubezpieczony pojazd).*?(\w+), (\w+-?\w+)', page_1, re.I | re.DOTALL).group(3)
                 model = re.search(rf'(?<={marka}) (\w+)', page_1, re.I).group(1)
                 nr_rej = re.search(rf'([A-Z0-9]+)(?=, ROK)', page_1).group(1)
@@ -616,7 +622,7 @@ def TU():
 
 
 def numer_polisy(page_1, pdf):
-
+    # print(page_1)
     nr_polisy = ''
     if 'Allianz' in page_1 and (nr_polisy := re.search(r'(Polisa nr|NUMER POLISY) (\d*-?\d+)', page_1)) or \
             'Globtroter' in page_1 and nr_polisy:
@@ -629,15 +635,15 @@ def numer_polisy(page_1, pdf):
         return 'GEN', 'GEN', nr_polisy.group(1)
     elif 'HDI' in page_1 and (nr_polisy := re.search('POLISA NR\s?: *(\d+)', page_1)):
         return 'WAR', 'HDI', nr_polisy.group(1)
-    elif 'Hestia' in page_1  and not 'MTU' in page_1 and (nr_polisy := re.search('Polisa[^0-9]+(\d+)', page_1, re.I)):
-        return 'HES', 'HES', nr_polisy.group(1) #'Polisa /Policy  ERGO Podróż909007099916 '
+    elif 'Hestia' in page_1  and not 'MTU' in page_1 and (nr_polisy := re.search('Polisa[^0-689]+(\d+)', page_1, re.I)):
+        return 'HES', 'HES', nr_polisy.group(1)
     elif 'INTER' and (nr_polisy := re.search('polisa\s*seria\s*(\w*)\s*numer\s*(\d*)', page_1)):
         return 'INT', 'INT', nr_polisy.group(1) + nr_polisy.group(2)
     elif 'InterRisk' in page_1 and (nr_polisy := re.search('Polisa seria?\s(.*)\snumer\s(\d+)', page_1, re.I)):
         return 'RIS', 'RIS', nr_polisy.group(1) + nr_polisy.group(2)
-    elif (nr_polisy := re.search('(Numer:?|POLISA DLA PANA:?)\s?\n?(\w\d+)', page_1, re.I)) and \
-                                                                    not 'Travel' in page_1 and not 'WARTA' in page_1:
-        return 'ULIN', 'LIN',  nr_polisy.group(2)
+    elif (nr_polisy := re.search('(Numer:?|POLISA DLA PANA:?|NR)\s?\n?(\w\d+)', page_1, re.I)) and \
+                                   not 'Travel' in page_1 and not 'WARTA' in page_1 and not 'PZU' in page_1:
+        return 'ULIN', 'LIN', nr_polisy.group(2)
     elif 'MTU' in page_1 and (nr_polisy := re.search('Polisa\s.*\s(\d+)', page_1, re.I)):
         return 'AZ', 'MTU', nr_polisy.group(1)
     elif 'Proama' in page_1 and (nr_polisy := re.search('POLISA NR\s*(\d+)', page_1, re.I)):
@@ -659,7 +665,7 @@ def numer_polisy(page_1, pdf):
     elif 'WARTA' in page_1 and (nr_polisy := re.search(
             '(POLISA NR\s?:|WARTA DOM\s\w*\s?NR:|PLUS NR:|TRAVEL NR:)\s*(\d+)', page_1)):
         return 'WAR', 'WAR', nr_polisy.group(2)
-    elif 'Wiener' in page_1 and (nr_polisy := re.search('(Seria i numer\s*|полис\s?)(\w+\d+)', page_1)):
+    elif 'Wiener' in page_1 and (nr_polisy := re.search('(Seria\s?i\s?numer|полис)\s*(\w+\d+)', page_1)):
         return 'WIE', 'WIE', nr_polisy.group(2)
     else:
         return 'NIE ROZPOZNANE !', '', ''
@@ -1022,7 +1028,7 @@ def przypis_daty_raty(pdf, page_1):
         total = re.search(r'(Składka łączna:|kwota:) (\d*\s?\d+,?\d{2}?)', pdf_str, re.I).group(2)
         total = zam_spacji(total)
 
-        if 'została opłacona w całości.' in pdf_str and 'zapłacono gotówką:' in pdf_str:
+        if 'została opłacona w całości' in pdf_str or 'zapłacono gotówką' in pdf_str:
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         if not 'została opłacona w całości.' in pdf_str and 'płatność: półroczna' in pdf_str and \
@@ -1270,9 +1276,11 @@ def przypis_daty_raty(pdf, page_1):
 
     # Wiener
     elif re.search('wiener', page_1, re.I):
-        pdf_str = polisa_str(pdf)[100:5000]
+        pdf_str = polisa_str(pdf)
         total = re.search(r'(SKŁADKA\sŁĄCZNA|Kwota\s|оплате):? (\d*\s?\.?\d+)', pdf_str, re.I)
-        total = int(total.group(2).replace('\xa0', '').replace('.', '').replace(' ', ''))
+        try:
+            total = int(total.group(2).replace('\xa0', '').replace('.', '').replace(' ', ''))
+        except:pass
 
         if re.search(r'(?=.*gotówka)', pdf_str, re.I | re.DOTALL):
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
