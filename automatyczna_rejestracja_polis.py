@@ -772,11 +772,23 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'EUROINS' in page_1:
         box = polisa_box(pdf, 0, 400, 590, 750)
-        (total := re.search(r'Łączna składka do zapłaty ([\d ]+,\d*)', box, re.I))
+        total = re.search(r'Łączna składka do zapłaty ([\d ]+,\d*)', box, re.I)
         total = float(total.group(1).replace(r',', '.').replace(' ', ''))
-        (termin_I := re.search(r'1. (\d{4}-\d{2}-\d{2})', box, re.I).group(1))
+
         if 'I Rata' in box and not 'II Rata' in box and re.search('przelew', box, re.I):
+            termin_I = re.search(r'1. (\d{4}-\d{2}-\d{2})', box, re.I).group(1)
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+        if 'II Rata' in box and re.search('przelew', box, re.I):
+            termin_I = re.search(r'\n1. (\d{4}-\d{2}-\d{2})', box).group(1)
+            termin_II = re.search(r'\n2. (\d{4}-\d{2}-\d{2})', box).group(1)
+
+            rata_I = re.search(rf'{termin_I}\s' + r'(\d*\s?\d+.\d*)', box).group(1)
+            rata_II = re.search(rf'{termin_II}\s' + r'(\d*\s?\d+.\d*)', box).group(1)
+
+            return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+
 
 
     elif 'Generali' in page_1 and not 'Proama' in page_1:
