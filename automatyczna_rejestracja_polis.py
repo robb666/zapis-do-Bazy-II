@@ -789,8 +789,6 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
-
-
     elif 'Generali' in page_1 and not 'Proama' in page_1:
         box = polisa_box(pdf, 0, 200, 590, 730)
         total = re.search(r'(RAZEM:|Składka|\(TOTAL\))(?!GRUPĘ) (\d*\s?\d+,\d*)\s?zł', box, re.I)
