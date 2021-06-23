@@ -246,7 +246,15 @@ def tel_mail(page_1, pdf, nazwisko):
         return tel, mail
 
     elif 'InterRisk' in page_1:
-        return tel, mail
+        try:
+            tel = re.search(r'Telefon: (\+48|0048)?\s?([0-9.\-\(\)\s]{9,})', page_1).group(2)
+        except:
+            pass
+        try:
+            mail = re.search(r'Email: ([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', page_1).group(1)
+        except:
+            pass
+        return tel.rstrip('.\xa0'), mail
 
     elif 'INTER' in page_1:
         try:
@@ -321,7 +329,7 @@ def tel_mail(page_1, pdf, nazwisko):
 
     elif 'Wiener' in page_1:
         try:
-            tel = re.search(r'(Telefon kontaktowy|Telefon komórkowy:)\s?(\+48|0048)?\s?([0-9.\-\(\)]{9,})?', page_1).group(3)
+            tel = re.search(r'(Telefon kontaktowy:?|Telefon komórkowy:)\s?(\+48|0048)?\s?([0-9.\-\(\)]{9,})?', page_1).group(3)
         except: pass
         try:
             mail = re.search(r'(E-mail)\s?([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', page_1).group(2)
@@ -642,7 +650,7 @@ def numer_polisy(page_1, pdf):
     elif 'InterRisk' in page_1 and (nr_polisy := re.search('Polisa seria?\s(.*)\snumer\s(\d+)', page_1, re.I)):
         return 'RIS', 'RIS', nr_polisy.group(1) + nr_polisy.group(2)
     elif (nr_polisy := re.search('(Numer:?|POLISA DLA PANA:?|NR)\s?\n?(\w\d+)', page_1, re.I)) and \
-                                   not 'Travel' in page_1 and not 'WARTA' in page_1 and not 'PZU' in page_1:
+                   not 'Travel' in page_1 and not 'WARTA' in page_1 and not 'PZU' in page_1 and not 'Wiener' in page_1:
         return 'ULIN', 'LIN', nr_polisy.group(2)
     elif 'MTU' in page_1 and (nr_polisy := re.search('Polisa\s.*\s(\d+)', page_1, re.I)):
         return 'AZ', 'MTU', nr_polisy.group(1)
