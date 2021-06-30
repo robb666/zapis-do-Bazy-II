@@ -216,8 +216,10 @@ def tel_mail(page_1, pdf, nazwisko):
                     'mail UNIQA': 'centrala@uniqa.pl'}
 
     if 'Allianz' in page_1:
-        tel = ''.join([tel for tel in re.findall(r'tel.*([0-9 .\-\(\)]{8,}[0-9])', page_1) if tel not in tel_mail_off.values()])
-        mail = ''.join([mail for mail in re.findall(r'([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', page_1) if mail not in tel_mail_off.values()])
+        try: tel = ''.join([tel for tel in re.findall(r'tel.*([0-9 .\-\(\)]{8,}[0-9])', page_1) if tel not in tel_mail_off.values()][0])
+        except: pass
+        try: mail = ''.join([mail for mail in re.findall(r'([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', page_1) if mail not in tel_mail_off.values()][0])
+        except: pass
         return tel, mail
 
     elif 'EUROINS' in page_1:
@@ -374,8 +376,8 @@ def przedmiot_ub(page_1, pdf):
 
             elif 'MÓJ DOM' in page_1:
                 kod = re.search('(Miejsce ubezpieczenia).*\n?.*,\s?(\d{2}-\d{3})', page_1).group(2)
-                miasto = re.search(f'{kod} (\w+)', page_1).group(1)
-                adres = re.search('(Miejsce ubezpieczenia) (ul.) ([\w ]+)\s?(,|UBEZPIECZAJĄCY)', page_1).group(3)
+                miasto = re.search(f'{kod} ([\w]+)?\n?(\w+)', page_1).group(2)
+                adres = re.search('(Miejsce ubezpieczenia) (ul.) ([\w\d/]+)', page_1).group(3)
                 if re.search('(Rok budowy) (\d+)', page_1):
                     rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
                 return marka, kod, model, miasto, nr_rej, adres, rok
@@ -712,7 +714,7 @@ def przypis_daty_raty(pdf, page_1):
     if 'Allianz' in page_1 or 'Globtroter' in page_1:
         # box = polisa_box(pdf, 0, 320, 590, 780)
         pdf_str2 = polisa_str(pdf)[0:-2600]
-        total = re.search(r'(Składka:|łącznie:|za 3 lata:|Razem) (\d*\s?\d+)', pdf_str2)
+        total = re.search(r'(Składka:|łącznie:|za 3 lata:|za rok:|Razem)\s(\d*\s?\d+)', pdf_str2)
         if total:
             total = int(re.sub(r'\xa0', '', total.group(2)))
 
@@ -724,14 +726,15 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
-        elif 'przelew' in page_1 and 'II rata' in page_1 and not 'III rata' in page_1:
+        elif 'przelew' in page_1 and 'II rata' in page_1 and not 'III rata' in page_1 or \
+                (raty_bezrat := re.search('do (\d{2}.\d{2}.\d{4}).*\ndo (\d{2}.\d{2}.\d{4})', page_1)):
 
-            termin = re.search(r'Dane płatności:\ndo (\d{2}.\d{2}.\d{4}).*\ndo\s?(\d{2}.\d{2}.\d{4}).*', pdf_str2, re.I | re.DOTALL)
+            termin = re.search(r'do (\d{2}.\d{2}.\d{4}).*\ndo\s?(\d{2}.\d{2}.\d{4}).*', pdf_str2, re.I | re.DOTALL)
 
             termin_I = term_pln(termin, 1)
             termin_II = term_pln(termin, 2)
-            rata_I = re.search(r'Dane płatności:\ndo (\d{2}.\d{2}.\d{4}) r. (\d*\s?\d+)', pdf_str2, re.I).group(2)
-            rata_II = re.search(rf'{termin.group(2)}.* (\d*\s?\d+)', pdf_str2, re.I).group(1)
+            rata_I = re.search(r'do (\d{2}.\d{2}.\d{4}) r. (\d*\s?\d+)', pdf_str2, re.I).group(2)
+            rata_II = re.search(rf'{raty_bezrat.group(2)}.*r\.\s(\d*\s?\d+)', pdf_str2, re.I).group(1)
 
             return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
@@ -796,7 +799,7 @@ def przypis_daty_raty(pdf, page_1):
             termin_I = re.search(r'1. (\d{4}-\d{2}-\d{2})', box, re.I).group(1)
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
-        if 'II Rata' in box and re.search('przelew', box, re.I):
+        if re.search('II Rata', box, re.I) and re.search('przelew', box, re.I):
             termin_I = re.search(r'\n1. (\d{4}-\d{2}-\d{2})', box).group(1)
             termin_II = re.search(r'\n2. (\d{4}-\d{2}-\d{2})', box).group(1)
 
