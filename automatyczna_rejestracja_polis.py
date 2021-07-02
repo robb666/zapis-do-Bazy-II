@@ -1069,6 +1069,7 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'PZU' in page_1:
         pdf_str = polisa_str(pdf)[200:5000]
+        # print(pdf_str)
         total = re.search(r'(Składka łączna:|kwota:) (\d*\s?\d+,?\d{2}?)', pdf_str, re.I).group(2)
         total = zam_spacji(total)
 
@@ -1107,20 +1108,27 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
-        if 'Rata 1 2 3 4' in pdf_str:
-            (raty := re.search(r'Kwota w złotych (\d*\s?\d+,\d{2}) (\d*\s?\d+,\d{2}) (\d*\s?\d+,\d{2}) (\d*\s?\d+,\d{2})',
-                               pdf_str, re.I))
+        if 'Rata 1 2 3 4' in pdf_str or 'kwartalna' in pdf_str:
+            pdf_str = polisa_box(pdf, 190, 50, 360, 770)
+
+            terminy = re.search(r'(Termin płatności|Harmonogram płatności).*\n(\d{2}.\d{2}.\d{2,4}).*\n'
+                                r'(\d{2}.\d{2}.\d{2,4}).*\n(\d{2}.\d{2}.\d{2,4}).*\n(\d{2}.\d{2}.\d{2,4})', pdf_str, re.I | re.DOTALL)
+            termin_I = datetime.strptime(term_pln(terminy, 2), '%Y-%m-%d') + one_day
+            termin_II = datetime.strptime(term_pln(terminy, 3), '%Y-%m-%d') + one_day
+            termin_III = datetime.strptime(term_pln(terminy, 4), '%Y-%m-%d') + one_day
+            termin_IV = datetime.strptime(term_pln(terminy, 5), '%Y-%m-%d') + one_day
+
+            raty = re.search(r'Kwota w złotych|Harmonogram płatności\n'
+                             r'[0-9.\s\w–]+(\d{3}) zł\n'
+                             r'[0-9.\s\w–]+(\d{3}) zł\n'
+                             r'[0-9.\s\w–]+([0-9]{3}) zł\n'
+                             r'[0-9\.\s\w–]+([0-9]{3}) zł\n',
+                               pdf_str, re.I)
+
             rata_I = float(raty.group(1).replace(',', '.').replace(' ', ''))
             rata_II = float(raty.group(2).replace(',', '.').replace(' ', ''))
             rata_III = float(raty.group(3).replace(',', '.').replace(' ', ''))
             rata_IV = float(raty.group(4).replace(',', '.').replace(' ', ''))
-
-            terminy = re.search(r'Termin płatności (\d{2}.\d{2}.\d{2}) (\d{2}.\d{2}.\d{2}) (\d{2}.\d{2}.\d{2}) '
-                                r'(\d{2}.\d{2}.\d{2})', pdf_str, re.I)
-            termin_I = datetime.strptime(term_pln(terminy, 1), '%y-%m-%d') + one_day
-            termin_II = datetime.strptime(term_pln(terminy, 2), '%y-%m-%d') + one_day
-            termin_III = datetime.strptime(term_pln(terminy, 3), '%y-%m-%d') + one_day
-            termin_IV = datetime.strptime(term_pln(terminy, 4), '%y-%m-%d') + one_day
 
             return total, termin_I, rata_I, 'P', 4, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
