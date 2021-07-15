@@ -467,7 +467,7 @@ def przedmiot_ub(page_1, pdf):
         elif 'Hestia' in page_1 and not 'MTU' in page_1:
             if 'Ubezpieczony pojazd' in page_1:
                 try:
-                    marka = re.search(r'pojazd (\w+)\s?,\s?([\w-]+)', page_1, re.I).group(2)
+                    marka = re.search(r'(Ubezpieczony pojazd).*?(\w+), (\w+-?\w+)', page_1, re.I | re.DOTALL).group(3)
                     model = re.search(rf'(?<={marka}),? (\w+)', page_1, re.I).group(1)
                     nr_rej = re.search(rf'([A-Z0-9]+)\s?(?=, ROK)', page_1).group(1)
                     rok = re.search(r'(ROK PRODUKCJI:?) (\d{4})', page_1).group(2)
@@ -795,7 +795,7 @@ def przypis_daty_raty(pdf, page_1):
         total = re.search(r'Łączna składka do zapłaty ([\d ]+,\d*)', box, re.I)
         total = float(total.group(1).replace(r',', '.').replace(' ', ''))
 
-        if 'I Rata' in box and not 'II Rata' in box and re.search('przelew', box, re.I):
+        if re.search('I Rata', box, re.I) and not re.search('II Rata', box, re.I) and re.search('przelew', box, re.I):
             termin_I = re.search(r'1. (\d{4}-\d{2}-\d{2})', box, re.I).group(1)
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
@@ -1069,11 +1069,10 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'PZU' in page_1:
         pdf_str = polisa_str(pdf)[200:5000]
-        # print(pdf_str)
         total = re.search(r'(Składka łączna:|kwota:) (\d*\s?\d+,?\d{2}?)', pdf_str, re.I).group(2)
         total = zam_spacji(total)
 
-        if re.search('opłacon[ao] w całości', pdf_str, re.I) or 'zapłacono gotówką' in pdf_str:
+        if re.search('opłacon[ao] w całości', pdf_str, re.I) and 'zapłacono gotówką' in pdf_str:
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         if not 'została opłacona w całości.' in pdf_str and 'płatność: półroczna' in pdf_str and \
@@ -1086,6 +1085,19 @@ def przypis_daty_raty(pdf, page_1):
             termin_II = term_pln(re.search(r'odbiorca: PZU SA (\d{2}\.\d{2}\.\d{4})', pdf_str), 1)
 
             return total, termin_I, rata_I, 'G', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
+        if not 'została opłacona w całości.' in pdf_str and 'płatność: półroczna' in pdf_str:
+
+            termin_Ia = re.search(r'odbiorca: PZU SA (\d{2}\.\d{2}\.\d{4})', pdf_str)
+            termin_IIa = re.search(r'00-133 Warszawa (\d{2}\.\d{2}\.\d{4})', pdf_str)
+
+            termin_I = term_pln(termin_Ia, 1)
+            termin_II = term_pln(termin_IIa, 1)
+
+            rata_I = re.search(rf'{termin_Ia.group(1)} r. – ' + '(\d*\s?\d+,?\d{2}?)', pdf_str, re.I).group(1)
+            rata_II = re.search(rf'{termin_IIa.group(1)} r. – ' + '(\d*\s?\d+,?\d{2}?)', pdf_str, re.I).group(1)
+
+            return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         if re.search('(jednorazow[o|a])', pdf_str, re.I) or 'tytule przelewu' in pdf_str or 'Osoba wnioskująca o zmiany' in pdf_str:
             # raty = re.search(r'(Kwota w złotych|PLN)\s*(\d*\s?\d+,\d{2})', pdf_str, re.I).group(2)
