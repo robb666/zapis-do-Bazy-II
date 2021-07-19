@@ -208,12 +208,13 @@ def kod_pocztowy(page_1, pdf):
     return ''
 
 
-def tel_mail(page_1, pdf, nazwisko):
+def tel_mail(page_1, pdf, d, nazwisko):
+    regon = pesel_regon(d, page_1)[1:]
     tel, mail = '', ''
     tel_mail_off = {'tel Robert': '606271169', 'mail Robert': 'ubezpieczenia.magro@gmail.com',
                     'tel Maciej': '602752893', 'mail Maciej': 'magro@ubezpieczenia-magro.pl',
                     'tel MAGRO': '572810576', 'mail AXA': 'obsluga@axaubezpieczenia.pl',
-                    'mail UNIQA': 'centrala@uniqa.pl'}
+                    'mail UNIQA': 'centrala@uniqa.pl', 'regon': regon}
 
     if 'Allianz' in page_1:
         try: tel = ''.join([tel for tel in re.findall(r'tel.*([0-9 .\-\(\)]{8,}[0-9])', page_1) if tel not in tel_mail_off.values()][0])
@@ -385,8 +386,7 @@ def przedmiot_ub(page_1, pdf):
 
         elif 'UNIQA' in page_1:
             pdf_str2 = polisa_str(pdf)[0:-300]
-            # print(pdf_str2)
-            if re.search('Pojazd', pdf_str2, re.I):
+            if re.search('Pojazd', pdf_str2, re.I) and not 'Firma & Planowanie' in pdf_str2:
                 for make in makes:
                     for line in pdf_str2.split('\n'):
                         if make in (lsplt := line.split()):
@@ -412,7 +412,6 @@ def przedmiot_ub(page_1, pdf):
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
             elif 'Przedmiot ubezpieczenia: Mieszkanie' in pdf_str2:
-                # print(pdf_str2)
                 kod = re.search('(Adres:).*\s(\d{2}[-\xad]\d{3})\s', pdf_str2, re.I).group(2)
                 miasto = re.search(f'{kod}\s(\w+)', pdf_str2).group(1)
                 adres = re.search('(Adres:)\s(.*),', pdf_str2).group(2)
@@ -420,6 +419,7 @@ def przedmiot_ub(page_1, pdf):
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
             elif 'Adres miejsca ubezpieczenia ' in pdf_str2:
+
                 kod = re.search('(Adres miejsca ubezpieczenia).*\s(\d{2}[-\xad]\d{3})\s', pdf_str2, re.I).group(2)
                 miasto = re.search(f'{kod}\s(\w+)', pdf_str2).group(1)
                 adres = re.search('miejsca ubezpieczenia\s([A-z0-9\s\./]+),', pdf_str2).group(1)
@@ -449,7 +449,6 @@ def przedmiot_ub(page_1, pdf):
 
         elif 'Generali' in page_1 or 'Proama' in page_1:
             if 'DANE POJAZDU' in page_1:
-
                 marka = re.search('(Marka / Model) (\w+)', page_1, re.I).group(2)
                 model = re.search('(Marka / Model) (\w+-?\w+) /? ([\w\d./]+)', page_1).group(3)
                 nr_rej = re.search('(Numer rejestracyjny / VIN) ([\w\d.]+)', page_1).group(2)
@@ -481,15 +480,21 @@ def przedmiot_ub(page_1, pdf):
                 model = re.search(rf'(?<={marka})\s(\w+)', page_1, re.I).group(1)
                 nr_rej = re.search(r'Nr rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
                 rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
+
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
 
         elif 'HDI' in page_1 and not 'PZU' in page_1 or '„WARTA” S.A. POTWIERDZA' in page_1:
-            if re.search(r'Marka, Model(, Typ|wersja)?:', page_1, re.I):
-                marka = re.search(r'Marka, Model(, Typ|wersja)?: ([\w./-]+)', page_1, re.I).group(2)
-                model = re.search(rf'(?<={marka})\s(\w+)', page_1, re.I).group(1)
+            if re.search(r'Marka, Model(, Typ|wersja)?:|Nr rejestracyjny', page_1, re.I):
+                for make in makes:
+                    for line in page_1.split('\n'):
+                        if make in (lsplt := line.split()):
+                            marka = make
+                            model = lsplt[lsplt.index(marka) + 1] if lsplt[lsplt.index(marka) + 1] not in \
+                                                                     ('Model:', '-') else lsplt[lsplt.index(marka) + 2]
                 nr_rej = re.search(r'(Nr|Numer) rejestracyjny: ([A-Z0-9]+)', page_1).group(2)
                 rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
+
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
 
@@ -505,7 +510,6 @@ def przedmiot_ub(page_1, pdf):
 
         elif 'MTU' in page_1:
             if 'Ubezpieczony pojazd' in page_1:
-
                 marka = re.search(r'(Ubezpieczony pojazd).*?(\w+), (\w+-?\w+)', page_1, re.I | re.DOTALL).group(3)
                 model = re.search(rf'(?<={marka}) (\w+)', page_1, re.I).group(1)
                 nr_rej = re.search(rf'([A-Z0-9]+)(?=, ROK)', page_1).group(1)
@@ -525,7 +529,7 @@ def przedmiot_ub(page_1, pdf):
             if 'Miejsce ubezpieczenia:' in page_1:
                 kod = re.search('(Miejsce ubezpieczenia:).*(\d{2}[-\xad]\d{3})', page_1, re.I).group(2)
                 miasto = re.search(f'{kod} (\w+)', page_1).group(1)
-                adres = re.search('(Miejsce ubezpieczenia:) ([\w \d/\.]+),', page_1).group(2)
+                adres = re.search('(Miejsce ubezpieczenia:)\s([\w\s\-\d/\.]+),', page_1).group(2)
                 rok = re.search('(rok budowy:)? (\d+)?', page_1).group(1)
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
@@ -1204,8 +1208,12 @@ def przypis_daty_raty(pdf, page_1):
         pdf_str2 = polisa_str(pdf)[500:-1]
         total = re.search(r'(do\szapłacenia|(?:.*)Składka łączn[ie|a]+:|Składk[a|i]+:|Płatność:) (\d*\s?\d+)',
                           pdf_str2, re.I).group(2)
-
+        # print(pdf_str2)
         if re.findall(r'(?=.*jednorazow[o|a]+)(?=.*gotówka).*', pdf_str2, re.I | re.DOTALL):
+            termin_I = re.search(r'(Składka została opłacona dnia:?)\s*'
+                                 r'(\d{4}[-\./]\d{2}[-\./]\d{2}|\d{2}[-\./]\d{2}[-\./]\d{4})', pdf_str2,
+                                 re.I | re.DOTALL)
+            termin_I = term_pln(termin_I, 2)
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         if not re.findall(r'(?=.*Rata\s2)(?=.*Nr\skonta).*', pdf_str2, re.I | re.DOTALL):
@@ -1234,7 +1242,6 @@ def przypis_daty_raty(pdf, page_1):
     elif 'UNIQA' in page_1:
         # box = polisa_box(pdf, 0, 300, 590, 700)
         pdf_str2 = polisa_str(pdf)[1000:4500]
-        # print(pdf_str2)
         total = re.findall(r'Składka łączna: (\d*\s?\d+)', pdf_str2, re.I)[-1]  # re.findall("pattern", "target_text")[-1]
         total = int(re.sub(r'\xa0', '', total))
 
@@ -1245,6 +1252,10 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         if re.findall(r'(?=.*gotówką)(?=.*jednorazowo).*', pdf_str2, re.I | re.DOTALL):
+            termin_I = re.search(r'(Składka została opłacona dnia:?)\s*'
+                                 r'(\d{4}[-\./]\d{2}[-\./]\d{2}|\d{2}[-\./]\d{2}[-\./]\d{4})', pdf_str2,
+                                 re.I | re.DOTALL)
+            termin_I = term_pln(termin_I, 2)
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         if 'przelewem' in pdf_str2 and 'w ratach' in pdf_str2:
@@ -1399,7 +1410,7 @@ def rozpoznanie_danych(tacka_na_polisy):
     kod_poczt_f_edit = f'{kod_poczt_f[:2]}-{kod_poczt_f[2:]}' if '-' not in kod_poczt_f else kod_poczt_f
     kod_poczt = kod_pocztowy(page_1, pdf) if kod_pocztowy(page_1, pdf) else kod_poczt_f_edit
 
-    tel_mail_ = tel_mail(page_1, pdf, nazwisko)
+    tel_mail_ = tel_mail(page_1, pdf, d, nazwisko)
     tel = tel_mail_[0].replace('\n', '') if tel_mail_[0] else ''
     email = tel_mail_[1]
 

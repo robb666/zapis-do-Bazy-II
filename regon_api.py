@@ -112,4 +112,4 @@ def get_regon_data(r):
         return print('\nBaza REGON\n==========\nPodany numer REGON jest błędny!\n')
 
 
-# pp.pprint(get_regon_data(100416810))
+# pp.pprint(get_regon_data(101606144))
