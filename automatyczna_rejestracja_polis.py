@@ -593,11 +593,17 @@ def przedmiot_ub(page_1, pdf):
 
 
         elif 'WARTA' in page_1:
-            if re.search('Marka, Model, Typ:', page_1) or re.search('Marka, Model:', page_1):
-                marka = re.search(r'Marka, Model(, Typ)?: ([\w./-]+)', page_1, re.I).group(2)
-                model = re.search(rf'(?<={marka})\s([\w-]+)', page_1, re.I).group(1)
-                nr_rej = re.search(r'Nr rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
+            if re.search('Nr rejestracyjny', page_1) or re.search('VIN', page_1):
+                for make in makes:
+                    for line in page_1.split('\n'):
+                        if make in (lsplt := line.split()):
+                            marka = make
+                            model = lsplt[lsplt.index(marka) + 1] if lsplt[lsplt.index(marka) + 1] not in \
+                                                                     ('Model:', '-') else lsplt[
+                                lsplt.index(marka) + 2]
+                nr_rej = re.search(r'(Nr|Numer) rejestracyjny: ([A-Z0-9]+)', page_1).group(2)
                 rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
+
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
             if 'WARTA DOM' in page_1:
