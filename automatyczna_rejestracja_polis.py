@@ -214,7 +214,7 @@ def tel_mail(page_1, pdf, d, nazwisko):
     tel_mail_off = {'tel Robert': '606271169', 'mail Robert': 'ubezpieczenia.magro@gmail.com',
                     'tel Maciej': '602752893', 'mail Maciej': 'magro@ubezpieczenia-magro.pl',
                     'tel MAGRO': '572810576', 'mail AXA': 'obsluga@axaubezpieczenia.pl',
-                    'mail UNIQA': 'centrala@uniqa.pl', 'regon': regon}
+                    'mail UNIQA': 'centrala@uniqa.pl', 'p_lub_r': regon}
 
     if 'Allianz' in page_1:
         try: tel = ''.join([tel for tel in re.findall(r'tel.*([0-9 .\-\(\)]{8,}[0-9])', page_1) if tel not in tel_mail_off.values()][0])
@@ -257,7 +257,7 @@ def tel_mail(page_1, pdf, d, nazwisko):
 
     elif 'InterRisk' in page_1:
         try:
-            tel = re.search(r'Telefon: (\+48|0048)?\s?([0-9.\-\(\)\s]{9,})', page_1).group(2)
+            tel = re.search(r'Telefon: (\+48|0048)?\s?([0-9.\-\(\)\s]{9,}\n)', page_1).group(2)
         except:
             pass
         try:
@@ -322,7 +322,7 @@ def tel_mail(page_1, pdf, d, nazwisko):
         try:
             # tel = re.search(r'(komórkowy:)?\n?(?<![-\w])([0-9]{9})\s', pdf_str2, re.M).group(2)
             tel = ''.join([tel for tel in re.findall(r'\s([0-9]{9}),?\s', page_1) if tel not in
-                           tel_mail_off.values()][0])
+                           tel_mail_off.values()][0]) and not re.search(r'REGON:\s([0-9]{9}),?\s', page_1)
         except:pass
         return tel, mail
 
@@ -340,9 +340,11 @@ def tel_mail(page_1, pdf, d, nazwisko):
     elif 'Wiener' in page_1:
         try:
             tel = re.search(r'(Telefon kontaktowy:?|Telefon komórkowy:)\s?(\+48|0048)?\s?([0-9.\-\(\)]{9,})?', page_1).group(3)
+            if '-' in tel:
+                tel = tel.replace('-', '')
         except: pass
         try:
-            mail = re.search(r'(E-mail)\s?([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', page_1).group(2)
+            mail = re.search(r'(E-mail:?)\s?([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', page_1, re.I).group(2)
         except: pass
         return tel, mail
 
@@ -615,7 +617,7 @@ def przedmiot_ub(page_1, pdf):
         elif 'Wiener' in page_1:
             if 'DANE POJAZDU' in page_1:
                 marka = re.search(r'Marka pojazdu: ([\w./]+)', page_1, re.I).group(1)
-                model = re.search(rf'{marka}.*\nMarka pojazdu:\s*([\w-]+)', page_1, re.I).group(1)
+                model = re.search(rf'Model pojazdu:\s*([\w-]+)', page_1, re.I).group(1)
                 nr_rej = re.search(r'Numer rejestracyjny: ([A-Z0-9]+)', page_1).group(1)
                 rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
                 return marka, kod, model, miasto, nr_rej, adres, rok
@@ -1082,7 +1084,7 @@ def przypis_daty_raty(pdf, page_1):
         total = re.search(r'(Składka łączna:|kwota:) (\d*\s?\d+,?\d{2}?)', pdf_str, re.I).group(2)
         total = zam_spacji(total)
 
-        if re.search('opłacon[ao] w całości', pdf_str, re.I) and 'zapłacono gotówką' in pdf_str:
+        if re.search('opłacon[ao] w całości', pdf_str, re.I) or 'zapłacono gotówką' in pdf_str:
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         if not 'została opłacona w całości.' in pdf_str and 'płatność: półroczna' in pdf_str and \
@@ -1257,7 +1259,7 @@ def przypis_daty_raty(pdf, page_1):
             termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
-        if re.findall(r'(?=.*gotówką)(?=.*jednorazowo).*', pdf_str2, re.I | re.DOTALL):
+        if re.findall(r'(?=.*gotówk[aą])(?=.*jednorazowo).*', pdf_str2, re.I | re.DOTALL):
             termin_I = re.search(r'(Składka została opłacona dnia:?)\s*'
                                  r'(\d{4}[-\./]\d{2}[-\./]\d{2}|\d{2}[-\./]\d{2}[-\./]\d{4})', pdf_str2,
                                  re.I | re.DOTALL)
