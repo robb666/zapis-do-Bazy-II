@@ -1323,8 +1323,9 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin.group(1), zam_spacji(raty.group(1)), 'P', 2, 1, termin.group(2), \
                    zam_spacji(raty.group(2)), termin_III, rata_III, termin_IV, rata_IV
 
-        elif re.findall(r'(?=.*3 rata)(?=.*PRZELEW).*', pdf_str, re.I | re.DOTALL) and not '4 rata' in pdf_str:
-            termin = re.search(r'3 RATACH Termin: (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2})', pdf_str)
+        elif re.findall(r'(?=.*3 rat[ach])(?=.*PRZELEW).*', pdf_str, re.I | re.DOTALL) and not '4 rata' in pdf_str:
+            print(pdf_str)
+            termin = re.search(r'Termin: (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2})', pdf_str)
             raty = re.search(r'Kwota: (\d+) zł (\d+) zł (\d+)', pdf_str)
             return total, termin.group(1), raty.group(1), 'P', 3, 1, termin.group(2), raty.group(2), \
                    termin.group(3), raty.group(3), termin_IV, rata_IV
