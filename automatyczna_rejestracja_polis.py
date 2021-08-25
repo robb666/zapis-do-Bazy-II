@@ -435,16 +435,16 @@ def przedmiot_ub(page_1, pdf):
             pdf_str2 = polisa_str(pdf)[0:-300]
             if re.search('Pojazd', pdf_str2, re.I) and not 'Firma & Planowanie' in pdf_str2:
                 for make in makes:
-                    for line in pdf_str2.split('\n'):
+                    for line_num, line in enumerate(pdf_str2.split('\n')):
                         if make in (lsplt := line.split()):
                             marka = make
                             model = lsplt[lsplt.index(marka) + 1] if lsplt[lsplt.index(marka) + 1] not in \
                                                                      ('Model:', '-') else lsplt[lsplt.index(marka) + 2]
-                        if line.startswith('Zakres Suma'):
-                            nr_rej = line.split()[-1]
+                        if re.search(f'(Twój zakres ubezpieczenia\n?[\w\d]+)', pdf_str2, re.I):
+                            nr_rej = re.search(f'Twój zakres ubezpieczenia\n?([\w\d]+)', pdf_str2).group(1)
                         elif re.search('er rejestracyjny: ([\w\d]+)', pdf_str2):
                             nr_rej = re.search('er rejestracyjny: ([\w\d]+)', pdf_str2).group(1)
-                        elif re.search(f'([\w\d]+) {marka}', pdf_str2):
+                        elif re.search(f'(Twój zakres ubezpieczenia\n?[\w\d]+)', pdf_str2, re.I):
                             nr_rej = re.search(f'([\w\d]+) {marka}', pdf_str2).group(1)
                         else:
                             pass
@@ -533,7 +533,8 @@ def przedmiot_ub(page_1, pdf):
 
 
         elif 'HDI' in page_1 and not 'PZU' in page_1 or '„WARTA” S.A. POTWIERDZA' in page_1:
-            if re.search(r'Marka, Model(, Typ|wersja)?:|Nr rejestracyjny', page_1, re.I):
+
+            if re.search(r'DANE UBEZPIECZONEGO POJAZDU|Marka|rejestracyjny', page_1, re.I):
                 for make in makes:
                     for line in page_1.split('\n'):
                         if make in (lsplt := line.split()):
@@ -1488,7 +1489,7 @@ def rozpoznanie_danych(tacka_na_polisy):
     kod_poczt = kod_pocztowy(page_1, pdf) if kod_pocztowy(page_1, pdf) else kod_poczt_f_edit
 
     tel_mail_ = tel_mail(page_1, pdf, d, nazwisko)
-    tel = tel_mail_[0].replace('\n', '') if tel_mail_[0] else ''
+    tel = tel_mail_[0].replace('\n', '') if tel_mail_[0] and tel_mail_[0] != True else ''
     email = tel_mail_[1]
 
     przedmiot_ub_ = przedmiot_ub(page_1, pdf)
