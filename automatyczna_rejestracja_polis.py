@@ -1402,7 +1402,6 @@ def przypis_daty_raty(pdf, page_1):
                 return total, termin.group(1), raty.group(1), 'P', 4, 1, termin.group(2), raty.group(2), \
                        termin.group(3), raty.group(3), termin.group(4), raty.group(4)
             elif transportowe and not 'Pakiet Przedsiębiorca' in pdf_str:
-                print(pdf_str)
                 total = (re.search('(SKŁADKA ŁĄCZNA|zawartej umowy ubezpieczenia):?\s?(\d*.?\d+)', pdf_str).group(2)).replace('.', '')
                 termin = re.search(r'Termin: (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2})'
                                    r' (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2})', pdf_str)
