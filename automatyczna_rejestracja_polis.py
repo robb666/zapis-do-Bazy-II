@@ -1398,16 +1398,26 @@ def przypis_daty_raty(pdf, page_1):
             if inne:
                 termin = re.search(r'4 RATACH Termin: (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2}) '
                                    r'(\d{4}-\d{2}-\d{2})', pdf_str)
-                raty = re.search(r'Kwota: (\d+) zł (\d+) zł (\d+) zł (\d+)', pdf_str)
+                raty = re.search(r'Kwota: (\d*\s?\d+) zł (\d*\s?\d+) zł (\d*\s?\d+) zł (\d*\s?\d+)', pdf_str)
                 return total, termin.group(1), raty.group(1), 'P', 4, 1, termin.group(2), raty.group(2), \
                        termin.group(3), raty.group(3), termin.group(4), raty.group(4)
             elif transportowe and not 'Pakiet Przedsiębiorca' in pdf_str:
-                total = (re.search('zawartej umowy ubezpieczenia : (\d*.?\d+)', pdf_str).group(1)).replace('.', '')
-                termin = re.search(r'Termin płatności\s?: 1. (\d{4}-\d{2}-\d{2}) 2. (\d{4}-\d{2}-\d{2}) '
-                                   r'3. (\d{4}-\d{2}-\d{2}) 4. (\d{4}-\d{2}-\d{2})', pdf_str)
-                raty = re.search(r'Kwota\s?: (\d+),\d*\s+(\d+),\d*\s+(\d+),\d*\s+(\d+)', pdf_str)
-                return total, termin.group(1), raty.group(1), 'P', 4, 1, termin.group(2), raty.group(2), \
-                       termin.group(3), raty.group(3), termin.group(4), raty.group(4)
+                print(pdf_str)
+                total = (re.search('(SKŁADKA ŁĄCZNA|zawartej umowy ubezpieczenia):?\s?(\d*.?\d+)', pdf_str).group(2)).replace('.', '')
+                termin = re.search(r'Termin: (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2})'
+                                   r' (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2})', pdf_str)
+                'Termin: 2021-09-01 2021-11-24 2022-02-24 2022-05-24'
+                raty = re.search(r'Kwota\s?: (\d*\s?\d+) zł (\d*\s?\d+) zł (\d*\s?\d+) zł (\d*\s?\d+)', pdf_str)
+                return zam_spacji(total), \
+                       termin.group(1), \
+                       zam_spacji(raty.group(1)), \
+                       'P', 4, 1, \
+                       termin.group(2), \
+                       zam_spacji(raty.group(2)), \
+                       termin.group(3), \
+                       zam_spacji(raty.group(3)), \
+                       termin.group(4), \
+                       zam_spacji(raty.group(4))
 
             elif 'Pakiet Przedsiębiorca' in pdf_str:
                 raty = re.search(r'Kwota\s?:\s*(\d*.\d+),?\d*\s*(\d*.\d+),?\d*\s*(\d*\.\d+),?\d*\s*(\d*\.?\d+),?\d*',
