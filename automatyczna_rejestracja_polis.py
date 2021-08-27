@@ -609,6 +609,7 @@ def przedmiot_ub(page_1, pdf):
 
         elif 'TUZ' in page_1:
             pdf_str3 = polisa_str(pdf)[0:6500]
+            print(pdf_str3)
             if 'Dane pojazdu' in pdf_str3:
                 try:
                     nr_rej = re.search(r'Dane pojazdu\n?\n?([A-Z0-9]+)', pdf_str3, re.DOTALL).group(1)
@@ -1453,27 +1454,30 @@ def przypis_daty_raty(pdf, page_1):
 
 
         elif re.findall(r'(?=.*przelew)(?=.*II\srata).*', pdf_str, re.I | re.DOTALL):
-            terminI = re.search(
-                r'(Wysokośćratwzł\n|kwoty płatności|do\sdnia\s|rata)\s?(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})', pdf_str,
-                re.I)
-            terminII = re.search(r'(II\srata)\s?(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})', pdf_str, re.I)
+            try:
+                terminI = re.search(
+                    r'(Wysokośćratwzł\n|kwoty płatności|do\sdnia\s|rata)\s?(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})', pdf_str,
+                    re.I)
+                terminII = re.search(r'(II\srata)\s?(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})', pdf_str, re.I)
 
-            termin_I = term_pln(terminI, 2)
-            termin_II = term_pln(terminII, 2)
+                termin_I = term_pln(terminI, 2)
+                termin_II = term_pln(terminII, 2)
 
-            rata_I = re.search(r'I\srata\s(\d{2}­\d{2}­\d{4})?\s–\s(\d*\s?\d+,\d{2})', pdf_str).group(2)
-            rata_II = re.search(r'II\srata\s(\d{2}­\d{2}­\d{4})?\s–\s(\d*\s?\d+,\d{2})', pdf_str).group(2)
-            rata_I = rata_I.replace(',', '.')
-            rata_II = rata_II.replace(',', '.')
+                rata_I = re.search(r'I\srata\s(\d{2}­\d{2}­\d{4})?\s–\s(\d*\s?\d+,\d{2})', pdf_str).group(2)
+                rata_II = re.search(r'II\srata\s(\d{2}­\d{2}­\d{4})?\s–\s(\d*\s?\d+,\d{2})', pdf_str).group(2)
+                rata_I = rata_I.replace(',', '.')
+                rata_II = rata_II.replace(',', '.')
+            except:
+                rata_I = 'BRAK'
+                rata_II = 'BRAK'
+                print('\nWIENER - Brak informacji o szczegółach płatności!\n')
 
-            return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+                return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
     return total, termin_I, rata_I, '', '', '', termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
 """Koniec arkusza EXCEL"""
-
-
 def rozpoznanie_danych(tacka_na_polisy):
     pdf = tacka_na_polisy
     page_ = polisa(pdf)
