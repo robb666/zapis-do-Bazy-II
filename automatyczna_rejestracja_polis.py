@@ -423,9 +423,9 @@ def przedmiot_ub(page_1, pdf):
 
             elif 'MÓJ DOM' in page_1:
                 pdf_str2 = polisa_box(pdf, 0, 100, 320, 400)
-                kod = re.search('(Miejsce ubezpieczenia).*\n?.*,\s?(\d{2}-\d{3})', page_1).group(2)
-                miasto = re.search(f'{kod}.*\n?(\w*)', page_1).group(1)
-                adres = re.search('(Miejsce ubezpieczenia) (ul.) ([\w\d/]+)', page_1).group(3)
+                kod = re.search('(Miejsce ubezpieczenia).*\n?.*\s?(\d{2}-\d{3})', page_1).group(2)
+                miasto = re.search(f'{kod}\s\n?(\w*)', page_1).group(1)
+                adres = re.search('(Miejsce ubezpieczenia).*(ul.) ([\w\d/]+)', page_1).group(3)
                 if re.search('(Rok budowy) (\d+)', page_1):
                     rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
                 return marka, kod, model, miasto, nr_rej, adres, rok
@@ -775,6 +775,7 @@ def przypis_daty_raty(pdf, page_1):
     if 'Allianz' in page_1 or 'Globtroter' in page_1:
         # box = polisa_box(pdf, 0, 320, 590, 780)
         pdf_str2 = polisa_str(pdf)[0:-2600]
+
         total = re.search(r'(Składka:|łącznie:|za 3 lata:|za rok:|Razem)\s(\d*\s?\d+)', pdf_str2)
         if total:
             total = int(re.sub(r'\xa0', '', total.group(2)))
@@ -787,7 +788,7 @@ def przypis_daty_raty(pdf, page_1):
 
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
-        if 'I rata przelew' in page_1:
+        if 'I rata przelew' in pdf_str2 or 'rata opłacona' in pdf_str2:
 
             termin_I = re.search(r'Dane płatności:\ndo (\d{2}.\d{2}.\d{4})', pdf_str2, re.I)
             termin_I = re.sub('[^0-9]', '-', termin_I.group(1))
