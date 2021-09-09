@@ -124,11 +124,10 @@ def regon(regon_checksum):
 
 """Funkcje odpowiadają kolumnom w bazie."""
 
-
 def nazwisko_imie(d, page_1, pdf):
     """Zwraca imię i nazwisko Klienta."""
     agent = {'Robert': 'Grzelak Robert', 'Maciej': 'Grzelak Maciej', 'MAGRO': 'Magro Maciej',
-             'Wpierdalata': 'Kozłowska-Chyła Beata'}
+             'Wpierdalata': 'Kozłowska-Chyła Beata', 'Dembska': 'Nieruchomościami'}
     with open(path + '\\imiona.txt') as content:
         all_names = content.read().split('\n')
         if 'euroins' in d.values():
@@ -144,7 +143,8 @@ def nazwisko_imie(d, page_1, pdf):
         elif 'tuz' in d.values():
             name = [f'{d[k + 1].title()} {v.title()}' for k, v in d.items() if k > 10 and v.title() in all_names]
         elif 'warta' in d.values():
-            name = [f'{d[k - 1].title()} {v.title()}' for k, v in d.items() if v.title() in all_names]
+            name = [f'{d[k - 1].title()} {v.title()}' for k, v in d.items() if v.title() in all_names and
+                    f'{d[k - 1].title()}' not in agent.values()]
         elif 'Wiener' in page_1 and 'полис' in page_1:
             name = [f'{name} BRAK!' for name in all_names if re.search(name, page_1, re.I)]
         else:
@@ -606,7 +606,6 @@ def przedmiot_ub(page_1, pdf):
                 # rok = re.search('(Rok budowy) (\d+)', page_1).group(2)
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
-
         elif 'TUZ' in page_1:
             pdf_str3 = polisa_str(pdf)[0:6500]
             print(pdf_str3)
@@ -651,7 +650,7 @@ def przedmiot_ub(page_1, pdf):
                                                                      ('Model:', '-') else lsplt[
                                 lsplt.index(marka) + 2]
                 nr_rej = re.search(r'(Nr|Numer) rejestracyjny: ([A-Z0-9]+)', page_1).group(2)
-                rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
+                rok = re.search(r'Rok\s?\n?produkcji: (\d{4})', page_1).group(1)
 
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
@@ -695,15 +694,16 @@ def koniec_ochrony(page_1, pdf):
 def TU():
     """W funkcji numer_polisy(page_1)"""
     pass
-
+' Wypadków II Polisa typ 1111 nr 4866434'
 
 def numer_polisy(page_1, pdf):
-    # print(page_1)
     nr_polisy = ''
     if 'Allianz' in page_1 and (nr_polisy := re.search(r'(Polisa nr|NUMER POLISY) (\d*-?\d+)', page_1)) or \
             'Globtroter' in page_1 and nr_polisy:
         return 'ALL', 'ALL', nr_polisy.group(2)
-    elif 'Compensa' in page_1 and (nr_polisy := re.search('typ polisy: *\s*(\d+),numer: *\s*(\d+)', page_1)):
+    elif re.search('Compens[ay]', page_1) and \
+            (nr_polisy := re.search('typ polisy: *\s*(\d+),numer: *\s*(\d+)', page_1, re.I)) or \
+                (nr_polisy := re.search('polisa typ (\d+)\snr\s *\s*(\d+)', page_1, re.I)):
         return 'COM', 'COM', nr_polisy.group(1) + nr_polisy.group(2)
     elif 'EUROINS' in page_1 and (nr_polisy := re.search('Polisa ubezpieczenia nr: (\d+)', page_1)):
         return 'EIN', 'EIN', nr_polisy.group(1)
@@ -745,7 +745,9 @@ def numer_polisy(page_1, pdf):
 
     # Link4 powinien być na końcu - brak "Link4" na polisie.
     elif (nr_polisy := re.search('(Numer:?|POLISA DLA PANA:?|NR)\s?\n?(\w\d+)', page_1, re.I)) and \
-            not 'Travel' in page_1 and not 'WARTA' in page_1 and not 'PZU' in page_1 and not 'Wiener' in page_1:
+            not 'Travel' in page_1 and not 'WARTA' in page_1 and not 'PZU' in page_1 and not 'Wiener' in page_1\
+            and not re.search('Compens[ay]', page_1):
+        # print(page_1)
         return 'ULIN', 'LIN', nr_polisy.group(2)
     else:
         return 'NIE ROZPOZNANE !', '', ''
@@ -808,7 +810,6 @@ def przypis_daty_raty(pdf, page_1):
 
             return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
-
         elif 'Twoja składka za 3 lata' in page_1:
             termin = re.search('do (\d{2}.\d{2}.\d{4}).*\n?do (\d{2}.\d{2}.\d{4}).*\n?do (\d{2}.\d{2}.\d{4})', pdf_str2,
                                re.I)
@@ -825,12 +826,10 @@ def przypis_daty_raty(pdf, page_1):
 
         return total, termin_I, rata_I, '', '', '', termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
-
-    elif 'Compensa' in page_1:
-
-        box = polisa_box(pdf, 0, 260, 590, 750)
+    elif re.search('Compens[ay]', page_1):
+        box = polisa_str(pdf)[200:5000]
         try:
-            total = re.search(r'Składka ogółem: (\d*\s?\d+)', box, re.I)
+            total = re.search(r'Składka ogółem: (\d*\s?\d+)|Składka\sw\swysokości\s?(\d*\s?\d+)', box, re.I)
             total = int(re.sub(r'\xa0', '', total.group(1)))
         except:
             pass
