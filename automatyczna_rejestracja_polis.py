@@ -487,7 +487,8 @@ def przedmiot_ub(page_1, pdf):
 
         elif 'EUROINS' in page_1:
             if 'Dane pojazdu' in page_1:
-                marka = re.search('(Marka, model:) (\w+)', page_1, re.I).group(2)
+                print(page_1)
+                marka = re.search(r'(Marka, model:) ([\w/-]+)', page_1, re.I).group(2)
                 model = re.search(f'{marka}\s+([\w\d./]+)', page_1).group(1)
                 nr_rej = re.search('(rejestracyjny:) ([\w\d.]+)', page_1).group(2)
                 rok = re.search('(Rok[\s\n]?produkcji:) (\d+),?', page_1).group(2)
@@ -1577,7 +1578,7 @@ try:
 
 except:
     ExcelApp = Dispatch("Excel.Application")
-    wb = ExcelApp.Workbooks.Open(path + "\\2014 BAZA MAGRO.xlsx")
+    wb = ExcelApp.Workbooks.OpenXML(path + "\\2014 BAZA MAGRO.xlsx")
     ws = wb.Worksheets("BAZA 2014")
 
 ExcelApp.Visible = True
