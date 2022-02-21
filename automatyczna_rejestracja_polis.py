@@ -1599,7 +1599,7 @@ except:
     ws = wb.Worksheets("BAZA 2014")
 
 ExcelApp.Visible = True
-
+xxx
 """Jesienne Bazie"""
 # try:
 for dane_polisy in tacka_na_polisy(folder):
