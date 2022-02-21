@@ -26,3 +26,4 @@ ocry.py
 pyinstaller --hiddenimport win32timezone -F automatyczna_rejestracja_polis.py
 ocry.py
 rejestracja polis pyinstaller command.txt
+.env/

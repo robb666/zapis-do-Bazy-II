@@ -7,7 +7,9 @@ from win32com.client import Dispatch
 import time
 from regon_api import get_regon_data
 
+
 start_time = time.time()
+
 path = os.getcwd()
 one_day = timedelta(1)
 
@@ -128,7 +130,7 @@ def nazwisko_imie(d, page_1, pdf):
     """Zwraca imię i nazwisko Klienta."""
     agent = {'Robert': 'Grzelak Robert', 'Maciej': 'Grzelak Maciej', 'MAGRO': 'Magro Maciej',
              'Wpierdalata': 'Kozłowska-Chyła Beata', 'Dembska': 'Nieruchomościami'}
-    with open(path + '\\imiona.txt') as content:
+    with open('M:\\Agent baza\\imiona.txt') as content:
         all_names = content.read().split('\n')
         if 'euroins' in d.values():
             name = []
@@ -411,7 +413,7 @@ def tel_mail(page_1, pdf, d, nazwisko):
 
 def przedmiot_ub(page_1, pdf):
     marka, kod, model, miasto, nr_rej, adres, rok = '', '', '', '', '', '', ''
-    with open(path + '\\marki.txt') as content:
+    with open('M:\\Agent baza\\marki.txt') as content:
         makes = content.read().split('\n')
         if 'Allianz' in page_1:
             if 'Marka / model pojazdu' in page_1:
@@ -487,7 +489,6 @@ def przedmiot_ub(page_1, pdf):
 
         elif 'EUROINS' in page_1:
             if 'Dane pojazdu' in page_1:
-                print(page_1)
                 marka = re.search(r'(Marka, model:) ([\w/-]+)', page_1, re.I).group(2)
                 model = re.search(f'{marka}\s+([\w\d./]+)', page_1).group(1)
                 nr_rej = re.search('(rejestracyjny:) ([\w\d.]+)', page_1).group(2)
@@ -1578,7 +1579,9 @@ try:
 
 except:
     ExcelApp = Dispatch("Excel.Application")
-    wb = ExcelApp.Workbooks.OpenXML(path + "\\2014 BAZA MAGRO.xlsx")
+    wb = ExcelApp.Workbooks.OpenXML("M:\\Agent baza\\2014 BAZA MAGRO.xlsx")
+    # Testy
+    # wb = ExcelApp.Workbooks.OpenXML(path + "\\2014 BAZA MAGRO.xlsx")
     ws = wb.Worksheets("BAZA 2014")
 
 ExcelApp.Visible = True
@@ -1679,7 +1682,10 @@ for dane_polisy in tacka_na_polisy(obj):
 
 """Opcje zapisania"""
 ExcelApp.DisplayAlerts = False
-wb.SaveAs(path + "\\2014 BAZA MAGRO.xlsx")
+wb.SaveAs("M:\\Agent baza\\2014 BAZA MAGRO.xlsx")
+
+# Testy
+# wb.SaveAs(path + "\\2014 BAZA MAGRO.xlsx")
 
 """Zamknięcie narazie wyłączone..."""
 # wb.Close()
