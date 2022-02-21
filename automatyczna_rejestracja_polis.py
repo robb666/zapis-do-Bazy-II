@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 import pdfplumber
 from datetime import datetime, timedelta
 import win32com.client
@@ -13,11 +14,11 @@ start_time = time.time()
 path = os.getcwd()
 one_day = timedelta(1)
 
-# obj = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
-obj = r'M:\Agent baza\Skrzynka na polisy'
+# folder = input('Podaj polisę/y w formacie .pdf do rejestracji: ')
+folder = r'M:\Agent baza\Skrzynka na polisy\\'
 
 
-# obj = r'M:\zSkrzynka na polisy'
+# folder = r'M:\zSkrzynka na polisy'
 
 
 def words_separately(text):
@@ -533,9 +534,7 @@ def przedmiot_ub(page_1, pdf):
 
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
-
         elif 'HDI' in page_1 and not 'PZU' in page_1 or '„WARTA” S.A. POTWIERDZA' in page_1:
-
             if re.search(r'DANE UBEZPIECZONEGO POJAZDU|Marka|rejestracyjny', page_1, re.I):
                 for make in makes:
                     for line in page_1.split('\n'):
@@ -553,7 +552,7 @@ def przedmiot_ub(page_1, pdf):
         elif re.search('Numer:?\s\n?(\w\d+)', page_1, re.I) and not 'WARTA' in page_1 or 'LINK4' in page_1:
             if 'Marka / Model' in page_1 or 'DANE POJAZDU' in page_1:
                 marka = re.search(r'(Marka / Model|Marka) ([\w./]+)', page_1, re.I).group(2)
-                model = re.search(rf'({marka})\n?\s?[A-z]+\s?(\w+)', page_1, re.I).group(2)
+                model = re.search(rf'({marka})([\n\s,])?([A-z\s]+),', page_1, re.I).group(3)
                 nr_rej = re.search(r'rejestracyjny ([A-Z0-9]+)', page_1).group(1)
                 rok = re.search(r'Rok produkcji (\d{4})', page_1).group(1)
                 return marka, kod, model, miasto, nr_rej, adres, rok
@@ -694,9 +693,9 @@ def koniec_ochrony(page_1, pdf):
 
 
 def TU():
-    """W funkcji numer_polisy(page_1)"""
+    """W funkcji numer_polisy(page_1, pdf)"""
     pass
-' Wypadków II Polisa typ 1111 nr 4866434'
+
 
 def numer_polisy(page_1, pdf):
     nr_polisy = ''
@@ -770,6 +769,11 @@ def term_pln(termin, group_n):
     if termin:
         zamiana_sep = re.sub('[^0-9]', '-', termin.group(group_n))
         return re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', zamiana_sep)
+
+
+def ryzyko(page_1, numer_polisy_):
+    if 'LIN' in numer_polisy_ and 'Odpowiedzialność Cywilna' in page_1:
+        return 'OC'
 
 
 def przypis_daty_raty(pdf, page_1):
@@ -1480,6 +1484,7 @@ def przypis_daty_raty(pdf, page_1):
 
 
 """Koniec arkusza EXCEL"""
+
 def rozpoznanie_danych(tacka_na_polisy):
     pdf = tacka_na_polisy
     page_ = polisa(pdf)
@@ -1534,9 +1539,12 @@ def rozpoznanie_danych(tacka_na_polisy):
     data_konca = koniec_ochrony(page_1, pdf)
 
     numer_polisy_ = numer_polisy(page_1, pdf)
+
     tow_ub_tor = numer_polisy_[0]
     tow_ub = numer_polisy_[1]
     nr_polisy = numer_polisy_[2]
+
+    # ryzyko = ryzyko(page_1, numer_polisy_)
 
     przypis_daty_raty_ = przypis_daty_raty(pdf, page_1)
 
@@ -1559,20 +1567,26 @@ def rozpoznanie_danych(tacka_na_polisy):
            rata_I, f_platnosci, ilosc_rat, nr_raty, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
-def tacka_na_polisy(obj):
-    if obj.endswith('.pdf'):
-        yield rozpoznanie_danych(obj)
+def tacka_na_polisy(folder):
+    if folder.endswith('.pdf'):
+        yield rozpoznanie_danych(folder)
     else:
-        for file in os.listdir(obj):
+        for file in os.listdir(folder):
             if file.endswith('.pdf'):
-                pdf = obj + '\\' + file
+                pdf = folder + '\\' + file
                 yield rozpoznanie_danych(pdf)
 
+
+"""Sprawdza czy jest polisa w folderze."""
+if not any([file.endswith('.pdf') for file in os.listdir(folder)]):
+    print('Brak polis.')
+    time.sleep(1.5)
+    sys.exit()
 
 """Sprawdza czy arkusz jest otwarty."""
 """Jeżeli arkusz jest zamknięty, otwiera go."""
 try:
-    ExcelApp = win32com.client.GetActiveObject('Excel.Application')
+    ExcelApp = win32com.client.GetActivefolderect('Excel.Application')
     wb = ExcelApp.Workbooks("2014 BAZA MAGRO.xlsx")
     ws = wb.Worksheets("BAZA 2014")
     # workbook = ExcelApp.Workbooks("Baza.xlsx")
@@ -1588,7 +1602,7 @@ ExcelApp.Visible = True
 
 """Jesienne Bazie"""
 # try:
-for dane_polisy in tacka_na_polisy(obj):
+for dane_polisy in tacka_na_polisy(folder):
     nazwa_firmy, nazwisko, imie, p_lub_r, pr_j, ulica_f_edit, kod_poczt, miasto_f, tel, email, marka, kod, model, \
     miasto, nr_rej, adres, rok, data_wyst, data_konca, tow_ub_tor, tow_ub, nr_polisy, przypis, ter_platnosci, rata_I, \
     f_platnosci, ilosc_rat, nr_raty, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV = dane_polisy
@@ -1633,7 +1647,7 @@ for dane_polisy in tacka_na_polisy(obj):
     # else:
     #     ExcelApp.Cells(row_to_write, 41).Value = 'N'
     #     ExcelApp.Cells(row_to_write, 42).Value = ''
-    # ryzyko = ExcelApp.Cells(row_to_write, 46).Value = 'b/d'
+    # ExcelApp.Cells(row_to_write, 46).Value = ryzyko
     ExcelApp.Cells(row_to_write, 48).Value = przypis
     ExcelApp.Cells(row_to_write, 49).Value = ter_platnosci
     # if I_rata_data:
