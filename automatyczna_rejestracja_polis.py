@@ -51,7 +51,10 @@ def polisa_str(pdf):
             (page_3 := policy.pages[2].extract_text())
         except:
             pass
-    return page_1 + page_2 + page_3
+    if page_3:
+        return page_1 + page_2 + page_3
+    else:
+        return page_1 + page_2
 
 
 def polisa_box(pdf, left, top, right, bottom):
@@ -552,7 +555,9 @@ def przedmiot_ub(page_1, pdf):
         elif re.search('Numer:?\s\n?(\w\d+)', page_1, re.I) and not 'WARTA' in page_1 or 'LINK4' in page_1:
             if 'Marka / Model' in page_1 or 'DANE POJAZDU' in page_1:
                 marka = re.search(r'(Marka / Model|Marka) ([\w./]+)', page_1, re.I).group(2)
-                model = re.search(rf'({marka})([\n\s,])?([A-z\s]+),', page_1, re.I).group(3)
+                model = re.search(rf'({marka})\s+?([A-z\s]+),', page_1, re.I)
+                if model:
+                    model = model.group(2)
                 nr_rej = re.search(r'rejestracyjny ([A-Z0-9]+)', page_1).group(1)
                 rok = re.search(r'Rok produkcji (\d{4})', page_1).group(1)
                 return marka, kod, model, miasto, nr_rej, adres, rok
