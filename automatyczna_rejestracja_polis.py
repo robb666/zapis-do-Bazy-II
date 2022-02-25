@@ -372,7 +372,7 @@ def tel_mail(page_1, pdf, d, nazwisko):
     elif 'WARTA' in page_1:
         pdf_str3 = polisa_str(pdf)[0:-3000]
         try:
-            tel = re.search(r'Telefon komórkowy:\s?(\+48|0048)?\s?([0-9.\-\(\)]{9,})?', pdf_str3).group(2)
+            tel = re.search(r'(Tel\.?|Telefon) komórkowy:\s?(\+48|0048)?\s?([0-9.\-\(\)]{9,})?', pdf_str3).group(3)
         except Exception:
             pass
         try:
@@ -416,6 +416,7 @@ def tel_mail(page_1, pdf, d, nazwisko):
 
 
 def przedmiot_ub(page_1, pdf):
+
     marka, kod, model, miasto, nr_rej, adres, rok = '', '', '', '', '', '', ''
     with open('M:\\Agent baza\\marki.txt') as content:
         makes = content.read().split('\n')
@@ -538,7 +539,7 @@ def przedmiot_ub(page_1, pdf):
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
         elif 'HDI' in page_1 and not 'PZU' in page_1 or '„WARTA” S.A. POTWIERDZA' in page_1:
-            if re.search(r'DANE UBEZPIECZONEGO POJAZDU|Marka|rejestracyjny', page_1, re.I):
+            if re.search(r'PRZEDMIOT UBEZPIECZENIA|Marka|rejestracyjny', page_1, re.I):
                 for make in makes:
                     for line in page_1.split('\n'):
                         if make in (lsplt := line.split()):
@@ -614,7 +615,6 @@ def przedmiot_ub(page_1, pdf):
 
         elif 'TUZ' in page_1:
             pdf_str3 = polisa_str(pdf)[0:6500]
-            print(pdf_str3)
             if 'Dane pojazdu' in pdf_str3:
                 try:
                     nr_rej = re.search(r'Dane pojazdu\n?\n?([A-Z0-9]+)', pdf_str3, re.DOTALL).group(1)
@@ -1379,7 +1379,7 @@ def przypis_daty_raty(pdf, page_1):
         total = int(total.group(2).replace('\xa0', '').replace('.', '').replace(' ', ''))
 
         if re.findall(r'(?=.*JEDNORAZOWO)(?=.*GOTÓWK[A|Ą]).*', pdf_str, re.I | re.DOTALL) and not 'PRZELEW' in pdf_str:
-            termin_I = re.search(r'(Termin:|DO DNIA)\s*(\d{4}-\d{2}-\d{2})', pdf_str, re.I).group(2)
+            termin_I = re.search(r'(Termin:|DO DNIA|W dniu)\s*(\d{4}-\d{2}-\d{2})', pdf_str, re.I).group(2)
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         elif re.findall(r'(?=.*JEDNORAZOWO)(?=.*PRZELE[W|EM]).*', pdf_str, re.I | re.DOTALL):
@@ -1598,9 +1598,9 @@ try:
 
 except:
     ExcelApp = Dispatch("Excel.Application")
-    wb = ExcelApp.Workbooks.OpenXML("M:\\Agent baza\\2014 BAZA MAGRO.xlsx")
+    # wb = ExcelApp.Workbooks.OpenXML("M:\\Agent baza\\2014 BAZA MAGRO.xlsx")
     # Testy
-    # wb = ExcelApp.Workbooks.OpenXML(path + "\\2014 BAZA MAGRO.xlsx")
+    wb = ExcelApp.Workbooks.OpenXML(path + "\\2014 BAZA MAGRO.xlsx")
     ws = wb.Worksheets("BAZA 2014")
 
 ExcelApp.Visible = True
@@ -1701,10 +1701,10 @@ for dane_polisy in tacka_na_polisy(folder):
 
 """Opcje zapisania"""
 ExcelApp.DisplayAlerts = False
-wb.SaveAs("M:\\Agent baza\\2014 BAZA MAGRO.xlsx")
+# wb.SaveAs("M:\\Agent baza\\2014 BAZA MAGRO.xlsx")
 
 # Testy
-# wb.SaveAs(path + "\\2014 BAZA MAGRO.xlsx")
+wb.SaveAs(path + "\\2014 BAZA MAGRO.xlsx")
 
 """Zamknięcie narazie wyłączone..."""
 # wb.Close()
