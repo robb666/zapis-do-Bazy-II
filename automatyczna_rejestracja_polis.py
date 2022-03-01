@@ -227,7 +227,9 @@ def tel_mail(page_1, pdf, d, nazwisko):
     tel_mail_off = {'tel Robert': '606271169', 'mail Robert': 'ubezpieczenia.magro@gmail.com',
                     'tel Maciej': '602752893', 'mail Maciej': 'magro@ubezpieczenia-magro.pl',
                     'tel MAGRO': '572810576', 'mail AXA': 'obsluga@axaubezpieczenia.pl',
-                    'mail UNIQA': 'centrala@uniqa.pl', 'p_lub_r': regon}
+                    'mail UNIQA': 'centrala@uniqa.pl',
+                    'mail WIENER': 'wiener@corislex.pl',
+                    'p_lub_r': regon}
 
     if 'Allianz' in page_1:
         try:
@@ -391,7 +393,8 @@ def tel_mail(page_1, pdf, d, nazwisko):
         except:
             pass
         try:
-            mail = re.search(r'(E-mail:?)\s?([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', page_1, re.I).group(2)
+            mail = ''.join([mail for mail in re.findall(r'([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)', page_1) if
+                            mail not in tel_mail_off.values()][0])
         except:
             pass
         return tel, mail
