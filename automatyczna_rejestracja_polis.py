@@ -500,7 +500,7 @@ def przedmiot_ub(page_1, pdf):
                 marka = re.search(r'(Marka, model:) ([\w/-]+)', page_1, re.I).group(2)
                 model = re.search(f'{marka}\s+([\w\d./]+)', page_1).group(1)
                 nr_rej = re.search('(rejestracyjny:) ([\w\d.]+)', page_1).group(2)
-                rok = re.search('(Rok[\s\n]?produkcji:) (\d+),?', page_1).group(2)
+                rok = re.search('(Rok[\s\n]*?produkcji:) (\d+),?', page_1).group(2)
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
 
