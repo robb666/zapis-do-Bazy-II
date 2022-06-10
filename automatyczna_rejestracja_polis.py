@@ -521,16 +521,15 @@ def przedmiot_ub(page_1, pdf):
 
 
         elif 'Hestia' in page_1 and not 'MTU' in page_1:
-            if 'Ubezpieczony pojazd' in page_1:
+            if 'UBEZPIECZONY POJAZD' in page_1:
                 try:
-                    marka = re.search(r'(Ubezpieczony pojazd).*?(\w+), (\w+-?\w+)', page_1, re.I | re.DOTALL).group(3)
-                    model = re.search(rf'(?<={marka}),? (\w+)', page_1, re.I).group(1)
-                    nr_rej = re.search(rf'([A-Z0-9]+)\s?(?=, ROK)', page_1).group(1)
-                    rok = re.search(r'(ROK PRODUKCJI:?) (\d{4})', page_1).group(2)
+                    marka = re.search(r'(marka\si\smodel:\s*)(\w+)', page_1, re.I | re.DOTALL).group(2)
+                    model = re.search(rf'(?<={marka})[\s,\n](\w+)', page_1, re.I).group(1)
+                    nr_rej = re.search(rf'numer\srejestracyjny:\s([\w\d.]+)', page_1).group(1)
+                    rok = re.search(r'(Rok\sprodukcji:?)\s(\d{4})', page_1, re.I).group(2)
                     return marka, kod, model, miasto, nr_rej, adres, rok
                 except:
                     pass
-
 
         elif 'InterRisk' in page_1:
             if 'DANE POJAZDU' in page_1:
@@ -863,7 +862,7 @@ def przypis_daty_raty(pdf, page_1):
                    termin_III, rata_III, termin_IV, rata_IV
 
         elif 'składki: kwartalna' in box:
-            (rata_I := re.search(r'I rata -  \d{2}.\d{2}.\d{4} - (\d+)', box, re.I).group(1))
+            rata_I = re.search(r'I rata -  \d{2}.\d{2}.\d{4} - (\d+)', box, re.I).group(1)
             (rata_II := re.search(r'II rata.* - (\d+)', box, re.I).group(1))
             (rata_III := re.search(r'[|III] rata.* - (\d+)', box, re.I).group(1))
             (rata_IV := re.search(r'\n- (\d+)', box, re.I).group(1))
@@ -971,8 +970,11 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'Hestia' in page_1 and not 'MTU' in page_1:
         box = polisa_box(pdf, 0, 120, 590, 600)
-        total = re.search(r'DO ZAPŁATY(/ TOTAL PREMIUM)? (\d*\s?\d+)', box, re.I)
-        total = int(re.sub(r'([\xa0 ])', '', total.group(2)))
+        print(box)
+        total = re.search(r'DO\sZAPŁATY:\s*(\d*\s?\d+)', box, re.I)
+        # print(total.group(1))
+        total = int(re.sub(r'([\xa0])', '', total.group(1)))
+        # total = int(total.group(1))
 
         if not 'II rata' in box and 'gotówka' in box:
             termin_I = re.search(r'płatności (\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
@@ -980,7 +982,7 @@ def przypis_daty_raty(pdf, page_1):
 
         elif not re.findall(r'(?=.*II\srata)(?=.*przelew|przelewem).*', box, re.I | re.DOTALL):
             try:
-                termin_I = re.search(r'płatności (\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
+                termin_I = re.search(r'płatności:\s(\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
             except Exception as e:
                 termin_I = re.search(r'(\d{4}[-‑]\d{2}[-‑]\d{2}).*\n.*płatności', box, re.I).group(1)
                 print(f'Termin płatności - Hestia {e}')
