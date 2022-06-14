@@ -1597,13 +1597,13 @@ if not any([file.endswith('.pdf') for file in os.listdir(folder)]):
 """Jeżeli arkusz jest zamknięty, otwiera go."""
 try:
     ExcelApp = win32com.client.GetActivefolderect('Excel.Application')
-    wb = ExcelApp.Workbooks("2014 BAZA MAGRO.xlsx")
+    wb = ExcelApp.Workbooks("2014 BAZA MAGRO.xlsm")
     ws = wb.Worksheets("BAZA 2014")
     # workbook = ExcelApp.Workbooks("Baza.xlsx")
 
 except:
     ExcelApp = Dispatch("Excel.Application")
-    wb = ExcelApp.Workbooks.OpenXML("M:\\Agent baza\\2014 BAZA MAGRO.xlsx")
+    wb = ExcelApp.Workbooks.OpenXML("M:\\Agent baza\\2014 BAZA MAGRO.xlsm")
     # Testy
     # wb = ExcelApp.Workbooks.OpenXML(path + "\\2014 BAZA MAGRO.xlsx")
     ws = wb.Worksheets("BAZA 2014")
@@ -1706,10 +1706,10 @@ for dane_polisy in tacka_na_polisy(folder):
 
 """Opcje zapisania"""
 ExcelApp.DisplayAlerts = False
-wb.SaveAs("M:\\Agent baza\\2014 BAZA MAGRO.xlsx")
+wb.SaveAs("M:\\Agent baza\\2014 BAZA MAGRO.xlsm")
 
 # Testy
-# wb.SaveAs(path + "\\2014 BAZA MAGRO.xlsx")
+# wb.SaveAs(path + "\\2014 BAZA MAGRO.xlsxxxxxxxx")
 
 """Zamknięcie narazie wyłączone..."""
 # wb.Close()
