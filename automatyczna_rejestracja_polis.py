@@ -1599,13 +1599,13 @@ try:
     ExcelApp = win32com.client.GetActivefolderect('Excel.Application')
     wb = ExcelApp.Workbooks("2014 BAZA MAGRO.xlsm")
     ws = wb.Worksheets("BAZA 2014")
-    # workbook = ExcelApp.Workbooks("Baza.xlsm")
+    # workbook = ExcelApp.Workbooks("Baza.xlsx")
 
 except:
     ExcelApp = Dispatch("Excel.Application")
     wb = ExcelApp.Workbooks.OpenXML("M:\\Agent baza\\2014 BAZA MAGRO.xlsm")
     # Testy
-    # wb = ExcelApp.Workbooks.OpenXML(path + "\\2014 BAZA MAGRO.xlsm")
+    # wb = ExcelApp.Workbooks.OpenXML(path + "\\2014 BAZA MAGRO.xlsx")
     ws = wb.Worksheets("BAZA 2014")
 
 ExcelApp.Visible = True
