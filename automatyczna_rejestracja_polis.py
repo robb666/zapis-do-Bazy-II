@@ -970,10 +970,10 @@ def przypis_daty_raty(pdf, page_1):
 
     elif 'Hestia' in page_1 and not 'MTU' in page_1:
         box = polisa_box(pdf, 0, 120, 590, 600)
-        print(box)
-        total = re.search(r'DO\sZAPŁATY:\s*(\d*\s?\d+)', box, re.I)
+        # print(box)
+        total = re.search(r'DO\sZAPŁATY:?\s*(\d*\s?\d+)', box, re.I)
         # print(total.group(1))
-        total = int(re.sub(r'([\xa0])', '', total.group(1)))
+        total = int(re.sub(r'([\xa0] | ' ')', '', total.group(1)))
         # total = int(total.group(1))
 
         if not 'II rata' in box and 'gotówka' in box:
