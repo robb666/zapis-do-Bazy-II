@@ -1015,7 +1015,7 @@ def przypis_daty_raty(pdf, page_1):
 
         if not 'II rata' in box and 'gotówka' in box:
             termin_I = re.search(r'płatności (\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
-            return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+            return total, zamiana_sep(termin_I), rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         elif not re.findall(r'(?=.*II\srata)(?=.*przelew|przelewem).*', box, re.I | re.DOTALL):
             try:
@@ -1023,30 +1023,33 @@ def przypis_daty_raty(pdf, page_1):
             except Exception as e:
                 termin_I = re.search(r'(\d{4}[-‑]\d{2}[-‑]\d{2}).*\n.*płatności', box, re.I).group(1)
                 print(f'Termin płatności - Hestia {e}')
-            return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+            return total, zamiana_sep(termin_I), rata_I, 'P', 1, 1, zamiana_sep(termin_II), rata_II, zamiana_sep(termin_III), \
+                   rata_III, zamiana_sep(termin_IV), rata_IV
 
         elif re.findall(r'(?=.*II\srata)(?=.*przelew|przelewem).*', box, re.I | re.DOTALL) and not ' III rata' in box:
-            termin_I = re.search(r'płatności I\srata\s(\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
-            termin_II = re.search(r'II\srata\s(\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
-            rata_I = re.search(rf'{termin_I},\s*(\d*\s?\d+)', box, re.I).group(1)
-            rata_II = re.search(rf'{termin_II},\s*(d*\s?\d+)', box, re.I).group(1)
 
-            return total, zamiana_sep(termin_I), rata_I, 'P', 2, 1, zamiana_sep(termin_II), rata_II, termin_III, \
-                   rata_III, termin_IV, rata_IV
+            termin_I = re.search(r'I\srata\s(\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
+            termin_II = re.search(r'II\srata\s(\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
+            rata_I = re.search(rf'{termin_I},?\s*(\d*\s?\d+)', box, re.I).group(1)
+            rata_II = re.search(rf'{termin_II},?\s*(d*\s?\d+)', box, re.I).group(1)
+
+            return total, zamiana_sep(termin_I), rata_I, 'P', 2, 1, zamiana_sep(termin_II), rata_II, zamiana_sep(termin_III), \
+                   rata_III, zamiana_sep(termin_IV), rata_IV
 
         elif re.findall(r'(?=.*IV\srata)(?=.*przelew|przelewem).*', box, re.I | re.DOTALL):
-            termin_I = re.search(r'płatności I\srata\s(\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
+
+            termin_I = re.search(r'I\srata\s(\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
             termin_II = re.search(r'II\srata\s(\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
             termin_III = re.search(r'III\srata\s(\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
             termin_IV = re.search(r'IV\srata\s(\d{4}[-‑]\d{2}[-‑]\d{2})', box, re.I).group(1)
 
-            rata_I = re.search(rf'{termin_I},\s*(\d*\s?\d+)', box, re.I).group(1)
-            rata_II = re.search(rf'{termin_II},\s*(d*\s?\d+)', box, re.I).group(1)
-            rata_III = re.search(rf'{termin_III},\s*(d*\s?\d+)', box, re.I).group(1)
-            rata_IV = re.search(rf'{termin_IV},\s*(d*\s?\d+)', box, re.I).group(1)
+            rata_I = re.search(rf'{termin_I},?\s*(\d*\s?\d+)', box, re.I).group(1)
+            rata_II = re.search(rf'{termin_II},?\s*(d*\s?\d+)', box, re.I).group(1)
+            rata_III = re.search(rf'{termin_III},?\s*(d*\s?\d+)', box, re.I).group(1)
+            rata_IV = re.search(rf'{termin_IV},?\s*(d*\s?\d+)', box, re.I).group(1)
 
-            return total, zamiana_sep(termin_I), rata_I, 'P', 4, 1, zamiana_sep(termin_II), rata_II, termin_III, \
-                   rata_III, termin_IV, rata_IV
+            return total, zamiana_sep(termin_I), rata_I, 'P', 4, 1, zamiana_sep(termin_II), rata_II, zamiana_sep(termin_III), \
+                   rata_III, zamiana_sep(termin_IV), rata_IV
 
 
     elif 'INTER ' in page_1 and not 'InterRisk' in page_1:
