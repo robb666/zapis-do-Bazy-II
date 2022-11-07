@@ -131,30 +131,37 @@ def regon(regon_checksum):
 """Funkcje odpowiadają kolumnom w bazie."""
 
 def nazwisko_imie(d, page_1, pdf):
+    # for k in d:
+    #     print(d[k].upper())
+
     """Zwraca imię i nazwisko Klienta."""
     agent = {'Robert': 'Grzelak Robert', 'Maciej': 'Grzelak Maciej', 'MAGRO': 'Magro Maciej',
              'Wpierdalata': 'Kozłowska-Chyła Beata', 'Dembska': 'Nieruchomościami'}
     with open('M:\\Agent baza\\imiona.txt') as content:
         all_names = content.read().split('\n')
+
         if 'euroins' in d.values():
             name = []
             for k, v in d.items():
-                if v.title() in all_names and not re.search('pesel', d[k + 1], re.I):
+                if re.search(f' {v} ', ' '.join(all_names), re.I) and not re.search('pesel', d[k + 1], re.I) \
+                        and v.title() != 'Sofia':
                     name.append(f'{d[k + 1].title()} {v.title()}')
-                if v.title() in all_names and re.search('\d', d[k + 4]):
+                if re.search(f' {v} ', ' '.join(all_names), re.I) and re.search('\d', d[k + 4]) \
+                        and v.title() != 'Sofia':
                     name.append(f'{d[k + 5].title()} {v.title()}')
-                if v.title() in all_names and not re.search('(\d|telefon$|Adres:?)', d[k + 4]):
+                if re.search(f' {v} ', ' '.join(all_names), re.I) and not re.search('(\d|telefon$|Adres:?)', d[k + 4]) \
+                        and v.title() != 'Sofia':
                     name.append(f'{d[k + 4].title()} {v.title()}')
 
         elif 'tuz' in d.values():
-            name = [f'{d[k + 1].title()} {v.title()}' for k, v in d.items() if k > 10 and v.title() in all_names]
+            name = [f'{d[k + 1].title()} {v.title()}' for k, v in d.items() if k > 10 and v.upper() in all_names]
         elif 'warta' in d.values():
-            name = [f'{d[k - 1].title()} {v.title()}' for k, v in d.items() if v.title() in all_names and
+            name = [f'{d[k - 1].title()} {v.title()}' for k, v in d.items() if v.upper() in all_names and
                     f'{d[k - 1].title()}' not in agent.values()]
         elif 'Wiener' in page_1 and 'полис' in page_1:
             name = [f'{name} BRAK!' for name in all_names if re.search(name, page_1, re.I)]
         else:
-            name = [f'{d[k + 1].title()} {v.title()}' for k, v in d.items() if v.title() in all_names
+            name = [f'{d[k + 1].title()} {v.title()}' for k, v in d.items() if v.upper() in all_names
                     and f'{d[k + 1].title()} {v.title()}' not in agent.values() and not re.search('\d', d[k + 1])
                     and v.title() not in przedmiot_ub(page_1, pdf)]
 
@@ -202,14 +209,20 @@ def adres():
 
 
 def kod_pocztowy(page_1, pdf):
-    # print(page_1)
+
     kod = re.compile('(adres\w*|(?<!InterRisk) kontakt\w*|pocztowy|ubezpiecz(ony|ający))', re.I)
     if 'UNIQA' in page_1 or 'TUW' in page_1 and not 'TUZ' in page_1:
         page_1 = polisa_str(pdf)[0:-200]
 
-    if (wiener := re.search('wiener', page_1, re.I)):
+    if re.search('wiener', page_1, re.I):
         kod_pocztowy = re.search('(Adres.*|Siedziba.*|ŁÓDŹ)\s?(\d{2}[-\xad]\d{3})', page_1)
         return kod_pocztowy.group(2)
+
+    if re.search('trasti', page_1, re.I):
+        page_1 = polisa_str(pdf)[400:2100]
+        kod_pocztowy = re.search('(\d{2}[-]\d{3})', page_1, re.MULTILINE)
+
+        return kod_pocztowy.group()
 
     if (f := kod.search(page_1)):
         adres = f.group().strip()
@@ -397,6 +410,19 @@ def tel_mail(page_1, pdf, d, nazwisko):
                             mail not in tel_mail_off.values()][0])
         except:
             pass
+        return tel, mail
+
+    elif 'trasti' in page_1:
+        pdf_str3 = polisa_str(pdf)[0:-3000]
+        try:
+            tel = re.search(r'(telefonu)\s?(\+48|0048)?\s?([0-9.\-\(\)]{9,})?', pdf_str3).group(3)
+        except Exception:
+            pass
+        try:
+            mail = re.search(r'Email\s?([A-z0-9._+-]+@[A-z0-9-]+\.[A-z0-9.-]+)?', pdf_str3, re.I).group(1)
+        except Exception:
+            pass
+
         return tel, mail
 
     else:
@@ -677,6 +703,15 @@ def przedmiot_ub(page_1, pdf):
                 rok = re.search(r'Rok produkcji: (\d{4})', page_1).group(1)
                 return marka, kod, model, miasto, nr_rej, adres, rok
 
+
+        elif 'Trasti' in page_1:
+            if 'Dane pojazdu' in page_1:
+                marka = re.search(r'Marka\s*([\w./]+)', page_1, re.I).group(1)
+                model = re.search(rf'Model i wersja\s*([\w-]+)', page_1, re.I).group(1)
+                nr_rej = re.search(r'Nr rejestracyjny\s*([A-Z0-9]+)', page_1).group(1)
+                rok = re.search(r'Rok produkcji\s*(\d{4})', page_1).group(1)
+                return marka, kod, model, miasto, nr_rej, adres, rok
+
         return marka, kod, model, miasto, nr_rej, adres, rok
 
 
@@ -757,8 +792,11 @@ def numer_polisy(page_1, pdf):
             and not re.search('Compens[ay]', page_1):
         # print(page_1)
         return 'ULIN', 'LIN', nr_polisy.group(2)
+    elif 'Trasti' in page_1 and (nr_polisy := re.search('(Polisa nr:)\s*(\w+\d+)', page_1)):
+        return 'TRA', 'TRA', nr_polisy.group(2)
     else:
         return 'NIE ROZPOZNANE !', '', ''
+
 
 
 def zam_spacji(kwota):
@@ -804,8 +842,7 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin_I, rata_I, 'G', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         if 'I rata przelew' in pdf_str2 or 'rata opłacona' in pdf_str2:
-
-            termin_I = re.search(r'Dane płatności:\ndo (\d{2}.\d{2}.\d{4})', pdf_str2, re.I)
+            termin_I = re.search(r'Dane do płatności:\ndo (\d{2}.\d{2}.\d{4})', pdf_str2, re.I)
             termin_I = re.sub('[^0-9]', '-', termin_I.group(1))
             termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
@@ -1490,6 +1527,21 @@ def przypis_daty_raty(pdf, page_1):
 
                 return total, termin_I, rata_I, 'P', 2, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
+
+    # Trasti
+    elif re.search('Trasti', page_1, re.I):
+        total = re.search(r'(Składka roczna)\s*(\d*\s?\.?\d+)', page_1, re.I)
+        try:
+            total = int(total.group(2).replace('\xa0', '').replace('.', '').replace(' ', ''))
+        except:
+            pass
+
+        terminI = re.search(r'(\(termin płatności do dnia)\s?(\d{2}.\d{2}.\d{4})', page_1, re.I)
+        termin_I = terminI.group(2).replace('.', '-')
+        termin_I = re.sub(r'(\d{2})-(\d{2})-(\d{4})', r'\3-\2-\1', termin_I)  # rrrr-mm-dd
+
+        return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
+
     return total, termin_I, rata_I, '', '', '', termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
 
@@ -1593,19 +1645,24 @@ if not any([file.endswith('.pdf') for file in os.listdir(folder)]):
     time.sleep(1.5)
     sys.exit()
 
-"""Sprawdza czy arkusz jest otwarty."""
-"""Jeżeli arkusz jest zamknięty, otwiera go."""
+
+
 try:
+    """Sprawdza czy arkusz jest otwarty."""
     ExcelApp = win32com.client.GetActivefolderect('Excel.Application')
     wb = ExcelApp.Workbooks("2014 BAZA MAGRO.xlsm")
     ws = wb.Worksheets("BAZA 2014")
     # workbook = ExcelApp.Workbooks("Baza.xlsx")
 
 except:
+    """Jeżeli arkusz jest zamknięty, otwiera go."""
     ExcelApp = Dispatch("Excel.Application")
-    wb = ExcelApp.Workbooks.OpenXML("M:\\Agent baza\\2014 BAZA MAGRO.xlsm")
+
+    # Exec
+    # wb = ExcelApp.Workbooks.OpenXML("M:\\Agent baza\\2014 BAZA MAGRO.xlsm")
+
     # Testy
-    # wb = ExcelApp.Workbooks.OpenXML(path + "\\2014 BAZA MAGRO.xlsx")
+    wb = ExcelApp.Workbooks.OpenXML(path + "\\2014 BAZA MAGRO.xlsm")
     ws = wb.Worksheets("BAZA 2014")
 
 ExcelApp.Visible = True
@@ -1705,11 +1762,13 @@ for dane_polisy in tacka_na_polisy(folder):
                 ExcelApp.Cells(row_to_write + 3, 53).Value = 4
 
 """Opcje zapisania"""
+
+# Exec
 ExcelApp.DisplayAlerts = False
-wb.SaveAs("M:\\Agent baza\\2014 BAZA MAGRO.xlsm")
+# wb.SaveAs("M:\\Agent baza\\2014 BAZA MAGRO.xlsm")
 
 # Testy
-# wb.SaveAs(path + "\\2014 BAZA MAGRO.xlsxxxxxxxx")
+wb.SaveAs(path + "\\2014 BAZA MAGRO.xlsm")
 
 """Zamknięcie narazie wyłączone..."""
 # wb.Close()
