@@ -1419,7 +1419,8 @@ def przypis_daty_raty(pdf, page_1):
 
 
     elif 'WARTA' in page_1:
-        pdf_str = polisa_str(pdf)[100:-300]
+        # pdf_str = polisa_str(pdf)[100:-300]
+        pdf_str = page_1
         total = re.search(r'(SKŁADKA ŁĄCZNA|Kwota\s?:?|w kwocie|do zapłaty \(zł\):) (\d*.\d+)', pdf_str, re.I)
         total = int(total.group(2).replace('\xa0', '').replace('.', '').replace(' ', ''))
 
@@ -1432,38 +1433,38 @@ def przypis_daty_raty(pdf, page_1):
             return total, termin_I, rata_I, 'P', 1, 1, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV
 
         elif re.findall(r'(?=.*2 RATACH)(?=.*GOTÓWKA).*', pdf_str, re.I | re.DOTALL):
-            termin = re.search(r'2 RATACH Termin: (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2})', pdf_str)
-            raty = re.search(r'Kwota: (\d*\s?\d+) zł (\d*\s?\d+)', pdf_str)
+            termin = re.search(r'TERMIN (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2})', pdf_str, re.I)
+            raty = re.search(r'Kwota:? (\d*\s?\d+) zł (\d*\s?\d+)', pdf_str, re.I)
             return total, termin.group(1), raty.group(1), 'G', 2, 1, termin.group(2), raty.group(2), \
                    termin_III, rata_III, termin_IV, rata_IV
 
         elif re.findall(r'(?=.*2 RATACH)(?=.*PRZELEW).*', pdf_str, re.I | re.DOTALL):
-            termin = re.search(r'2 RATACH Termin: (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2})', pdf_str)
-            raty = re.search(r'Kwota: (\d*\s?\d+) zł (\d*\s?\d+)', pdf_str)
+            termin = re.search(r'TERMIN (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2})', pdf_str, re.I)
+            raty = re.search(r'Kwota:? (\d*\s?\d+) zł (\d*\s?\d+)', pdf_str, re.I)
             return total, termin.group(1), zam_spacji(raty.group(1)), 'P', 2, 1, termin.group(2), \
                    zam_spacji(raty.group(2)), termin_III, rata_III, termin_IV, rata_IV
 
         elif re.findall(r'(?=.*3 rat[ach])(?=.*PRZELEW).*', pdf_str, re.I | re.DOTALL) and not '4 rata' in pdf_str:
-            print(pdf_str)
-            termin = re.search(r'Termin: (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2})', pdf_str)
-            raty = re.search(r'Kwota: (\d+) zł (\d+) zł (\d+)', pdf_str)
+            termin = re.search(r'TERMIN (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2})', pdf_str, re.I)
+            raty = re.search(r'Kwota:? (\d+) zł (\d+) zł (\d+)', pdf_str, re.I)
             return total, termin.group(1), raty.group(1), 'P', 3, 1, termin.group(2), raty.group(2), \
                    termin.group(3), raty.group(3), termin_IV, rata_IV
 
         elif (inne := re.findall(r'(?=.*3 rata)(?=.*PRZELEW).*', pdf_str, re.I | re.DOTALL) and '4 rata' in pdf_str) or \
                 (transportowe := 'W 4 RATACH' in pdf_str):
             if inne:
-                termin = re.search(r'4 RATACH Termin: (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2}) '
-                                   r'(\d{4}-\d{2}-\d{2})', pdf_str)
-                raty = re.search(r'Kwota: (\d*\s?\d+) zł (\d*\s?\d+) zł (\d*\s?\d+) zł (\d*\s?\d+)', pdf_str)
+                termin = re.search(r'TERMIN\s*(\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2}) '
+                                   r'(\d{4}-\d{2}-\d{2})', pdf_str, re.I)
+                raty = re.search(r'Kwota:? (\d*\s?\d+) zł (\d*\s?\d+) zł (\d*\s?\d+) zł (\d*\s?\d+)', pdf_str, re.I)
                 return total, termin.group(1), raty.group(1), 'P', 4, 1, termin.group(2), raty.group(2), \
                        termin.group(3), raty.group(3), termin.group(4), raty.group(4)
+
             elif transportowe and not 'Pakiet Przedsiębiorca' in pdf_str:
                 total = (re.search('(SKŁADKA ŁĄCZNA|zawartej umowy ubezpieczenia):?\s?(\d*.?\d+)', pdf_str).group(2)).replace('.', '')
-                termin = re.search(r'Termin: (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2})'
-                                   r' (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2})', pdf_str)
-                'Termin: 2021-09-01 2021-11-24 2022-02-24 2022-05-24'
-                raty = re.search(r'Kwota\s?: (\d*\s?\d+) zł (\d*\s?\d+) zł (\d*\s?\d+) zł (\d*\s?\d+)', pdf_str)
+                termin = re.search(r'TERMIN\s*(\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2})'
+                                   r' (\d{4}-\d{2}-\d{2}) (\d{4}-\d{2}-\d{2})', pdf_str, re.I)
+
+                raty = re.search(r'Kwota\s?:? (\d*\s?\d+) zł (\d*\s?\d+) zł (\d*\s?\d+) zł (\d*\s?\d+)', pdf_str, re.I)
                 return zam_spacji(total), \
                        termin.group(1), \
                        zam_spacji(raty.group(1)), \
