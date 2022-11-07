@@ -1663,10 +1663,11 @@ except:
     ExcelApp = Dispatch("Excel.Application")
 
     # Exec
-    # wb = ExcelApp.Workbooks.OpenXML("M:\\Agent baza\\2014 BAZA MAGRO.xlsm")
+    wb = ExcelApp.Workbooks.OpenXML("M:\\Agent baza\\2014 BAZA MAGRO.xlsm")
 
     # Testy
-    wb = ExcelApp.Workbooks.OpenXML(path + "\\2014 BAZA MAGRO.xlsm")
+    # wb = ExcelApp.Workbooks.OpenXML(path + "\\2014 BAZA MAGRO.xlsm")
+
     ws = wb.Worksheets("BAZA 2014")
 
 ExcelApp.Visible = True
@@ -1769,10 +1770,12 @@ for dane_polisy in tacka_na_polisy(folder):
 
 # Exec
 ExcelApp.DisplayAlerts = False
+
+## Bez zapisania
 # wb.SaveAs("M:\\Agent baza\\2014 BAZA MAGRO.xlsm")
 
 # Testy
-wb.SaveAs(path + "\\2014 BAZA MAGRO.xlsm")
+# wb.SaveAs(path + "\\2014 BAZA MAGRO.xlsm")
 
 """Zamknięcie narazie wyłączone..."""
 # wb.Close()
