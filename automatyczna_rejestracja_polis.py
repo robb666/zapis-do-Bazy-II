@@ -137,6 +137,7 @@ def nazwisko_imie(d, page_1, pdf):
     """Zwraca imię i nazwisko Klienta."""
     agent = {'Robert': 'Grzelak Robert', 'Maciej': 'Grzelak Maciej', 'MAGRO': 'Magro Maciej',
              'Wpierdalata': 'Kozłowska-Chyła Beata', 'Dembska': 'Nieruchomościami'}
+
     with open('M:\\Agent baza\\imiona.txt') as content:
         all_names = content.read().split('\n')
 
