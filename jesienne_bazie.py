@@ -16,24 +16,68 @@ ws = wb['Aplikacje']
 in_l = ws['F21'].value
 in_h = ws['G21'].value
 
+wb.close()
+
+
+try:
+    """Sprawdza czy arkusz jest otwarty."""
+    ExcelApp = win32com.client.GetActivefolderect('Excel.Application')
+    wb = ExcelApp.Workbooks("2014 BAZA MAGRO.xlsm")
+    ws = wb.Worksheets("BAZA 2014")
+    # workbook = ExcelApp.Workbooks("Baza.xlsx")
+
+except:
+    """Jeżeli arkusz jest zamknięty, otwiera go."""
+    ExcelApp = Dispatch("Excel.Application")
+
+    # Exec
+    # wb = ExcelApp.Workbooks.OpenXML("M:\\Agent baza\\2014 BAZA MAGRO.xlsm")
+    wb = ExcelApp.Workbooks.OpenXML("C:\\Users\\PipBoy3000\\Desktop\\2014 BAZA MAGRO.xlsm")
+
+    # Testy
+    # wb = ExcelApp.Workbooks.OpenXML(path + "\\2014 BAZA MAGRO.xlsm")
+
+    ws = wb.Worksheets("BAZA 2014")
+
+ExcelApp.Visible = True
+
+# row_to_write = wb.Worksheets(1).Cells(wb.Worksheets(1).Rows.Count, 30).End(-4162).Row + 1
+row_to_write = wb.Worksheets(1).Cells(wb.Worksheets(1).Rows.Count, 30).End(-4162)
+
+print(row_to_write)
+
+
+
+
+
 headers = {
     "Authorization": f"Bearer {key}",
     "Content-Type": "application/json"
 }
 
 payload = {
-    "username": in_l,
-    "password": in_h,
-    "ajax_url": "/api/policy/getpolicy",
-    "output": "json",
-    "policy_oid": "10340324",
-    # "policy_oid": "10274225",
-    "return_objects": "1"
+ "ajax_url": "/api/policy/list",
+ "output": "json",
+ "timestamp_from": "05.12.2023",
+ "timestamp_to": "12.12.2023"
 }
 
+# payload = {
+#     "username": in_l,
+#     "password": in_h,
+#     "ajax_url": "/api/policy/getpolicy",
+#     "output": "json",
+#     "policy_oid": "10340324",
+#     # "policy_oid": "10274225",
+#     "return_objects": "1"
+# }
 
+
+
+r={}
 try:
-    response = requests.post('https://magro2-api.insly.pl/api/policy/getpolicy',
+    # response = requests.post('https://magro2-api.insly.pl/api/policy/getpolicy',
+    response = requests.post('https://magro2-api.insly.pl/api/policy/list',
                              headers=headers,
                              json=payload)
     r = response.json()
@@ -79,33 +123,33 @@ def pesel_checksum(p):
         return False
 
 
-pesel = pesel_checksum(r['customer_idcode'])
-regon = regon_checksum(r['customer_idcode'])
-
-nazwa_firmy = r['customer_name'] if regon else ''
-nazwisko = r['customer_name'].split()[-1] if nazwa_firmy == '' else ''
-imie = r['customer_name'].split()[0] if nazwa_firmy == '' else ''
-
-p_lub_r = r['customer_idcode'] if pesel else r['customer_idcode'] if regon else ''
-ulica = r['address'][0]['customer_address_street']
-kod_poczt = r['address'][0]['customer_address_zip']
-miasto = r['address'][0]['customer_address_city']
-tel = r['customer_mobile'] if r['customer_mobile'] != '' else r['customer_phone']
-email = r['customer_email']
-
-marka = r['objects'][0]['vehicle_make']
-
-
-print(nazwa_firmy)
-print(nazwisko)
-print(imie)
-print(p_lub_r)
-print(ulica)
-print(kod_poczt)
-print(miasto)
-print(tel)
-print(email)
-print(marka)
+# pesel = pesel_checksum(r['customer_idcode'])
+# regon = regon_checksum(r['customer_idcode'])
+#
+# nazwa_firmy = r['customer_name'] if regon else ''
+# nazwisko = r['customer_name'].split()[-1] if nazwa_firmy == '' else ''
+# imie = r['customer_name'].split()[0] if nazwa_firmy == '' else ''
+#
+# p_lub_r = r['customer_idcode'] if pesel else r['customer_idcode'] if regon else ''
+# ulica = r['address'][0]['customer_address_street']
+# kod_poczt = r['address'][0]['customer_address_zip']
+# miasto = r['address'][0]['customer_address_city']
+# tel = r['customer_mobile'] if r['customer_mobile'] != '' else r['customer_phone']
+# email = r['customer_email']
+#
+# marka = r['objects'][0]['vehicle_make']
+#
+#
+# print(nazwa_firmy)
+# print(nazwisko)
+# print(imie)
+# print(p_lub_r)
+# print(ulica)
+# print(kod_poczt)
+# print(miasto)
+# print(tel)
+# print(email)
+# print(marka)
 
 
 # nazwa_firmy, nazwisko, imie, p_lub_r, pr_j, ulica_f_edit, kod_poczt, miasto_f, tel, email, marka, kod, model, \
