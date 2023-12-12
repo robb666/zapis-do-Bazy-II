@@ -123,7 +123,7 @@ for policy in policies_list['policies']:
                              json=payload)
     r = response.json()
 
-    ic(r)
+    # ic(r)
 
 
 
@@ -140,6 +140,7 @@ for policy in policies_list['policies']:
     kod_poczt = r['address'][0]['customer_address_zip']
     miasto = r['address'][0]['customer_address_city']
     tel = r['customer_mobile'] if r['customer_mobile'] != '' else r['customer_phone']
+    tel = tel.lstrip('+48')
     email = r['customer_email']
 
     marka = r.get('objects')[0].get('vehicle_make', 'BRAK')
@@ -152,7 +153,7 @@ for policy in policies_list['policies']:
     print(ulica)
     print(kod_poczt)
     print(miasto)
-    print(tel.lstrip('+48'))
+    print(tel)
     print(email)
     print(marka)
 
@@ -161,36 +162,13 @@ for policy in policies_list['policies']:
 
 
 
-# nazwa_firmy, nazwisko, imie, p_lub_r, pr_j, ulica_f_edit, kod_poczt, miasto_f, tel, email, marka, kod, model, \
-# miasto, nr_rej, adres, rok, data_wyst, data_konca, tow_ub_tor, tow_ub, nr_polisy, przypis, ter_platnosci, rata_I, \
-# f_platnosci, ilosc_rat, nr_raty, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV = dane_polisy
+    # nazwa_firmy, nazwisko, imie, p_lub_r, pr_j, ulica_f_edit, kod_poczt, miasto_f, tel, email, marka, kod, model, \
+    # miasto, nr_rej, adres, rok, data_wyst, data_konca, tow_ub_tor, tow_ub, nr_polisy, przypis, ter_platnosci, rata_I, \
+    # f_platnosci, ilosc_rat, nr_raty, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV = dane_polisy
 
 
 
 
-
-# try:
-#     """Sprawdza czy arkusz jest otwarty."""
-#     ExcelApp = win32com.client.GetActivefolderect('Excel.Application')
-#     wb = ExcelApp.Workbooks("2014 BAZA MAGRO.xlsm")
-#     ws = wb.Worksheets("BAZA 2014")
-#     # workbook = ExcelApp.Workbooks("Baza.xlsx")
-#
-# except:
-#     """Jeżeli arkusz jest zamknięty, otwiera go."""
-#     ExcelApp = Dispatch("Excel.Application")
-#
-#     # Exec
-#     # wb = ExcelApp.Workbooks.OpenXML("M:\\Agent baza\\2014 BAZA MAGRO.xlsm")
-#     wb = ExcelApp.Workbooks.OpenXML("C:\\Users\\PipBoy3000\\Desktop\\2014 BAZA MAGRO.xlsm")
-#
-#     # Testy
-#     # wb = ExcelApp.Workbooks.OpenXML(path + "\\2014 BAZA MAGRO.xlsm")
-#
-#     ws = wb.Worksheets("BAZA 2014")
-#
-# ExcelApp.Visible = True
-#
 # """Jesienne Bazie"""
 # # try:
 # for dane_polisy in tacka_na_polisy(folder):
@@ -199,24 +177,28 @@ for policy in policies_list['policies']:
 #     f_platnosci, ilosc_rat, nr_raty, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV = dane_polisy
 #     print(dane_polisy)
 #
-#     """Rozpoznaje kolejny wiersz, który może zapisać."""
-#     row_to_write = wb.Worksheets(1).Cells(wb.Worksheets(1).Rows.Count, 30).End(-4162).Row + 1
-#
-#     # Rok_przypisu = ExcelApp.Cells(row_to_write, 1).Value = data_wyst[:2] # Komórka tylko do testów
-#     Rozlicz = ExcelApp.Cells(row_to_write, 7).Value = 'Robert'
-#     Podpis = ExcelApp.Cells(row_to_write, 10).Value = 'Grzelak'
-#     FIRMA = ExcelApp.Cells(row_to_write, 11).Value = nazwa_firmy
-#     Nazwisko = ExcelApp.Cells(row_to_write, 12).Value = nazwisko
-#     Imie = ExcelApp.Cells(row_to_write, 13).Value = imie
-#     Pesel_Regon = ExcelApp.Cells(row_to_write, 14).Value = p_lub_r
-#     ExcelApp.Cells(row_to_write, 15).Value = pr_j
-#     ExcelApp.Cells(row_to_write,
-#                    16).Value = ulica_f_edit  # f'{ulica_f} {nr_ulicy_f}' if not nr_lok else f'{ulica_f} {nr_ulicy_f} m {nr_lok}'
-#     ExcelApp.Cells(row_to_write, 17).Value = kod_poczt  # kod_pocztowy(page_1) if not kod_poczt_f else kod_poczt_f_edit
-#     ExcelApp.Cells(row_to_write, 18).Value = miasto_f
-#     ExcelApp.Cells(row_to_write, 19).Value = tel
-#     ExcelApp.Cells(row_to_write, 20).Value = email.lower() if email else ''
-#     ExcelApp.Cells(row_to_write, 23).Value = marka if marka else kod
+    """Rozpoznaje kolejny wiersz, który może zapisać."""
+    # row_to_write = wb.Worksheets(1).Cells(wb.Worksheets(1).Rows.Count, 30).End(-4162).Row + 1
+
+    # Rok_przypisu = ExcelApp.Cells(row_to_write, 1).Value = data_wyst[:2] # Komórka tylko do testów
+    Rozlicz = ExcelApp.Cells(row_to_write, 7).Value = 'Robert'
+    Podpis = ExcelApp.Cells(row_to_write, 10).Value = 'Grzelak'
+    FIRMA = ExcelApp.Cells(row_to_write, 11).Value = nazwa_firmy
+    Nazwisko = ExcelApp.Cells(row_to_write, 12).Value = nazwisko
+    Imie = ExcelApp.Cells(row_to_write, 13).Value = imie
+    Pesel_Regon = ExcelApp.Cells(row_to_write, 14).Value = p_lub_r
+    # ExcelApp.Cells(row_to_write, 15).Value = pr_j
+    ExcelApp.Cells(row_to_write,
+                   16).Value = ulica  # f'{ulica_f} {nr_ulicy_f}' if not nr_lok else f'{ulica_f} {nr_ulicy_f} m {nr_lok}'
+    ExcelApp.Cells(row_to_write, 17).Value = kod_poczt  # kod_pocztowy(page_1) if not kod_poczt_f else kod_poczt_f_edit
+    ExcelApp.Cells(row_to_write, 18).Value = miasto
+    ExcelApp.Cells(row_to_write, 19).Value = tel
+    ExcelApp.Cells(row_to_write, 20).Value = email.lower() if email else ''
+    ExcelApp.Cells(row_to_write, 23).Value = marka if marka else kod_poczt
+
+    row_to_write += 1
+
+
 #     ExcelApp.Cells(row_to_write, 24).Value = model if model else miasto
 #     ExcelApp.Cells(row_to_write, 25).Value = nr_rej if nr_rej else adres
 #     ExcelApp.Cells(row_to_write, 26).Value = rok
