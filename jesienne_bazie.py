@@ -4,6 +4,7 @@ import win32com.client
 from win32com.client import Dispatch
 import time
 from openpyxl import load_workbook
+import datetime
 from creds import key
 from icecream import ic
 
@@ -41,13 +42,15 @@ except:
 
 ExcelApp.Visible = True
 
-# row_to_write = wb.Worksheets(1).Cells(wb.Worksheets(1).Rows.Count, 30).End(-4162).Row + 1
-row_to_write = wb.Worksheets(1).Cells(wb.Worksheets(1).Rows.Count, 30).End(-4162)
+row_to_write = wb.Worksheets(1).Cells(wb.Worksheets(1).Rows.Count, 30).End(-4162).Row + 1
 
-print(row_to_write)
+from_date = wb.Worksheets(1).Cells(wb.Worksheets(1).Rows.Count, 30).End(-4162)
 
+str_conv = str(from_date)[:10].replace('.', '-')
+year, month, day = str_conv.split('-')
 
-
+timestamp_from = datetime.datetime(int(year), int(month), int(day)).strftime('%d.%m.%Y')
+timestamp_to = datetime.date.today().strftime('%d.%m.%Y')
 
 
 headers = {
@@ -55,43 +58,21 @@ headers = {
     "Content-Type": "application/json"
 }
 
-payload = {
- "ajax_url": "/api/policy/list",
- "output": "json",
- "timestamp_from": "05.12.2023",
- "timestamp_to": "12.12.2023"
+policy_list_payload = {
+    "username": in_l,
+    "password": in_h,
+    "ajax_url": "/api/policy/list",
+    "output": "json",
+    "timestamp_from": timestamp_from,
+    "timestamp_to": timestamp_to
 }
 
-# payload = {
-#     "username": in_l,
-#     "password": in_h,
-#     "ajax_url": "/api/policy/getpolicy",
-#     "output": "json",
-#     "policy_oid": "10340324",
-#     # "policy_oid": "10274225",
-#     "return_objects": "1"
-# }
 
-
-
-r={}
-try:
-    # response = requests.post('https://magro2-api.insly.pl/api/policy/getpolicy',
-    response = requests.post('https://magro2-api.insly.pl/api/policy/list',
-                             headers=headers,
-                             json=payload)
-    r = response.json()
-    ic(r)
-
-except requests.exceptions.HTTPError as errh:
-    print(f"Http Error: {errh}")
-except requests.exceptions.ConnectionError as errc:
-    print(f"Error Connecting: {errc}")
-except requests.exceptions.Timeout as errt:
-    print(f"Timeout Error: {errt}")
-except requests.exceptions.RequestException as err:
-    print(f"Error: {err}")
-
+response = requests.post('https://magro2-api.insly.pl/api/policy/list',
+                         headers=headers,
+                         json=policy_list_payload)
+policies_list = response.json()
+ic(policies_list)
 
 
 def regon_checksum(r: str):
@@ -123,33 +104,61 @@ def pesel_checksum(p):
         return False
 
 
-# pesel = pesel_checksum(r['customer_idcode'])
-# regon = regon_checksum(r['customer_idcode'])
-#
-# nazwa_firmy = r['customer_name'] if regon else ''
-# nazwisko = r['customer_name'].split()[-1] if nazwa_firmy == '' else ''
-# imie = r['customer_name'].split()[0] if nazwa_firmy == '' else ''
-#
-# p_lub_r = r['customer_idcode'] if pesel else r['customer_idcode'] if regon else ''
-# ulica = r['address'][0]['customer_address_street']
-# kod_poczt = r['address'][0]['customer_address_zip']
-# miasto = r['address'][0]['customer_address_city']
-# tel = r['customer_mobile'] if r['customer_mobile'] != '' else r['customer_phone']
-# email = r['customer_email']
-#
-# marka = r['objects'][0]['vehicle_make']
-#
-#
-# print(nazwa_firmy)
-# print(nazwisko)
-# print(imie)
-# print(p_lub_r)
-# print(ulica)
-# print(kod_poczt)
-# print(miasto)
-# print(tel)
-# print(email)
-# print(marka)
+for policy in policies_list['policies']:
+    policy_oid = policy['policy_oid']
+
+    payload = {
+        # "username": in_l,
+        # "password": in_h,
+        "ajax_url": "/api/policy/getpolicy",
+        "output": "json",
+        "policy_oid": policy_oid,
+        # "policy_oid": "10274225",
+        "return_objects": "1"
+    }
+
+
+    response = requests.post('https://magro2-api.insly.pl/api/policy/getpolicy',
+                             headers=headers,
+                             json=payload)
+    r = response.json()
+
+    ic(r)
+
+
+
+
+    pesel = pesel_checksum(r['customer_idcode'])
+    regon = regon_checksum(r['customer_idcode'])
+
+    nazwa_firmy = r['customer_name'] if regon else ''
+    nazwisko = r['customer_name'].split()[-1] if nazwa_firmy == '' else ''
+    imie = r['customer_name'].split()[0] if nazwa_firmy == '' else ''
+
+    p_lub_r = r['customer_idcode'] if pesel else r['customer_idcode'] if regon else ''
+    ulica = r['address'][0]['customer_address_street']
+    kod_poczt = r['address'][0]['customer_address_zip']
+    miasto = r['address'][0]['customer_address_city']
+    tel = r['customer_mobile'] if r['customer_mobile'] != '' else r['customer_phone']
+    email = r['customer_email']
+
+    marka = r.get('objects')[0].get('vehicle_make', 'BRAK')
+
+
+    print(nazwa_firmy)
+    print(nazwisko)
+    print(imie)
+    print(p_lub_r)
+    print(ulica)
+    print(kod_poczt)
+    print(miasto)
+    print(tel.lstrip('+48'))
+    print(email)
+    print(marka)
+
+    print('-------------')
+
+
 
 
 # nazwa_firmy, nazwisko, imie, p_lub_r, pr_j, ulica_f_edit, kod_poczt, miasto_f, tel, email, marka, kod, model, \
