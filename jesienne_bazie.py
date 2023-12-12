@@ -1,5 +1,4 @@
 import requests
-import json
 import win32com.client
 from win32com.client import Dispatch
 import time
@@ -22,7 +21,7 @@ wb.close()
 
 try:
     """Sprawdza czy arkusz jest otwarty."""
-    ExcelApp = win32com.client.GetActivefolderect('Excel.Application')
+    ExcelApp = win32com.client.GetActiveObject('Excel.Application')
     wb = ExcelApp.Workbooks("2014 BAZA MAGRO.xlsm")
     ws = wb.Worksheets("BAZA 2014")
     # workbook = ExcelApp.Workbooks("Baza.xlsx")
@@ -103,6 +102,24 @@ def pesel_checksum(p):
     else:
         return False
 
+# TODO case insensitive regex --- re.search('Polisa seria?\s(.*)\snumer\s(\d+)', page_1, re.I))
+def insurer(tow):
+    tow = tow.title()
+    insurers = {'Allianz': 'ALL', 'AXA': 'AXA', 'Balcia': 'BAL', 'Compensa': 'COM', 'Euroins': 'EIN',
+                'PZU': 'EPZU', 'Generali': 'GEN', 'HDI': 'HDI', 'Ergo Hestia': 'HES',
+                'INTER': 'INT', 'LINK 4': 'LIN', 'MTU': 'MTU', 'Proama': 'PRO',
+                'InterRisk': 'RIS', 'TUW': 'TUW', 'TUZ': 'TUZ', 'Uniqa': 'UNI',
+                'Warta': 'WAR', 'Wiener': 'WIE', 'You Can Drive': 'YCD', 'Trasti': 'TRA',
+                'Wefox': 'WEF'}
+    if tow in insurers:
+        return insurers[tow]
+    else:
+        return ''
+
+print(insurer('trasti'))
+
+
+
 
 for policy in policies_list['policies']:
     policy_oid = policy['policy_oid']
@@ -138,25 +155,24 @@ for policy in policies_list['policies']:
     email = r['customer_email']
 
     marka = r.get('objects')[0].get('vehicle_make', '') \
-        if r.get('objects')[0].get('vehicle_make', '') != '' \
-        else kod_poczt
+
     model = r.get('objects')[0].get('vehicle_model', '') \
-        if r.get('objects')[0].get('vehicle_model', '') != '' \
-        else miasto
+
     nr_rej = r.get('objects')[0].get('vehicle_registration_number', '') \
         if r.get('objects')[0].get('vehicle_registration_number', '') != '' \
         else r.get('objects')[0].get('vehicle_licenseplate', '') \
-        if r.get('objects')[0].get('vehicle_licenseplate', '') != '' \
-        else ulica
 
-    adres = ulica
-
-    rok = r.get('objects')[0].get('vehicle_first_registration_date', '') \
+    rok = r.get('objects')[0].get('vehicle_first_registration_date', '')[:4] \
         if r.get('objects')[0].get('vehicle_first_registration_date', '') != '' \
-        else r.get('objects')[0].get('vehicle_registered', '')
+        else r.get('objects')[0].get('vehicle_registered', '')[:4]
 
+    d, m, y = r.get('policy_date_start', '').split('.')
+    data_pocz = datetime.datetime(int(y), int(m), int(d)).strftime('%Y-%m-%d')
 
+    d, m, y = r.get('policy_date_end', '').split('.')
+    data_konca = datetime.datetime(int(y), int(m), int(d)).strftime('%Y-%m-%d')
 
+    tow_ub = insurer(r.get('policy_insurer', ''))
 
 
     print(nazwa_firmy)
@@ -171,6 +187,10 @@ for policy in policies_list['policies']:
     print(marka)
     print(model)
     print(nr_rej)
+    print(rok)
+    print(data_pocz)
+    print(data_konca)
+    print(tow_ub)
 
     print('-------------')
 
@@ -190,21 +210,26 @@ for policy in policies_list['policies']:
     ExcelApp.Cells(row_to_write, 18).Value = miasto
     ExcelApp.Cells(row_to_write, 19).Value = tel
     ExcelApp.Cells(row_to_write, 20).Value = email.lower() if email else ''
-    ExcelApp.Cells(row_to_write, 23).Value = marka if marka != '' and nr_rej != '' else kod_poczt
-    ExcelApp.Cells(row_to_write, 24).Value = model if model != '' and nr_rej != '' else miasto
+    ExcelApp.Cells(row_to_write, 23).Value = marka if nr_rej != '' else kod_poczt
+    ExcelApp.Cells(row_to_write, 24).Value = model if nr_rej != '' else miasto
     ExcelApp.Cells(row_to_write, 25).Value = nr_rej if nr_rej != '' else ulica
     ExcelApp.Cells(row_to_write, 26).Value = rok
 
-    row_to_write += 1
-
 #     # ExcelApp.Cells(row_to_write, 29).Value = int(ile_dni) + 1
 #     # ExcelApp.Cells(row_to_write, 30).NumberFormat = 'yy-mm-dd'
-#     ExcelApp.Cells(row_to_write, 30).Value = data_wyst
-#     # ExcelApp.Cells(row_to_write, 31).Value = data_pocz
-#     ExcelApp.Cells(row_to_write, 32).Value = data_konca
-#     ExcelApp.Cells(row_to_write, 36).Value = 'SPÓŁKA'
-#     tor = ExcelApp.Cells(row_to_write, 37).Value = tow_ub_tor
-#     ExcelApp.Cells(row_to_write, 38).Value = tow_ub
+    ExcelApp.Cells(row_to_write, 30).Value = datetime.date.today().strftime('%Y-%m-%d')
+    ExcelApp.Cells(row_to_write, 31).Value = data_pocz
+    ExcelApp.Cells(row_to_write, 32).Value = data_konca
+    ExcelApp.Cells(row_to_write, 36).Value = 'SPÓŁKA'
+    # tor = ExcelApp.Cells(row_to_write, 37).Value = tow_ub_tor
+    ExcelApp.Cells(row_to_write, 38).Value = tow_ub
+
+
+
+    row_to_write += 1
+
+
+
 #     # ExcelApp.Cells(row_to_write, 39).Value = rodzaj
 #     ExcelApp.Cells(row_to_write, 40).Value = nr_polisy
 #     # ExcelApp.Cells(row_to_write, 41).Value = nowa_wzn
