@@ -108,12 +108,9 @@ for policy in policies_list['policies']:
     policy_oid = policy['policy_oid']
 
     payload = {
-        # "username": in_l,
-        # "password": in_h,
         "ajax_url": "/api/policy/getpolicy",
         "output": "json",
         "policy_oid": policy_oid,
-        # "policy_oid": "10274225",
         "return_objects": "1"
     }
 
@@ -123,10 +120,7 @@ for policy in policies_list['policies']:
                              json=payload)
     r = response.json()
 
-    # ic(r)
-
-
-
+    ic(r)
 
     pesel = pesel_checksum(r['customer_idcode'])
     regon = regon_checksum(r['customer_idcode'])
@@ -143,7 +137,26 @@ for policy in policies_list['policies']:
     tel = tel.lstrip('+48')
     email = r['customer_email']
 
-    marka = r.get('objects')[0].get('vehicle_make', 'BRAK')
+    marka = r.get('objects')[0].get('vehicle_make', '') \
+        if r.get('objects')[0].get('vehicle_make', '') != '' \
+        else kod_poczt
+    model = r.get('objects')[0].get('vehicle_model', '') \
+        if r.get('objects')[0].get('vehicle_model', '') != '' \
+        else miasto
+    nr_rej = r.get('objects')[0].get('vehicle_registration_number', '') \
+        if r.get('objects')[0].get('vehicle_registration_number', '') != '' \
+        else r.get('objects')[0].get('vehicle_licenseplate', '') \
+        if r.get('objects')[0].get('vehicle_licenseplate', '') != '' \
+        else ulica
+
+    adres = ulica
+
+    rok = r.get('objects')[0].get('vehicle_first_registration_date', '') \
+        if r.get('objects')[0].get('vehicle_first_registration_date', '') != '' \
+        else r.get('objects')[0].get('vehicle_registered', '')
+
+
+
 
 
     print(nazwa_firmy)
@@ -156,29 +169,12 @@ for policy in policies_list['policies']:
     print(tel)
     print(email)
     print(marka)
+    print(model)
+    print(nr_rej)
 
     print('-------------')
 
 
-
-
-    # nazwa_firmy, nazwisko, imie, p_lub_r, pr_j, ulica_f_edit, kod_poczt, miasto_f, tel, email, marka, kod, model, \
-    # miasto, nr_rej, adres, rok, data_wyst, data_konca, tow_ub_tor, tow_ub, nr_polisy, przypis, ter_platnosci, rata_I, \
-    # f_platnosci, ilosc_rat, nr_raty, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV = dane_polisy
-
-
-
-
-# """Jesienne Bazie"""
-# # try:
-# for dane_polisy in tacka_na_polisy(folder):
-#     nazwa_firmy, nazwisko, imie, p_lub_r, pr_j, ulica_f_edit, kod_poczt, miasto_f, tel, email, marka, kod, model, \
-#     miasto, nr_rej, adres, rok, data_wyst, data_konca, tow_ub_tor, tow_ub, nr_polisy, przypis, ter_platnosci, rata_I, \
-#     f_platnosci, ilosc_rat, nr_raty, termin_II, rata_II, termin_III, rata_III, termin_IV, rata_IV = dane_polisy
-#     print(dane_polisy)
-#
-    """Rozpoznaje kolejny wiersz, który może zapisać."""
-    # row_to_write = wb.Worksheets(1).Cells(wb.Worksheets(1).Rows.Count, 30).End(-4162).Row + 1
 
     # Rok_przypisu = ExcelApp.Cells(row_to_write, 1).Value = data_wyst[:2] # Komórka tylko do testów
     Rozlicz = ExcelApp.Cells(row_to_write, 7).Value = 'Robert'
@@ -194,14 +190,13 @@ for policy in policies_list['policies']:
     ExcelApp.Cells(row_to_write, 18).Value = miasto
     ExcelApp.Cells(row_to_write, 19).Value = tel
     ExcelApp.Cells(row_to_write, 20).Value = email.lower() if email else ''
-    ExcelApp.Cells(row_to_write, 23).Value = marka if marka else kod_poczt
+    ExcelApp.Cells(row_to_write, 23).Value = marka if marka != '' and nr_rej != '' else kod_poczt
+    ExcelApp.Cells(row_to_write, 24).Value = model if model != '' and nr_rej != '' else miasto
+    ExcelApp.Cells(row_to_write, 25).Value = nr_rej if nr_rej != '' else ulica
+    ExcelApp.Cells(row_to_write, 26).Value = rok
 
     row_to_write += 1
 
-
-#     ExcelApp.Cells(row_to_write, 24).Value = model if model else miasto
-#     ExcelApp.Cells(row_to_write, 25).Value = nr_rej if nr_rej else adres
-#     ExcelApp.Cells(row_to_write, 26).Value = rok
 #     # ExcelApp.Cells(row_to_write, 29).Value = int(ile_dni) + 1
 #     # ExcelApp.Cells(row_to_write, 30).NumberFormat = 'yy-mm-dd'
 #     ExcelApp.Cells(row_to_write, 30).Value = data_wyst
