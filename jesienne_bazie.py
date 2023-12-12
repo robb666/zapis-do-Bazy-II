@@ -92,9 +92,8 @@ def pesel_checksum(p):
         l = int(p[10])
         suma = 1 * int(p[0]) + 3 * int(p[1]) + 7 * int(p[2]) + 9 * int(p[3]) + 1 * int(p[4]) + 3 * int(p[5]) + \
                7 * int(p[6]) + 9 * int(p[7]) + 1 * int(p[8]) + 3 * int(p[9]) + 1 * int(p[10])
-        lm = suma % 10  # dzielenie wyniku modulo 10
-        kontrola = 10 - lm  # sprawdzenie ostatniej liczby kontrolnej
-        # w przypadku liczby kontrolnej 10 i 0 sa jednoznaczne a 0 moze byc wynikiem odejmowania
+        lm = suma % 10
+        kontrola = 10 - lm
         if (kontrola == 10 or l == kontrola) and p[2:4] != '00':
             return True
         else:
