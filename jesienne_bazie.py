@@ -4,6 +4,7 @@ from win32com.client import Dispatch
 import time
 from openpyxl import load_workbook
 import datetime
+import re
 from creds import key
 from icecream import ic
 
@@ -101,11 +102,11 @@ def pesel_checksum(p):
     else:
         return False
 
-# TODO case insensitive regex --- re.search('Polisa seria?\s(.*)\snumer\s(\d+)', page_1, re.I))
+
 def insurer(tow):
     tow = tow.title()
     insurers = {'Allianz': 'ALL', 'AXA': 'AXA', 'Balcia': 'BAL', 'Compensa': 'COM', 'Euroins': 'EIN',
-                'PZU': 'EPZU', 'Generali': 'GEN', 'HDI': 'HDI', 'Ergo Hestia': 'HES',
+                'PZU': 'EPZU', 'Generali': 'GEN', 'HDI': 'HDI', 'Ergo Hestia': 'HES', 'Ergohestialite': 'HES',
                 'INTER': 'INT', 'LINK 4': 'LIN', 'MTU': 'MTU', 'Proama': 'PRO',
                 'InterRisk': 'RIS', 'TUW': 'TUW', 'TUZ': 'TUZ', 'Uniqa': 'UNI',
                 'Warta': 'WAR', 'Wiener': 'WIE', 'You Can Drive': 'YCD', 'Trasti': 'TRA',
@@ -115,8 +116,13 @@ def insurer(tow):
     else:
         return ''
 
-print(insurer('trasti'))
 
+def insurance_type(rodzaj):
+    moto = 'Ubezpieczenie komunikacyjne motor'
+    if re.search(rodzaj, moto, re.I):
+        return 'kom'
+    else:
+        return ''
 
 
 
@@ -153,13 +159,13 @@ for policy in policies_list['policies']:
     tel = tel.lstrip('+48')
     email = r['customer_email']
 
-    marka = r.get('objects')[0].get('vehicle_make', '') \
+    marka = r.get('objects')[0].get('vehicle_make', '')
 
-    model = r.get('objects')[0].get('vehicle_model', '') \
+    model = r.get('objects')[0].get('vehicle_model', '')
 
     nr_rej = r.get('objects')[0].get('vehicle_registration_number', '') \
         if r.get('objects')[0].get('vehicle_registration_number', '') != '' \
-        else r.get('objects')[0].get('vehicle_licenseplate', '') \
+        else r.get('objects')[0].get('vehicle_licenseplate', '')
 
     rok = r.get('objects')[0].get('vehicle_first_registration_date', '')[:4] \
         if r.get('objects')[0].get('vehicle_first_registration_date', '') != '' \
@@ -172,6 +178,9 @@ for policy in policies_list['policies']:
     data_konca = datetime.datetime(int(y), int(m), int(d)).strftime('%Y-%m-%d')
 
     tow_ub = insurer(r.get('policy_insurer', ''))
+
+    # print("r['policy_product_displayname']", r.get('policy_product_info')[0].get('policy_product_displayname'))
+    # rodzaj = insurance_type(r.get('policy_product_info')[0].get('policy_product_displayname'))
 
 
     print(nazwa_firmy)
@@ -190,6 +199,7 @@ for policy in policies_list['policies']:
     print(data_pocz)
     print(data_konca)
     print(tow_ub)
+    print(rodzaj)
 
     print('-------------')
 
@@ -220,16 +230,9 @@ for policy in policies_list['policies']:
     ExcelApp.Cells(row_to_write, 31).Value = data_pocz
     ExcelApp.Cells(row_to_write, 32).Value = data_konca
     ExcelApp.Cells(row_to_write, 36).Value = 'SPÓŁKA'
-    # tor = ExcelApp.Cells(row_to_write, 37).Value = tow_ub_tor
+    ExcelApp.Cells(row_to_write, 37).Value = tow_ub
     ExcelApp.Cells(row_to_write, 38).Value = tow_ub
-
-
-
-    row_to_write += 1
-
-
-
-#     # ExcelApp.Cells(row_to_write, 39).Value = rodzaj
+    ExcelApp.Cells(row_to_write, 39).Value = rodzaj
 #     ExcelApp.Cells(row_to_write, 40).Value = nr_polisy
 #     # ExcelApp.Cells(row_to_write, 41).Value = nowa_wzn
 #     # ExcelApp.Cells(row_to_write, 42).Value = nr_wzn
@@ -285,7 +288,13 @@ for policy in policies_list['policies']:
 #                 ExcelApp.Cells(row_to_write + 3, 49).Value = termin_IV
 #                 ExcelApp.Cells(row_to_write + 3, 50).Value = rata_IV
 #                 ExcelApp.Cells(row_to_write + 3, 53).Value = 4
-#
+
+
+
+    row_to_write += 1
+
+
+
 # """Opcje zapisania"""
 #
 # # Exec
