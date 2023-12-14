@@ -50,6 +50,8 @@ str_conv = str(from_date)[:10].replace('.', '-')
 year, month, day = str_conv.split('-')
 
 timestamp_from = datetime.datetime(int(year), int(month), int(day)).strftime('%d.%m.%Y')
+ic(timestamp_from)
+
 timestamp_to = datetime.date.today().strftime('%d.%m.%Y')
 
 
@@ -63,7 +65,7 @@ policy_list_payload = {
     "password": in_h,
     "ajax_url": "/api/policy/list",
     "output": "json",
-    "timestamp_from": timestamp_from,
+    "timestamp_from": "11.12.2023",  # timestamp_from
     "timestamp_to": timestamp_to
 }
 
@@ -72,7 +74,7 @@ response = requests.post('https://magro2-api.insly.pl/api/policy/list',
                          headers=headers,
                          json=policy_list_payload)
 policies_list = response.json()
-ic(policies_list)
+print(policies_list)
 
 
 def regon_checksum(r: str):
@@ -117,13 +119,13 @@ def insurer(tow):
         return ''
 
 
+# TODO rozdzielić markę i model
 def insurance_type(rodzaj):
     moto = 'Ubezpieczenie komunikacyjne motor'
     if re.search(rodzaj, moto, re.I):
         return 'kom'
     else:
         return ''
-
 
 
 for policy in policies_list['policies']:
@@ -159,17 +161,21 @@ for policy in policies_list['policies']:
     tel = tel.lstrip('+48')
     email = r['customer_email']
 
-    marka = r.get('objects')[0].get('vehicle_make', '')
+    marka = r.get('objects')[0].get('vehicle_make', '') if len(r['objects']) > 0 else ''
 
-    model = r.get('objects')[0].get('vehicle_model', '')
+    model = r.get('objects', '')[0].get('vehicle_model', '') if len(r['objects']) > 0 else ''
 
-    nr_rej = r.get('objects')[0].get('vehicle_registration_number', '') \
-        if r.get('objects')[0].get('vehicle_registration_number', '') != '' \
-        else r.get('objects')[0].get('vehicle_licenseplate', '')
+    nr_rej = ''
+    rok = ''
 
-    rok = r.get('objects')[0].get('vehicle_first_registration_date', '')[:4] \
-        if r.get('objects')[0].get('vehicle_first_registration_date', '') != '' \
-        else r.get('objects')[0].get('vehicle_registered', '')[:4]
+    if len(r['objects']) > 0:
+        nr_rej = r.get('objects')[0].get('vehicle_registration_number', '') \
+            if r.get('objects')[0].get('vehicle_registration_number', '') != '' \
+            else r.get('objects')[0].get('vehicle_licenseplate', '')
+
+        rok = r.get('objects')[0].get('vehicle_first_registration_date', '')[:4] \
+            if r.get('objects')[0].get('vehicle_first_registration_date', '') != '' \
+            else r.get('objects')[0].get('vehicle_registered', '')[:4]
 
     d, m, y = r.get('policy_date_start', '').split('.')
     data_pocz = datetime.datetime(int(y), int(m), int(d)).strftime('%Y-%m-%d')
@@ -179,8 +185,8 @@ for policy in policies_list['policies']:
 
     tow_ub = insurer(r.get('policy_insurer', ''))
 
-    # print("r['policy_product_displayname']", r.get('policy_product_info')[0].get('policy_product_displayname'))
-    # rodzaj = insurance_type(r.get('policy_product_info')[0].get('policy_product_displayname'))
+    print("r['policy_product_displayname']", r.get('policy_product_info')[0].get('policy_product_displayname'))
+    rodzaj = insurance_type(r.get('policy_product_info')[0].get('policy_product_displayname'))
 
 
     print(nazwa_firmy)
@@ -211,7 +217,8 @@ for policy in policies_list['policies']:
     FIRMA = ExcelApp.Cells(row_to_write, 11).Value = nazwa_firmy
     Nazwisko = ExcelApp.Cells(row_to_write, 12).Value = nazwisko
     Imie = ExcelApp.Cells(row_to_write, 13).Value = imie
-    Pesel_Regon = ExcelApp.Cells(row_to_write, 14).Value = p_lub_r
+    Pesel_Regon = ExcelApp.Cells(row_to_write, 14).Value = 'p' + p_lub_r if len(p_lub_r) == 11 \
+                                                        else 'r' + p_lub_r if len(p_lub_r) == 9 else ''
     # ExcelApp.Cells(row_to_write, 15).Value = pr_j
     ExcelApp.Cells(row_to_write,
                    16).Value = ulica  # f'{ulica_f} {nr_ulicy_f}' if not nr_lok else f'{ulica_f} {nr_ulicy_f} m {nr_lok}'
@@ -232,7 +239,7 @@ for policy in policies_list['policies']:
     ExcelApp.Cells(row_to_write, 36).Value = 'SPÓŁKA'
     ExcelApp.Cells(row_to_write, 37).Value = tow_ub
     ExcelApp.Cells(row_to_write, 38).Value = tow_ub
-    ExcelApp.Cells(row_to_write, 39).Value = rodzaj
+    ExcelApp.Cells(row_to_write, 39).Value = 'kom' if nr_rej != '' else ''
 #     ExcelApp.Cells(row_to_write, 40).Value = nr_polisy
 #     # ExcelApp.Cells(row_to_write, 41).Value = nowa_wzn
 #     # ExcelApp.Cells(row_to_write, 42).Value = nr_wzn
