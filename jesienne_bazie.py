@@ -9,6 +9,13 @@ from creds import key
 from icecream import ic
 
 
+
+
+
+class pyxlExcel:
+    pass
+
+
 start_time = time.time()
 
 wb = load_workbook(filename="M:/Agent baza/Login_Hasło.xlsm", read_only=True)
@@ -20,31 +27,54 @@ in_h = ws['G21'].value
 wb.close()
 
 
-try:
-    """Sprawdza czy arkusz jest otwarty."""
-    ExcelApp = win32com.client.GetActiveObject('Excel.Application')
-    wb = ExcelApp.Workbooks("2014 BAZA MAGRO.xlsm")
-    ws = wb.Worksheets("BAZA 2014")
-    # workbook = ExcelApp.Workbooks("Baza.xlsx")
+class Win32comExcel:
 
-except:
-    """Jeżeli arkusz jest zamknięty, otwiera go."""
-    ExcelApp = Dispatch("Excel.Application")
+    def __init__(self, filename=None, workbook=None, sheet=None, visible=True):
+        try:
+            self.ExcelApp = win32com.client.GetActiveObject('Excel.Application')
+            self.wb = self.ExcelApp.Workbooks(workbook)
+            self.ws = self.wb.Worksheets(sheet)
+        except:
+            self.ExcelApp = win32com.client.gencache.EnsureDispatch('Excel.Application')
+            self.wb = self.ExcelApp.Workbooks.OpenXML(filename)
+            self.ws = self.wb.Worksheets(sheet)
+        self.ExcelApp.Visible = visible
 
-    # Exec
-    # wb = ExcelApp.Workbooks.OpenXML("M:\\Agent baza\\2014 BAZA MAGRO.xlsm")
-    wb = ExcelApp.Workbooks.OpenXML("C:\\Users\\PipBoy3000\\Desktop\\2014 BAZA MAGRO.xlsm")
 
-    # Testy
-    # wb = ExcelApp.Workbooks.OpenXML(path + "\\2014 BAZA MAGRO.xlsm")
+ExcelApp = Win32comExcel(
+    filename='C:\\Users\\PipBoy3000\\Desktop\\2014 BAZA MAGRO.xlsm',
+    workbook='2014 BAZA MAGRO.xlsm',
+    sheet='BAZA 2014',
+)
 
-    ws = wb.Worksheets("BAZA 2014")
 
-ExcelApp.Visible = True
 
-row_to_write = wb.Worksheets(1).Cells(wb.Worksheets(1).Rows.Count, 30).End(-4162).Row + 1
 
-from_date = wb.Worksheets(1).Cells(wb.Worksheets(1).Rows.Count, 30).End(-4162)
+# try:
+#     """Sprawdza czy arkusz jest otwarty."""
+#     ExcelApp = win32com.client.GetActiveObject('Excel.Application')
+#     wb = ExcelApp.Workbooks("2014 BAZA MAGRO.xlsm")
+#     ws = wb.Worksheets("BAZA 2014")
+#     # workbook = ExcelApp.Workbooks("Baza.xlsx")
+#
+# except:
+#     """Jeżeli arkusz jest zamknięty, otwiera go."""
+#     ExcelApp = Dispatch("Excel.Application")
+#
+#     # Exec
+#     # wb = ExcelApp.Workbooks.OpenXML("M:\\Agent baza\\2014 BAZA MAGRO.xlsm")
+#     wb = ExcelApp.Workbooks.OpenXML("C:\\Users\\PipBoy3000\\Desktop\\2014 BAZA MAGRO.xlsm")
+#
+#     # Testy
+#     # wb = ExcelApp.Workbooks.OpenXML(path + "\\2014 BAZA MAGRO.xlsm")
+#
+#     ws = wb.Worksheets("BAZA 2014")
+#
+# ExcelApp.Visible = True
+
+row_to_write = ExcelApp.wb.Worksheets(1).Cells(ExcelApp.wb.Worksheets(1).Rows.Count, 30).End(-4162).Row + 1
+
+from_date = ExcelApp.wb.Worksheets(1).Cells(ExcelApp.wb.Worksheets(1).Rows.Count, 30).End(-4162)
 
 str_conv = str(from_date)[:10].replace('.', '-')
 year, month, day = str_conv.split('-')
@@ -53,6 +83,17 @@ timestamp_from = datetime.datetime(int(year), int(month), int(day)).strftime('%d
 ic(timestamp_from)
 
 timestamp_to = datetime.date.today().strftime('%d.%m.%Y')
+
+
+
+
+
+
+class Insly:
+    def __init__(self):
+        pass
+
+
 
 
 headers = {
@@ -212,34 +253,34 @@ for policy in policies_list['policies']:
 
 
     # Rok_przypisu = ExcelApp.Cells(row_to_write, 1).Value = data_wyst[:2] # Komórka tylko do testów
-    Rozlicz = ExcelApp.Cells(row_to_write, 7).Value = 'Robert'
-    Podpis = ExcelApp.Cells(row_to_write, 10).Value = 'Grzelak'
-    FIRMA = ExcelApp.Cells(row_to_write, 11).Value = nazwa_firmy
-    Nazwisko = ExcelApp.Cells(row_to_write, 12).Value = nazwisko
-    Imie = ExcelApp.Cells(row_to_write, 13).Value = imie
-    Pesel_Regon = ExcelApp.Cells(row_to_write, 14).Value = 'p' + p_lub_r if len(p_lub_r) == 11 \
+    Rozlicz = ExcelApp.ws.Cells(row_to_write, 7).Value = 'Robert'
+    Podpis = ExcelApp.ws.Cells(row_to_write, 10).Value = 'Grzelak'
+    FIRMA = ExcelApp.ws.Cells(row_to_write, 11).Value = nazwa_firmy
+    Nazwisko = ExcelApp.ws.Cells(row_to_write, 12).Value = nazwisko
+    Imie = ExcelApp.ws.Cells(row_to_write, 13).Value = imie
+    Pesel_Regon = ExcelApp.ws.Cells(row_to_write, 14).Value = 'p' + p_lub_r if len(p_lub_r) == 11 \
                                                         else 'r' + p_lub_r if len(p_lub_r) == 9 else ''
     # ExcelApp.Cells(row_to_write, 15).Value = pr_j
-    ExcelApp.Cells(row_to_write,
+    ExcelApp.ws.Cells(row_to_write,
                    16).Value = ulica  # f'{ulica_f} {nr_ulicy_f}' if not nr_lok else f'{ulica_f} {nr_ulicy_f} m {nr_lok}'
-    ExcelApp.Cells(row_to_write, 17).Value = kod_poczt  # kod_pocztowy(page_1) if not kod_poczt_f else kod_poczt_f_edit
-    ExcelApp.Cells(row_to_write, 18).Value = miasto
-    ExcelApp.Cells(row_to_write, 19).Value = tel
-    ExcelApp.Cells(row_to_write, 20).Value = email.lower() if email else ''
-    ExcelApp.Cells(row_to_write, 23).Value = marka if nr_rej != '' else kod_poczt
-    ExcelApp.Cells(row_to_write, 24).Value = model if nr_rej != '' else miasto
-    ExcelApp.Cells(row_to_write, 25).Value = nr_rej if nr_rej != '' else ulica
-    ExcelApp.Cells(row_to_write, 26).Value = rok
+    ExcelApp.ws.Cells(row_to_write, 17).Value = kod_poczt  # kod_pocztowy(page_1) if not kod_poczt_f else kod_poczt_f_edit
+    ExcelApp.ws.Cells(row_to_write, 18).Value = miasto
+    ExcelApp.ws.Cells(row_to_write, 19).Value = tel
+    ExcelApp.ws.Cells(row_to_write, 20).Value = email.lower() if email else ''
+    ExcelApp.ws.Cells(row_to_write, 23).Value = marka if nr_rej != '' else kod_poczt
+    ExcelApp.ws.Cells(row_to_write, 24).Value = model if nr_rej != '' else miasto
+    ExcelApp.ws.Cells(row_to_write, 25).Value = nr_rej if nr_rej != '' else ulica
+    ExcelApp.ws.Cells(row_to_write, 26).Value = rok
 
 #     # ExcelApp.Cells(row_to_write, 29).Value = int(ile_dni) + 1
 #     # ExcelApp.Cells(row_to_write, 30).NumberFormat = 'yy-mm-dd'
-    ExcelApp.Cells(row_to_write, 30).Value = datetime.date.today().strftime('%Y-%m-%d')
-    ExcelApp.Cells(row_to_write, 31).Value = data_pocz
-    ExcelApp.Cells(row_to_write, 32).Value = data_konca
-    ExcelApp.Cells(row_to_write, 36).Value = 'SPÓŁKA'
-    ExcelApp.Cells(row_to_write, 37).Value = tow_ub
-    ExcelApp.Cells(row_to_write, 38).Value = tow_ub
-    ExcelApp.Cells(row_to_write, 39).Value = 'kom' if nr_rej != '' else ''
+    ExcelApp.ws.Cells(row_to_write, 30).Value = datetime.date.today().strftime('%Y-%m-%d')
+    ExcelApp.ws.Cells(row_to_write, 31).Value = data_pocz
+    ExcelApp.ws.Cells(row_to_write, 32).Value = data_konca
+    ExcelApp.ws.Cells(row_to_write, 36).Value = 'SPÓŁKA'
+    ExcelApp.ws.Cells(row_to_write, 37).Value = tow_ub
+    ExcelApp.ws.Cells(row_to_write, 38).Value = tow_ub
+    ExcelApp.ws.Cells(row_to_write, 39).Value = 'kom' if nr_rej != '' else ''
 #     ExcelApp.Cells(row_to_write, 40).Value = nr_polisy
 #     # ExcelApp.Cells(row_to_write, 41).Value = nowa_wzn
 #     # ExcelApp.Cells(row_to_write, 42).Value = nr_wzn
