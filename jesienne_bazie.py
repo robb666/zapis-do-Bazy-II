@@ -9,26 +9,22 @@ from creds import key
 from icecream import ic
 
 
-
-
-
-class pyxlExcel:
-    pass
-
-
 start_time = time.time()
 
-wb = load_workbook(filename="M:/Agent baza/Login_Hasło.xlsm", read_only=True)
-ws = wb['Aplikacje']
 
-in_l = ws['F21'].value
-in_h = ws['G21'].value
+class PyxlExcel:
+    def __init__(self, filename=None, workbook=None):
+        self.wb = load_workbook(filename)
+        self.ws = self.wb[workbook]
 
-wb.close()
+    def get_cell(self, col_row):
+        return self.ws[col_row].value
+
+    def close(self):
+        return self.wb.close()
 
 
 class Win32comExcel:
-
     def __init__(self, filename=None, workbook=None, sheet=None, visible=True):
         try:
             self.ExcelApp = win32com.client.GetActiveObject('Excel.Application')
@@ -40,6 +36,74 @@ class Win32comExcel:
             self.ws = self.wb.Worksheets(sheet)
         self.ExcelApp.Visible = visible
 
+    def get_next_row(self, col):
+        return self.ws.Cells(self.ws.Rows.Count, col).End(-4162).Row + 1
+
+    def get_last_cell(self, col):
+        return self.ws.Cells(self.ws.Rows.Count, col).End(-4162)
+
+
+class ValidatedAPIRequester:
+    def __init__(self, base_url, headers, data):
+        self.base_url = base_url
+        self.headers = headers
+        self.data = data
+
+    def post(self, headers, json):
+        return requests.post(self.base_url, headers, json)
+
+    def regon_checksum(self, r: str):
+        if len(r) == 9:
+            regon = list(str(r))
+            suma = (int(regon[0]) * 8 + int(regon[1]) * 9 + int(regon[2]) * 2 + int(regon[3]) * 3 + int(regon[4]) * 4 +
+                    int(regon[5]) * 5 + int(regon[6]) * 6 + int(regon[7]) * 7) % 11
+            if suma == int(regon[-1]) or suma == 10 and int(regon[-1]) == 0:
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    def pesel_checksum(self, p):
+        if len(p) == 11:
+            l = int(p[10])
+            suma = 1 * int(p[0]) + 3 * int(p[1]) + 7 * int(p[2]) + 9 * int(p[3]) + 1 * int(p[4]) + 3 * int(p[5]) + \
+                   7 * int(p[6]) + 9 * int(p[7]) + 1 * int(p[8]) + 3 * int(p[9]) + 1 * int(p[10])
+            lm = suma % 10
+            kontrola = 10 - lm
+            if (kontrola == 10 or l == kontrola) and p[2:4] != '00':
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    def insurer(self, tow):
+        tow = tow.title()
+        insurers = {'Allianz': 'ALL', 'AXA': 'AXA', 'Balcia': 'BAL', 'Compensa': 'COM', 'Euroins': 'EIN',
+                    'PZU': 'EPZU', 'Generali': 'GEN', 'HDI': 'HDI', 'Ergo Hestia': 'HES', 'Ergohestialite': 'HES',
+                    'INTER': 'INT', 'LINK 4': 'LIN', 'MTU': 'MTU', 'Proama': 'PRO', 'InterRisk': 'RIS', 'TUW': 'TUW',
+                    'TUZ': 'TUZ', 'Uniqa': 'UNI', 'Warta': 'WAR', 'Wiener': 'WIE', 'You Can Drive': 'YCD',
+                    'Trasti': 'TRA', 'Wefox': 'WEF'}
+        if tow in insurers:
+            return insurers[tow]
+        else:
+            return ''
+
+    # TODO rozdzielić markę i model
+    def insurance_type(self, rodzaj):
+        moto = 'Ubezpieczenie komunikacyjne motor'
+        if re.search(rodzaj, moto, re.I):
+            return 'kom'
+        else:
+            return ''
+
+
+
+pyxl = PyxlExcel(
+    filename='M:/Agent baza/Login_Hasło.xlsm',
+    workbook='Aplikacje',
+)
 
 ExcelApp = Win32comExcel(
     filename='C:\\Users\\PipBoy3000\\Desktop\\2014 BAZA MAGRO.xlsm',
@@ -47,53 +111,19 @@ ExcelApp = Win32comExcel(
     sheet='BAZA 2014',
 )
 
+in_l = pyxl.get_cell('F21')
+in_h = pyxl.get_cell('G21')
+pyxl.close()
 
+row_to_write = ExcelApp.get_next_row(col=30)
+from_date = ExcelApp.get_last_cell(col=30)
 
-
-# try:
-#     """Sprawdza czy arkusz jest otwarty."""
-#     ExcelApp = win32com.client.GetActiveObject('Excel.Application')
-#     wb = ExcelApp.Workbooks("2014 BAZA MAGRO.xlsm")
-#     ws = wb.Worksheets("BAZA 2014")
-#     # workbook = ExcelApp.Workbooks("Baza.xlsx")
-#
-# except:
-#     """Jeżeli arkusz jest zamknięty, otwiera go."""
-#     ExcelApp = Dispatch("Excel.Application")
-#
-#     # Exec
-#     # wb = ExcelApp.Workbooks.OpenXML("M:\\Agent baza\\2014 BAZA MAGRO.xlsm")
-#     wb = ExcelApp.Workbooks.OpenXML("C:\\Users\\PipBoy3000\\Desktop\\2014 BAZA MAGRO.xlsm")
-#
-#     # Testy
-#     # wb = ExcelApp.Workbooks.OpenXML(path + "\\2014 BAZA MAGRO.xlsm")
-#
-#     ws = wb.Worksheets("BAZA 2014")
-#
-# ExcelApp.Visible = True
-
-row_to_write = ExcelApp.wb.Worksheets(1).Cells(ExcelApp.wb.Worksheets(1).Rows.Count, 30).End(-4162).Row + 1
-
-from_date = ExcelApp.wb.Worksheets(1).Cells(ExcelApp.wb.Worksheets(1).Rows.Count, 30).End(-4162)
 
 str_conv = str(from_date)[:10].replace('.', '-')
 year, month, day = str_conv.split('-')
 
 timestamp_from = datetime.datetime(int(year), int(month), int(day)).strftime('%d.%m.%Y')
-ic(timestamp_from)
-
 timestamp_to = datetime.date.today().strftime('%d.%m.%Y')
-
-
-
-
-
-
-class Insly:
-    def __init__(self):
-        pass
-
-
 
 
 headers = {
@@ -110,6 +140,10 @@ policy_list_payload = {
     "timestamp_to": timestamp_to
 }
 
+API = ValidatedAPIRequester(
+        base_url='https://magro2-api.insly.pl/api/policy/list',
+        headers=headers,
+        json=policy_list_payload)
 
 response = requests.post('https://magro2-api.insly.pl/api/policy/list',
                          headers=headers,
@@ -117,56 +151,6 @@ response = requests.post('https://magro2-api.insly.pl/api/policy/list',
 policies_list = response.json()
 print(policies_list)
 
-
-def regon_checksum(r: str):
-    if len(r) == 9:
-        regon = list(str(r))
-        suma = (int(regon[0]) * 8 + int(regon[1]) * 9 + int(regon[2]) * 2 + int(regon[3]) * 3 + int(regon[4]) * 4 +
-                int(regon[5]) * 5 + int(regon[6]) * 6 + int(regon[7]) * 7) % 11
-        if suma == int(regon[-1]) or suma == 10 and int(regon[-1]) == 0:
-            return True
-        else:
-            return False
-    else:
-        return False
-
-
-def pesel_checksum(p):
-    if len(p) == 11:
-        l = int(p[10])
-        suma = 1 * int(p[0]) + 3 * int(p[1]) + 7 * int(p[2]) + 9 * int(p[3]) + 1 * int(p[4]) + 3 * int(p[5]) + \
-               7 * int(p[6]) + 9 * int(p[7]) + 1 * int(p[8]) + 3 * int(p[9]) + 1 * int(p[10])
-        lm = suma % 10
-        kontrola = 10 - lm
-        if (kontrola == 10 or l == kontrola) and p[2:4] != '00':
-            return True
-        else:
-            return False
-    else:
-        return False
-
-
-def insurer(tow):
-    tow = tow.title()
-    insurers = {'Allianz': 'ALL', 'AXA': 'AXA', 'Balcia': 'BAL', 'Compensa': 'COM', 'Euroins': 'EIN',
-                'PZU': 'EPZU', 'Generali': 'GEN', 'HDI': 'HDI', 'Ergo Hestia': 'HES', 'Ergohestialite': 'HES',
-                'INTER': 'INT', 'LINK 4': 'LIN', 'MTU': 'MTU', 'Proama': 'PRO',
-                'InterRisk': 'RIS', 'TUW': 'TUW', 'TUZ': 'TUZ', 'Uniqa': 'UNI',
-                'Warta': 'WAR', 'Wiener': 'WIE', 'You Can Drive': 'YCD', 'Trasti': 'TRA',
-                'Wefox': 'WEF'}
-    if tow in insurers:
-        return insurers[tow]
-    else:
-        return ''
-
-
-# TODO rozdzielić markę i model
-def insurance_type(rodzaj):
-    moto = 'Ubezpieczenie komunikacyjne motor'
-    if re.search(rodzaj, moto, re.I):
-        return 'kom'
-    else:
-        return ''
 
 
 for policy in policies_list['policies']:
