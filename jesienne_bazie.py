@@ -44,13 +44,19 @@ class Win32comExcel:
 
 
 class ValidatedAPIRequester:
-    def __init__(self, base_url, headers, data):
+    def __init__(self, base_url, headers):
         self.base_url = base_url
         self.headers = headers
-        self.data = data
+        self.endpoints = {}  # Store endpoints
 
-    def post(self, headers, json):
-        return requests.post(self.base_url, headers, json)
+    def add_endpoint(self, name, endpoint):
+        self.endpoints[name] = endpoint
+
+    def __getitem__(self, key):
+        return self.endpoints.get(key)
+
+    def post(self, endpoint, data):
+        return requests.post(self.base_url + endpoint, headers=self.headers, json=data).json()
 
     def regon_checksum(self, r: str):
         if len(r) == 9:
@@ -99,7 +105,6 @@ class ValidatedAPIRequester:
             return ''
 
 
-
 pyxl = PyxlExcel(
     filename='M:/Agent baza/Login_Hasło.xlsm',
     workbook='Aplikacje',
@@ -140,18 +145,17 @@ policy_list_payload = {
     "timestamp_to": timestamp_to
 }
 
-API = ValidatedAPIRequester(
-        base_url='https://magro2-api.insly.pl/api/policy/list',
+api_requester = ValidatedAPIRequester(
+        base_url='https://magro2-api.insly.pl/api/',
         headers=headers,
-        json=policy_list_payload)
+)
 
-response = requests.post('https://magro2-api.insly.pl/api/policy/list',
-                         headers=headers,
-                         json=policy_list_payload)
-policies_list = response.json()
-print(policies_list)
+api_requester.add_endpoint('policies list', 'policy/list')
+policies_list = api_requester.post(api_requester['policies list'],
+                                   data=policy_list_payload)
 
-
+api_requester.add_endpoint('get policy', 'policy/getpolicy')
+print(policies_list['policies'])
 
 for policy in policies_list['policies']:
     policy_oid = policy['policy_oid']
@@ -163,16 +167,11 @@ for policy in policies_list['policies']:
         "return_objects": "1"
     }
 
-
-    response = requests.post('https://magro2-api.insly.pl/api/policy/getpolicy',
-                             headers=headers,
-                             json=payload)
-    r = response.json()
-
+    r = api_requester.post(api_requester['get policy'], data=payload)
     ic(r)
 
-    pesel = pesel_checksum(r['customer_idcode'])
-    regon = regon_checksum(r['customer_idcode'])
+    pesel = api_requester.pesel_checksum(r['customer_idcode'])
+    regon = api_requester.regon_checksum(r['customer_idcode'])
 
     nazwa_firmy = r['customer_name'] if regon else ''
     nazwisko = r['customer_name'].split()[-1] if nazwa_firmy == '' else ''
@@ -208,10 +207,10 @@ for policy in policies_list['policies']:
     d, m, y = r.get('policy_date_end', '').split('.')
     data_konca = datetime.datetime(int(y), int(m), int(d)).strftime('%Y-%m-%d')
 
-    tow_ub = insurer(r.get('policy_insurer', ''))
+    tow_ub = api_requester.insurer(r.get('policy_insurer', ''))
 
     print("r['policy_product_displayname']", r.get('policy_product_info')[0].get('policy_product_displayname'))
-    rodzaj = insurance_type(r.get('policy_product_info')[0].get('policy_product_displayname'))
+    rodzaj = api_requester.insurance_type(r.get('policy_product_info')[0].get('policy_product_displayname'))
 
 
     print(nazwa_firmy)
