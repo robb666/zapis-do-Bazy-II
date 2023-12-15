@@ -216,7 +216,7 @@ for policy in policies_list['policies']:
     # ilosc_rat = r.get('policy_first_installment_payment_method', '')
     I_rata = r.get('payment')[0].get('policy_installment_sum_real', '')
 
-
+    II_rata, III_rata, IV_rata = '', '', ''
     if len(r.get('payment')) > 2:
         II_rata = r.get('payment')[1].get('policy_installment_sum_real', '')
     if len(r.get('payment')) > 3:
@@ -272,7 +272,7 @@ for policy in policies_list['policies']:
         nr_polisy, '', '', '', '', '', '', '',
         przypis,
         ter_platnosci,
-        przypis if not I_rata else I_rata,
+        I_rata,
         f_platnosci,
         ilosc_rat,
     ]  # data for the row
