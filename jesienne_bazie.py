@@ -211,6 +211,8 @@ for policy in policies_list['policies']:
     print("r['policy_product_displayname']", r.get('policy_product_info')[0].get('policy_product_displayname'))
     rodzaj = api_requester.insurance_type(r.get('policy_product_info')[0].get('policy_product_displayname'))
 
+    nr_polisy = r['policy_no']
+
 
     print(nazwa_firmy)
     print(nazwisko)
@@ -233,6 +235,7 @@ for policy in policies_list['policies']:
     print('-------------')
 
     data = [
+        '', '', '', '', '', '',
         'Robert', '', '',
         'Grzelak',
         nazwa_firmy,
@@ -243,12 +246,23 @@ for policy in policies_list['policies']:
         kod_poczt,
         miasto,
         tel,
-        email := email.lower() if email else '',
-
+        email := email.lower() if email else '', '', '',
+        marka if nr_rej != '' else kod_poczt,
+        model if nr_rej != '' else miasto,
+        nr_rej if nr_rej != '' else ulica,
+        rok, '', '', '',
+        datetime.date.today().strftime('%Y-%m-%d'),
+        data_pocz,
+        data_konca, '', '', '',
+        'SPÓŁKA',
+        tow_ub,
+        tow_ub,
+        'kom' if nr_rej != '' else '',
+        nr_polisy,
     ]  # Your data for the row
 
     ## ws.Range(ws.Cells(row_to_write, 1), ws.Cells(row_to_write, len(data))).Value = data
-    ExcelApp.ws.Range(ExcelApp.ws.Cells(row_to_write, 7), ExcelApp.ws.Cells(row_to_write, len(data))).Value = data  # ----> metoda w ksiązce!
+    ExcelApp.ws.Range(ExcelApp.ws.Cells(row_to_write, 1), ExcelApp.ws.Cells(row_to_write, len(data))).Value = data  # ----> metoda w ksiązce!
     row_to_write += 1
 
 
@@ -281,7 +295,7 @@ for policy in policies_list['policies']:
 #     ExcelApp.ws.Cells(row_to_write, 37).Value = tow_ub
 #     ExcelApp.ws.Cells(row_to_write, 38).Value = tow_ub
 #     ExcelApp.ws.Cells(row_to_write, 39).Value = 'kom' if nr_rej != '' else ''
-# #     ExcelApp.Cells(row_to_write, 40).Value = nr_polisy
+#     ExcelApp.Cells(row_to_write, 40).Value = nr_polisy
 #     # ExcelApp.Cells(row_to_write, 41).Value = nowa_wzn
 #     # ExcelApp.Cells(row_to_write, 42).Value = nr_wzn
 #     # if wzn_idx:
