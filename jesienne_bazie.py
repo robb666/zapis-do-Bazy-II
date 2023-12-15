@@ -232,46 +232,56 @@ for policy in policies_list['policies']:
 
     print('-------------')
 
-    # data = [
-    #     'Robert',
-    #     value2,
-    #     value3,
-    #     ...,
-    #     valueN]  # Your data for the row
+    data = [
+        'Robert', '', '',
+        'Grzelak',
+        nazwa_firmy,
+        nazwisko,
+        imie,
+        pesel_lub_regon := 'p' + p_lub_r if len(p_lub_r) == 11 else 'r' + p_lub_r if len(p_lub_r) == 9 else '', '',
+        ulica,
+        kod_poczt,
+        miasto,
+        tel,
+        email := email.lower() if email else '',
+
+    ]  # Your data for the row
 
     ## ws.Range(ws.Cells(row_to_write, 1), ws.Cells(row_to_write, len(data))).Value = data
-    # ExcelApp.ws.Range(ExcelApp.ws.Cells(row_to_write, 7), ws.Cells(row_to_write, len(data))).Value = data ----> metoda w ksiązce!
+    ExcelApp.ws.Range(ExcelApp.ws.Cells(row_to_write, 7), ExcelApp.ws.Cells(row_to_write, len(data))).Value = data  # ----> metoda w ksiązce!
+    row_to_write += 1
 
-    # Rok_przypisu = ExcelApp.Cells(row_to_write, 1).Value = data_wyst[:2] # Komórka tylko do testów
-    Rozlicz = ExcelApp.ws.Cells(row_to_write, 7).Value = 'Robert'
-    Podpis = ExcelApp.ws.Cells(row_to_write, 10).Value = 'Grzelak'
-    FIRMA = ExcelApp.ws.Cells(row_to_write, 11).Value = nazwa_firmy
-    Nazwisko = ExcelApp.ws.Cells(row_to_write, 12).Value = nazwisko
-    Imie = ExcelApp.ws.Cells(row_to_write, 13).Value = imie
-    Pesel_Regon = ExcelApp.ws.Cells(row_to_write, 14).Value = 'p' + p_lub_r if len(p_lub_r) == 11 \
-                                                        else 'r' + p_lub_r if len(p_lub_r) == 9 else ''
-    # ExcelApp.Cells(row_to_write, 15).Value = pr_j
-    ExcelApp.ws.Cells(row_to_write,
-                   16).Value = ulica  # f'{ulica_f} {nr_ulicy_f}' if not nr_lok else f'{ulica_f} {nr_ulicy_f} m {nr_lok}'
-    ExcelApp.ws.Cells(row_to_write, 17).Value = kod_poczt  # kod_pocztowy(page_1) if not kod_poczt_f else kod_poczt_f_edit
-    ExcelApp.ws.Cells(row_to_write, 18).Value = miasto
-    ExcelApp.ws.Cells(row_to_write, 19).Value = tel
-    ExcelApp.ws.Cells(row_to_write, 20).Value = email.lower() if email else ''
-    ExcelApp.ws.Cells(row_to_write, 23).Value = marka if nr_rej != '' else kod_poczt
-    ExcelApp.ws.Cells(row_to_write, 24).Value = model if nr_rej != '' else miasto
-    ExcelApp.ws.Cells(row_to_write, 25).Value = nr_rej if nr_rej != '' else ulica
-    ExcelApp.ws.Cells(row_to_write, 26).Value = rok
 
-#     # ExcelApp.Cells(row_to_write, 29).Value = int(ile_dni) + 1
-#     # ExcelApp.Cells(row_to_write, 30).NumberFormat = 'yy-mm-dd'
-    ExcelApp.ws.Cells(row_to_write, 30).Value = datetime.date.today().strftime('%Y-%m-%d')
-    ExcelApp.ws.Cells(row_to_write, 31).Value = data_pocz
-    ExcelApp.ws.Cells(row_to_write, 32).Value = data_konca
-    ExcelApp.ws.Cells(row_to_write, 36).Value = 'SPÓŁKA'
-    ExcelApp.ws.Cells(row_to_write, 37).Value = tow_ub
-    ExcelApp.ws.Cells(row_to_write, 38).Value = tow_ub
-    ExcelApp.ws.Cells(row_to_write, 39).Value = 'kom' if nr_rej != '' else ''
-#     ExcelApp.Cells(row_to_write, 40).Value = nr_polisy
+#     # Rok_przypisu = ExcelApp.Cells(row_to_write, 1).Value = data_wyst[:2] # Komórka tylko do testów
+#     Rozlicz = ExcelApp.ws.Cells(row_to_write, 7).Value = 'Robert'
+#     Podpis = ExcelApp.ws.Cells(row_to_write, 10).Value = 'Grzelak'
+#     FIRMA = ExcelApp.ws.Cells(row_to_write, 11).Value = nazwa_firmy
+#     Nazwisko = ExcelApp.ws.Cells(row_to_write, 12).Value = nazwisko
+#     Imie = ExcelApp.ws.Cells(row_to_write, 13).Value = imie
+#     Pesel_Regon = ExcelApp.ws.Cells(row_to_write, 14).Value = 'p' + p_lub_r if len(p_lub_r) == 11 \
+#                                                         else 'r' + p_lub_r if len(p_lub_r) == 9 else ''
+#     # ExcelApp.Cells(row_to_write, 15).Value = pr_j
+#     ExcelApp.ws.Cells(row_to_write,
+#                    16).Value = ulica  # f'{ulica_f} {nr_ulicy_f}' if not nr_lok else f'{ulica_f} {nr_ulicy_f} m {nr_lok}'
+#     ExcelApp.ws.Cells(row_to_write, 17).Value = kod_poczt  # kod_pocztowy(page_1) if not kod_poczt_f else kod_poczt_f_edit
+#     ExcelApp.ws.Cells(row_to_write, 18).Value = miasto
+#     ExcelApp.ws.Cells(row_to_write, 19).Value = tel
+#     ExcelApp.ws.Cells(row_to_write, 20).Value = email.lower() if email else ''
+#     ExcelApp.ws.Cells(row_to_write, 23).Value = marka if nr_rej != '' else kod_poczt
+#     ExcelApp.ws.Cells(row_to_write, 24).Value = model if nr_rej != '' else miasto
+#     ExcelApp.ws.Cells(row_to_write, 25).Value = nr_rej if nr_rej != '' else ulica
+#     ExcelApp.ws.Cells(row_to_write, 26).Value = rok
+#
+# #     # ExcelApp.Cells(row_to_write, 29).Value = int(ile_dni) + 1
+# #     # ExcelApp.Cells(row_to_write, 30).NumberFormat = 'yy-mm-dd'
+#     ExcelApp.ws.Cells(row_to_write, 30).Value = datetime.date.today().strftime('%Y-%m-%d')
+#     ExcelApp.ws.Cells(row_to_write, 31).Value = data_pocz
+#     ExcelApp.ws.Cells(row_to_write, 32).Value = data_konca
+#     ExcelApp.ws.Cells(row_to_write, 36).Value = 'SPÓŁKA'
+#     ExcelApp.ws.Cells(row_to_write, 37).Value = tow_ub
+#     ExcelApp.ws.Cells(row_to_write, 38).Value = tow_ub
+#     ExcelApp.ws.Cells(row_to_write, 39).Value = 'kom' if nr_rej != '' else ''
+# #     ExcelApp.Cells(row_to_write, 40).Value = nr_polisy
 #     # ExcelApp.Cells(row_to_write, 41).Value = nowa_wzn
 #     # ExcelApp.Cells(row_to_write, 42).Value = nr_wzn
 #     # if wzn_idx:
@@ -329,7 +339,7 @@ for policy in policies_list['policies']:
 
 
 
-    row_to_write += 1
+    # row_to_write += 1
 
 
 
