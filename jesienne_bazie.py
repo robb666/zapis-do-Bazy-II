@@ -104,6 +104,12 @@ class ValidatedAPIRequester:
         else:
             return ''
 
+    def date_formatter(self, date):
+        if date not in ('', None, 'None'):
+            day, month, year = date.split('.')
+            return datetime.datetime(int(year), int(month), int(day)).strftime('%Y-%m-%d')
+        return ''
+
 
 pyxl = PyxlExcel(
     filename='M:/Agent baza/Login_Hasło.xlsm',
@@ -132,7 +138,7 @@ timestamp_to = datetime.date.today().strftime('%d.%m.%Y')
 
 headers = {
     "Authorization": f"Bearer {key}",
-    "Content-Type": "application/json"
+    "Content-Type": "application/json",
 }
 
 policy_list_payload = {
@@ -141,7 +147,7 @@ policy_list_payload = {
     "ajax_url": "/api/policy/list",
     "output": "json",
     "timestamp_from": "11.12.2023",  # timestamp_from
-    "timestamp_to": timestamp_to
+    "timestamp_to": timestamp_to,
 }
 
 api_requester = ValidatedAPIRequester(
@@ -171,11 +177,9 @@ for policy in policies_list['policies']:
 
     pesel = api_requester.pesel_checksum(r['customer_idcode'])
     regon = api_requester.regon_checksum(r['customer_idcode'])
-
     nazwa_firmy = r['customer_name'] if regon else ''
     nazwisko = r['customer_name'].split()[-1] if nazwa_firmy == '' else ''
     imie = r['customer_name'].split()[0] if nazwa_firmy == '' else ''
-
     p_lub_r = r['customer_idcode'] if pesel else r['customer_idcode'] if regon else ''
     ulica = r['address'][0]['customer_address_street']
     kod_poczt = r['address'][0]['customer_address_zip']
@@ -185,12 +189,9 @@ for policy in policies_list['policies']:
     email = r['customer_email']
 
     marka = r.get('objects')[0].get('vehicle_make', '') if len(r['objects']) > 0 else ''
-
     model = r.get('objects', '')[0].get('vehicle_model', '') if len(r['objects']) > 0 else ''
-
     nr_rej = ''
     rok = ''
-
     if len(r['objects']) > 0:
         nr_rej = r.get('objects')[0].get('vehicle_registration_number', '') \
             if r.get('objects')[0].get('vehicle_registration_number', '') != '' \
@@ -200,18 +201,14 @@ for policy in policies_list['policies']:
             if r.get('objects')[0].get('vehicle_first_registration_date', '') != '' \
             else r.get('objects')[0].get('vehicle_registered', '')[:4]
 
-    d, m, y = r.get('policy_date_start', '').split('.')
-    data_pocz = datetime.datetime(int(y), int(m), int(d)).strftime('%Y-%m-%d')
-
-    d, m, y = r.get('policy_date_end', '').split('.')
-    data_konca = datetime.datetime(int(y), int(m), int(d)).strftime('%Y-%m-%d')
-
+    data_pocz = api_requester.date_formatter(r.get('policy_date_start', ''))
+    data_konca = api_requester.date_formatter(r.get('policy_date_end', ''))
     tow_ub = api_requester.insurer(r.get('policy_insurer', ''))
-
-    print("r['policy_product_displayname']", r.get('policy_product_info')[0].get('policy_product_displayname'))
-    rodzaj = api_requester.insurance_type(r.get('policy_product_info')[0].get('policy_product_displayname'))
-
+    rodzaj = api_requester.insurance_type(r.get('policy_product_info', '')[0].get('policy_product_displayname', ''))
     nr_polisy = r['policy_no']
+    przypis = r['policy_payment_sum']
+    ter_platnosci = api_requester.date_formatter(r.get('payment', '')[0].get('policy_installment_date_due', ''))
+    ilosc_rat = r.get('payment')[0].get('policy_installment_num')
 
 
     print(nazwa_firmy)
@@ -258,10 +255,13 @@ for policy in policies_list['policies']:
         tow_ub,
         tow_ub,
         'kom' if nr_rej != '' else '',
-        nr_polisy,
+        nr_polisy, '', '', '', '', '', '', '',
+        przypis,
+        ter_platnosci,
+
     ]  # Your data for the row
 
-    ## ws.Range(ws.Cells(row_to_write, 1), ws.Cells(row_to_write, len(data))).Value = data
+    # TODO zaimplementować to w Win32comExcel
     ExcelApp.ws.Range(ExcelApp.ws.Cells(row_to_write, 1), ExcelApp.ws.Cells(row_to_write, len(data))).Value = data  # ----> metoda w ksiązce!
     row_to_write += 1
 
