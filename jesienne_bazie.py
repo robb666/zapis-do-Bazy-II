@@ -274,7 +274,9 @@ for policy in policies_list['policies']:
         ter_platnosci,
         I_rata,
         f_platnosci,
-        ilosc_rat,
+        ilosc_rat, '', '', '', '', '',
+        'API', '',
+        tow_ub
     ]  # data for the row
 
     # TODO zaimplementować to w Win32comExcel i zrobić wszystkie raty..nawet 12
