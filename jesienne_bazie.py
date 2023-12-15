@@ -126,7 +126,6 @@ from_date = ExcelApp.get_last_cell(col=30)
 
 str_conv = str(from_date)[:10].replace('.', '-')
 year, month, day = str_conv.split('-')
-
 timestamp_from = datetime.datetime(int(year), int(month), int(day)).strftime('%d.%m.%Y')
 timestamp_to = datetime.date.today().strftime('%d.%m.%Y')
 
@@ -233,7 +232,15 @@ for policy in policies_list['policies']:
 
     print('-------------')
 
+    # data = [
+    #     'Robert',
+    #     value2,
+    #     value3,
+    #     ...,
+    #     valueN]  # Your data for the row
 
+    ## ws.Range(ws.Cells(row_to_write, 1), ws.Cells(row_to_write, len(data))).Value = data
+    # ExcelApp.ws.Range(ExcelApp.ws.Cells(row_to_write, 7), ws.Cells(row_to_write, len(data))).Value = data ----> metoda w ksiązce!
 
     # Rok_przypisu = ExcelApp.Cells(row_to_write, 1).Value = data_wyst[:2] # Komórka tylko do testów
     Rozlicz = ExcelApp.ws.Cells(row_to_write, 7).Value = 'Robert'
