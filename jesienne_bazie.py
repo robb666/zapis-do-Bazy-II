@@ -42,6 +42,16 @@ class Win32comExcel:
     def get_last_cell(self, col):
         return self.ws.Cells(self.ws.Rows.Count, col).End(-4162)
 
+    def date_formatter(self, date):
+        if date not in ('', None, 'None'):
+            day, month, year = date.split('.')
+            return datetime.datetime(int(year), int(month), int(day)).strftime('%Y-%m-%d')
+        return ''
+
+    def row_range_input(self, data):
+        row_to_write = self.get_next_row(col=30)
+        self.ws.Range(self.ws.Cells(row_to_write, 1), self.ws.Cells(row_to_write, len(data))).Value = data
+
 
 class ValidatedAPIRequester:
     def __init__(self, base_url, headers):
@@ -104,12 +114,6 @@ class ValidatedAPIRequester:
         else:
             return ''
 
-    def date_formatter(self, date):
-        if date not in ('', None, 'None'):
-            day, month, year = date.split('.')
-            return datetime.datetime(int(year), int(month), int(day)).strftime('%Y-%m-%d')
-        return ''
-
 
 pyxl = PyxlExcel(
     filename='M:/Agent baza/Login_Hasło.xlsm',
@@ -126,7 +130,6 @@ in_l = pyxl.get_cell('F21')
 in_h = pyxl.get_cell('G21')
 pyxl.close()
 
-row_to_write = ExcelApp.get_next_row(col=30)
 from_date = ExcelApp.get_last_cell(col=30)
 
 
@@ -146,7 +149,7 @@ policy_list_payload = {
     "password": in_h,
     "ajax_url": "/api/policy/list",
     "output": "json",
-    "timestamp_from": "11.12.2023",  # timestamp_from
+    "timestamp_from": timestamp_from, #"05.12.2023",  # timestamp_from
     "timestamp_to": timestamp_to,
 }
 
@@ -158,7 +161,7 @@ api_requester = ValidatedAPIRequester(
 api_requester.add_endpoint('policies list', 'policy/list')
 policies_list = api_requester.post(api_requester['policies list'],
                                    data=policy_list_payload)
-
+print(policies_list)
 api_requester.add_endpoint('get policy', 'policy/getpolicy')
 print(policies_list['policies'])
 
@@ -201,14 +204,25 @@ for policy in policies_list['policies']:
             if r.get('objects')[0].get('vehicle_first_registration_date', '') != '' \
             else r.get('objects')[0].get('vehicle_registered', '')[:4]
 
-    data_pocz = api_requester.date_formatter(r.get('policy_date_start', ''))
-    data_konca = api_requester.date_formatter(r.get('policy_date_end', ''))
+    data_pocz = ExcelApp.date_formatter(r.get('policy_date_start', ''))
+    data_konca = ExcelApp.date_formatter(r.get('policy_date_end', ''))
     tow_ub = api_requester.insurer(r.get('policy_insurer', ''))
     rodzaj = api_requester.insurance_type(r.get('policy_product_info', '')[0].get('policy_product_displayname', ''))
     nr_polisy = r['policy_no']
     przypis = r['policy_payment_sum']
-    ter_platnosci = api_requester.date_formatter(r.get('payment', '')[0].get('policy_installment_date_due', ''))
-    ilosc_rat = r.get('payment')[0].get('policy_installment_num')
+    ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[0].get('policy_installment_date_due', ''))
+    f_platnosci = 'P' if r.get('policy_first_installment_payment_method') == 3 else ''
+    ilosc_rat = r.get('policy_installments', '')
+    # ilosc_rat = r.get('policy_first_installment_payment_method', '')
+    I_rata = r.get('payment')[0].get('policy_installment_sum_real', '')
+
+
+    if len(r.get('payment')) > 2:
+        II_rata = r.get('payment')[1].get('policy_installment_sum_real', '')
+    if len(r.get('payment')) > 3:
+        III_rata = r.get('payment')[2].get('policy_installment_sum_real', '')
+    if len(r.get('payment')) > 4:
+        IV_rata = r.get('payment')[3].get('policy_installment_sum_real', '')
 
 
     print(nazwa_firmy)
@@ -258,12 +272,13 @@ for policy in policies_list['policies']:
         nr_polisy, '', '', '', '', '', '', '',
         przypis,
         ter_platnosci,
-
-    ]  # Your data for the row
+        przypis if not I_rata else I_rata,
+        f_platnosci,
+        ilosc_rat,
+    ]  # data for the row
 
     # TODO zaimplementować to w Win32comExcel i zrobić wszystkie raty..nawet 12
-    ExcelApp.ws.Range(ExcelApp.ws.Cells(row_to_write, 1), ExcelApp.ws.Cells(row_to_write, len(data))).Value = data  # ----> metoda w ksiązce!
-    row_to_write += 1
+    ExcelApp.row_range_input(data)
 
 
 #     # Rok_przypisu = ExcelApp.Cells(row_to_write, 1).Value = data_wyst[:2] # Komórka tylko do testów
