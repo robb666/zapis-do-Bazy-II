@@ -96,7 +96,7 @@ class ValidatedAPIRequester:
         else:
             return ''
 
-    # TODO rozdzielić markę i model
+    # TODO rozdzielić markę i model (plik w starej wersji)
     def insurance_type(self, rodzaj):
         moto = 'Ubezpieczenie komunikacyjne motor'
         if re.search(rodzaj, moto, re.I):
@@ -261,7 +261,7 @@ for policy in policies_list['policies']:
 
     ]  # Your data for the row
 
-    # TODO zaimplementować to w Win32comExcel
+    # TODO zaimplementować to w Win32comExcel i zrobić wszystkie raty..nawet 12
     ExcelApp.ws.Range(ExcelApp.ws.Cells(row_to_write, 1), ExcelApp.ws.Cells(row_to_write, len(data))).Value = data  # ----> metoda w ksiązce!
     row_to_write += 1
 
