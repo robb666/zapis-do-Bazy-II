@@ -121,9 +121,8 @@ class ValidatedAPIRequester:
                 makes = content.read().split('\n')
                 for make in makes:
                     if re.search(make, policy_description, re.I):
-                        print('policy_description', policy_description)
-                        model = re.search(rf'{make},?\s([\w\s\d-]+)', policy_description).group(1)
-
+                        if model := re.search(rf'{make},?\s([\w\s\d-]+)', policy_description):
+                            model = model.group(1)
                         return make, model
                 return '', ''
 
