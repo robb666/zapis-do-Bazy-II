@@ -109,11 +109,21 @@ class ValidatedAPIRequester:
 
     # TODO rozdzielić markę i model (plik w starej wersji)
     def insurance_type(self, rodzaj):
-        moto = 'Ubezpieczenie komunikacyjne Motor (w/o calculation)'
-        if re.search(rodzaj, moto, re.I):
+        moto = ('Ubezpieczenie komunikacyjne', 'ubezpieczenie komunikacyjne', 'Motor (w/o calculation)')
+        if rodzaj in moto:
             return 'kom'
         else:
             return ''
+
+    def car_make(self, policy_description):
+        if policy_description:
+            with open('M:\\Agent baza\\marki.txt') as content:
+                makes = content.read().split('\n')
+                for make in makes:
+                    print(make)
+                    if re.search(make, policy_description, re.I):
+                        return make
+                    return ''
 
 
 pyxl = PyxlExcel(
@@ -193,6 +203,8 @@ for policy in policies_list['policies']:
     email = r['customer_email']
 
     marka = r.get('objects')[0].get('vehicle_make', '') if len(r['objects']) > 0 else ''
+    if marka == '':
+        marka = api_requester.car_make(r.get('policy_description', None))
     model = r.get('objects', '')[0].get('vehicle_model', '') if len(r['objects']) > 0 else ''
     nr_rej = ''
     rok = ''
@@ -208,7 +220,10 @@ for policy in policies_list['policies']:
     data_pocz = ExcelApp.date_formatter(r.get('policy_date_start', ''))
     data_konca = ExcelApp.date_formatter(r.get('policy_date_end', ''))
     tow_ub = api_requester.insurer(r.get('policy_insurer', ''))
-    rodzaj = api_requester.insurance_type(r.get('policy_product_info', '')[0].get('policy_product_displayname', ''))
+    rodzaj = api_requester.insurance_type(
+        r.get('policy_product_info', '')[0].get('policy_product_displayname', '')
+        if r.get('policy_product_info', '')[0].get('policy_product_displayname', '') != ''
+        else r.get('policy_type', ''))
     nr_polisy = r['policy_no']
     przypis = r['policy_payment_sum']
     ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[0].get('policy_installment_date_due', ''))
@@ -219,6 +234,7 @@ for policy in policies_list['policies']:
 
     I_rata = r.get('payment')[0].get('policy_installment_sum_real', '')
     nr_raty = '1'
+
 
     print(nazwa_firmy)
     print(nazwisko)
@@ -263,7 +279,7 @@ for policy in policies_list['policies']:
         'SPÓŁKA',
         tow_ub,
         tow_ub,
-        'kom' if nr_rej != '' else '',
+        rodzaj,
         nr_polisy, '', '', '', '', '', '', '',
         ### logika rat ###
         przypis,
