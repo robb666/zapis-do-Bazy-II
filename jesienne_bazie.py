@@ -149,8 +149,8 @@ policy_list_payload = {
     "password": in_h,
     "ajax_url": "/api/policy/list",
     "output": "json",
-    "timestamp_from": timestamp_from, #"05.12.2023",  # timestamp_from
-    "timestamp_to": timestamp_to,
+    "timestamp_from": "15.11.2023", #,  # timestamp_from
+    "timestamp_to": "15.12.2023", #timestamp_to,
 }
 
 api_requester = ValidatedAPIRequester(
@@ -213,17 +213,9 @@ for policy in policies_list['policies']:
     ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[0].get('policy_installment_date_due', ''))
     f_platnosci = 'P' if r.get('policy_first_installment_payment_method') == 3 else ''
     ilosc_rat = r.get('policy_installments', '')
-    # ilosc_rat = r.get('policy_first_installment_payment_method', '')
+
     I_rata = r.get('payment')[0].get('policy_installment_sum_real', '')
-
-    II_rata, III_rata, IV_rata = '', '', ''
-    if len(r.get('payment')) > 2:
-        II_rata = r.get('payment')[1].get('policy_installment_sum_real', '')
-    if len(r.get('payment')) > 3:
-        III_rata = r.get('payment')[2].get('policy_installment_sum_real', '')
-    if len(r.get('payment')) > 4:
-        IV_rata = r.get('payment')[3].get('policy_installment_sum_real', '')
-
+    nr_raty = '1'
 
     print(nazwa_firmy)
     print(nazwisko)
@@ -270,103 +262,162 @@ for policy in policies_list['policies']:
         tow_ub,
         'kom' if nr_rej != '' else '',
         nr_polisy, '', '', '', '', '', '', '',
+        ### logika rat ###
         przypis,
         ter_platnosci,
-        I_rata,
+        I_rata if I_rata else przypis,
         f_platnosci,
-        ilosc_rat, '', '', '', '', '',
-        'API', '',
+        ilosc_rat,
+        nr_raty,
+        ter_platnosci, '', '', '',
+        'api', '',
         tow_ub
     ]  # data for the row
+
+
 
     # TODO zaimplementować to w Win32comExcel i zrobić wszystkie raty..nawet 12
     ExcelApp.row_range_input(data)
 
+    """  RATY  """
 
-#     # Rok_przypisu = ExcelApp.Cells(row_to_write, 1).Value = data_wyst[:2] # Komórka tylko do testów
-#     Rozlicz = ExcelApp.ws.Cells(row_to_write, 7).Value = 'Robert'
-#     Podpis = ExcelApp.ws.Cells(row_to_write, 10).Value = 'Grzelak'
-#     FIRMA = ExcelApp.ws.Cells(row_to_write, 11).Value = nazwa_firmy
-#     Nazwisko = ExcelApp.ws.Cells(row_to_write, 12).Value = nazwisko
-#     Imie = ExcelApp.ws.Cells(row_to_write, 13).Value = imie
-#     Pesel_Regon = ExcelApp.ws.Cells(row_to_write, 14).Value = 'p' + p_lub_r if len(p_lub_r) == 11 \
-#                                                         else 'r' + p_lub_r if len(p_lub_r) == 9 else ''
-#     # ExcelApp.Cells(row_to_write, 15).Value = pr_j
-#     ExcelApp.ws.Cells(row_to_write,
-#                    16).Value = ulica  # f'{ulica_f} {nr_ulicy_f}' if not nr_lok else f'{ulica_f} {nr_ulicy_f} m {nr_lok}'
-#     ExcelApp.ws.Cells(row_to_write, 17).Value = kod_poczt  # kod_pocztowy(page_1) if not kod_poczt_f else kod_poczt_f_edit
-#     ExcelApp.ws.Cells(row_to_write, 18).Value = miasto
-#     ExcelApp.ws.Cells(row_to_write, 19).Value = tel
-#     ExcelApp.ws.Cells(row_to_write, 20).Value = email.lower() if email else ''
-#     ExcelApp.ws.Cells(row_to_write, 23).Value = marka if nr_rej != '' else kod_poczt
-#     ExcelApp.ws.Cells(row_to_write, 24).Value = model if nr_rej != '' else miasto
-#     ExcelApp.ws.Cells(row_to_write, 25).Value = nr_rej if nr_rej != '' else ulica
-#     ExcelApp.ws.Cells(row_to_write, 26).Value = rok
-#
-# #     # ExcelApp.Cells(row_to_write, 29).Value = int(ile_dni) + 1
-# #     # ExcelApp.Cells(row_to_write, 30).NumberFormat = 'yy-mm-dd'
-#     ExcelApp.ws.Cells(row_to_write, 30).Value = datetime.date.today().strftime('%Y-%m-%d')
-#     ExcelApp.ws.Cells(row_to_write, 31).Value = data_pocz
-#     ExcelApp.ws.Cells(row_to_write, 32).Value = data_konca
-#     ExcelApp.ws.Cells(row_to_write, 36).Value = 'SPÓŁKA'
-#     ExcelApp.ws.Cells(row_to_write, 37).Value = tow_ub
-#     ExcelApp.ws.Cells(row_to_write, 38).Value = tow_ub
-#     ExcelApp.ws.Cells(row_to_write, 39).Value = 'kom' if nr_rej != '' else ''
-#     ExcelApp.Cells(row_to_write, 40).Value = nr_polisy
-#     # ExcelApp.Cells(row_to_write, 41).Value = nowa_wzn
-#     # ExcelApp.Cells(row_to_write, 42).Value = nr_wzn
-#     # if wzn_idx:
-#     #     ExcelApp.Cells(row_to_write, 41).Value = 'W'
-#     #     ExcelApp.Cells(row_to_write, 42).Value = nowa_wzn
-#     # else:
-#     #     ExcelApp.Cells(row_to_write, 41).Value = 'N'
-#     #     ExcelApp.Cells(row_to_write, 42).Value = ''
-#     # ExcelApp.Cells(row_to_write, 46).Value = ryzyko
-#     ExcelApp.Cells(row_to_write, 48).Value = przypis
-#     ExcelApp.Cells(row_to_write, 49).Value = ter_platnosci
-#     # if I_rata_data:
-#     #     ExcelApp.Cells(row_to_write, 49).Value = I_rata_data
-#     if rata_I:
-#         ExcelApp.Cells(row_to_write, 50).Value = rata_I
-#     else:
-#         ExcelApp.Cells(row_to_write, 50).Value = przypis
-#     ExcelApp.Cells(row_to_write, 51).Value = f_platnosci
-#     ExcelApp.Cells(row_to_write, 52).Value = ilosc_rat
-#     ExcelApp.Cells(row_to_write, 53).Value = nr_raty
-#     data_inkasa = ExcelApp.Cells(row_to_write, 54).Value = ter_platnosci
-#     if rata_I:
-#         ExcelApp.Cells(row_to_write, 55).Value = rata_I
-#     else:
-#         ExcelApp.Cells(row_to_write, 55).Value = przypis
-#     ExcelApp.Cells(row_to_write, 58).Value = 'aut'
-#     ExcelApp.Cells(row_to_write, 60).Value = tow_ub_tor
-#
-#     if rata_II:
-#         ws.Range(f'A{row_to_write}:BH{row_to_write}').Copy()
-#         ws.Range(f'A{row_to_write + 1}').PasteSpecial()
-#
-#         ExcelApp.Cells(row_to_write + 1, 48).Value = ''
-#         ExcelApp.Cells(row_to_write + 1, 49).Value = termin_II
-#         ExcelApp.Cells(row_to_write + 1, 50).Value = rata_II
-#         ExcelApp.Cells(row_to_write + 1, 53).Value = 2
-#         data_inkasa = ExcelApp.Cells(row_to_write + 1, 54).Value = ''
-#         ExcelApp.Cells(row_to_write + 1, 55).Value = ''
-#
-#         if rata_III:
-#             ws.Range(f'A{row_to_write + 1}:BH{row_to_write + 1}').Copy()
-#             ws.Range(f'A{row_to_write + 2}').PasteSpecial()
-#
-#             ExcelApp.Cells(row_to_write + 2, 49).Value = termin_III
-#             ExcelApp.Cells(row_to_write + 2, 50).Value = rata_III
-#             ExcelApp.Cells(row_to_write + 2, 53).Value = 3
-#
-#             if rata_IV:
-#                 ws.Range(f'A{row_to_write + 2}:BH{row_to_write + 2}').Copy()
-#                 ws.Range(f'A{row_to_write + 3}').PasteSpecial()
-#
-#                 ExcelApp.Cells(row_to_write + 3, 49).Value = termin_IV
-#                 ExcelApp.Cells(row_to_write + 3, 50).Value = rata_IV
-#                 ExcelApp.Cells(row_to_write + 3, 53).Value = 4
+    II_rata, III_rata, IV_rata = '', '', ''
+
+    row_to_write = ExcelApp.get_next_row(col=30)
+
+    if len(r.get('payment')) > 1:
+        II_rata = r.get('payment')[1].get('policy_installment_sum_real', '')
+        II_ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[1].get('policy_installment_date_due', ''))
+        nr_raty = '2'
+        II_rata_data = data[:-13] + ['', II_ter_platnosci, II_rata, f_platnosci, ilosc_rat, nr_raty, '', '', '', '',
+                                     'api', '', tow_ub]
+        ExcelApp.row_range_input(II_rata_data)
+
+    if len(r.get('payment')) > 2:
+        III_rata = r.get('payment')[2].get('policy_installment_sum_real', '')
+        III_ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[2].get('policy_installment_date_due', ''))
+        nr_raty = '3'
+        III_rata_data = data[:-13] + ['', III_ter_platnosci, III_rata, f_platnosci, ilosc_rat, nr_raty, '', '', '', '',
+                                     'api', '', tow_ub]
+        ExcelApp.row_range_input(III_rata_data)
+
+    if len(r.get('payment')) > 3:
+        IV_rata = r.get('payment')[3].get('policy_installment_sum_real', '')
+        IV_ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[3].get('policy_installment_date_due', ''))
+        nr_raty = '4'
+        IV_rata_data = data[:-13] + ['', IV_ter_platnosci, IV_rata, f_platnosci, ilosc_rat, nr_raty, '', '', '', '',
+                                     'api', '', tow_ub]
+        ExcelApp.row_range_input(IV_rata_data)
+
+    if len(r.get('payment')) > 4:
+        V_rata = r.get('payment')[4].get('policy_installment_sum_real', '')
+        V_ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[4].get('policy_installment_date_due', ''))
+        nr_raty = '4'
+        V_rata_data = data[:-13] + ['', V_ter_platnosci, V_rata, f_platnosci, ilosc_rat, nr_raty, '', '', '', '',
+                                     'api', '', tow_ub]
+        ExcelApp.row_range_input(V_rata_data)
+
+    if len(r.get('payment')) > 5:
+        VI_rata = r.get('payment')[5].get('policy_installment_sum_real', '')
+        VI_ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[5].get('policy_installment_date_due', ''))
+        nr_raty = '4'
+        VI_rata_data = data[:-13] + ['', VI_ter_platnosci, VI_rata, f_platnosci, ilosc_rat, nr_raty, '', '', '', '',
+                                     'api', '', tow_ub]
+        ExcelApp.row_range_input(VI_rata_data)
+
+    if len(r.get('payment')) > 6:
+        VII_rata = r.get('payment')[6].get('policy_installment_sum_real', '')
+        VII_ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[6].get('policy_installment_date_due', ''))
+        nr_raty = '4'
+        VII_rata_data = data[:-13] + ['', VII_ter_platnosci, VII_rata, f_platnosci, ilosc_rat, nr_raty, '', '', '', '',
+                                     'api', '', tow_ub]
+        ExcelApp.row_range_input(VII_rata_data)
+
+    if len(r.get('payment')) > 7:
+        VIII_rata = r.get('payment')[7].get('policy_installment_sum_real', '')
+        VIII_ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[7].get('policy_installment_date_due', ''))
+        nr_raty = '4'
+        VIII_rata_data = data[:-13] + ['', VIII_ter_platnosci, VIII_rata, f_platnosci, ilosc_rat, nr_raty, '', '', '', '',
+                                     'api', '', tow_ub]
+        ExcelApp.row_range_input(VIII_rata_data)
+
+    if len(r.get('payment')) > 8:
+        IX_rata = r.get('payment')[8].get('policy_installment_sum_real', '')
+        IX_ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[8].get('policy_installment_date_due', ''))
+        nr_raty = '4'
+        IX_rata_data = data[:-13] + ['', IX_ter_platnosci, IX_rata, f_platnosci, ilosc_rat, nr_raty, '', '', '', '',
+                                     'api', '', tow_ub]
+        ExcelApp.row_range_input(IX_rata_data)
+
+    if len(r.get('payment')) > 9:
+        X_rata = r.get('payment')[9].get('policy_installment_sum_real', '')
+        X_ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[9].get('policy_installment_date_due', ''))
+        nr_raty = '4'
+        X_rata_data = data[:-13] + ['', X_ter_platnosci, X_rata, f_platnosci, ilosc_rat, nr_raty, '', '', '', '',
+                                     'api', '', tow_ub]
+        ExcelApp.row_range_input(X_rata_data)
+
+    if len(r.get('payment')) > 10:
+        XI_rata = r.get('payment')[10].get('policy_installment_sum_real', '')
+        XI_ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[10].get('policy_installment_date_due', ''))
+        nr_raty = '4'
+        XI_rata_data = data[:-13] + ['', XI_ter_platnosci, XI_rata, f_platnosci, ilosc_rat, nr_raty, '', '', '', '',
+                                     'api', '', tow_ub]
+        ExcelApp.row_range_input(XI_rata_data)
+
+    if len(r.get('payment')) > 12:
+        XII_rata = r.get('payment')[12].get('policy_installment_sum_real', '')
+        XII_ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[12].get('policy_installment_date_due', ''))
+        nr_raty = '4'
+        XII_rata_data = data[:-13] + ['', XII_ter_platnosci, XII_rata, f_platnosci, ilosc_rat, nr_raty, '', '', '', '',
+                                     'api', '', tow_ub]
+        ExcelApp.row_range_input(XII_rata_data)
+
+
+
+
+
+    # if rata_I:
+    #     ExcelApp.Cells(row_to_write, 50).Value = rata_I
+    # else:
+    #     ExcelApp.Cells(row_to_write, 50).Value = przypis
+    # ExcelApp.Cells(row_to_write, 51).Value = f_platnosci
+    # ExcelApp.Cells(row_to_write, 52).Value = ilosc_rat
+    # ExcelApp.Cells(row_to_write, 53).Value = nr_raty
+    # data_inkasa = ExcelApp.Cells(row_to_write, 54).Value = ter_platnosci
+    # if rata_I:
+    #     ExcelApp.Cells(row_to_write, 55).Value = rata_I
+    # else:
+    #     ExcelApp.Cells(row_to_write, 55).Value = przypis
+    # ExcelApp.Cells(row_to_write, 58).Value = 'aut'
+    # ExcelApp.Cells(row_to_write, 60).Value = tow_ub_tor
+    #
+    # if rata_II:
+    #     ws.Range(f'A{row_to_write}:BH{row_to_write}').Copy()
+    #     ws.Range(f'A{row_to_write + 1}').PasteSpecial()
+    #
+    #     ExcelApp.Cells(row_to_write + 1, 48).Value = ''
+    #     ExcelApp.Cells(row_to_write + 1, 49).Value = termin_II
+    #     ExcelApp.Cells(row_to_write + 1, 50).Value = rata_II
+    #     ExcelApp.Cells(row_to_write + 1, 53).Value = 2
+    #     data_inkasa = ExcelApp.Cells(row_to_write + 1, 54).Value = ''
+    #     ExcelApp.Cells(row_to_write + 1, 55).Value = ''
+    #
+    #     if rata_III:
+    #         ws.Range(f'A{row_to_write + 1}:BH{row_to_write + 1}').Copy()
+    #         ws.Range(f'A{row_to_write + 2}').PasteSpecial()
+    #
+    #         ExcelApp.Cells(row_to_write + 2, 49).Value = termin_III
+    #         ExcelApp.Cells(row_to_write + 2, 50).Value = rata_III
+    #         ExcelApp.Cells(row_to_write + 2, 53).Value = 3
+    #
+    #         if rata_IV:
+    #             ws.Range(f'A{row_to_write + 2}:BH{row_to_write + 2}').Copy()
+    #             ws.Range(f'A{row_to_write + 3}').PasteSpecial()
+    #
+    #             ExcelApp.Cells(row_to_write + 3, 49).Value = termin_IV
+    #             ExcelApp.Cells(row_to_write + 3, 50).Value = rata_IV
+    #             ExcelApp.Cells(row_to_write + 3, 53).Value = 4
 
 
 
