@@ -278,16 +278,9 @@ for policy in policies_list['policies']:
         tow_ub
     ]  # data for the row
 
-
-
-    # TODO zaimplementować to w Win32comExcel i zrobić wszystkie raty..nawet 12
     ExcelApp.row_range_input(data)
 
     """  RATY  """
-
-    II_rata, III_rata, IV_rata = '', '', ''
-
-    row_to_write = ExcelApp.get_next_row(col=30)
 
     for num in range(1, len(r.get('payment'))):
         x_rata = r.get('payment')[num].get('policy_installment_sum_real', '')
@@ -298,9 +291,8 @@ for policy in policies_list['policies']:
         ExcelApp.row_range_input(x_rata_dane)
 
 
-# """Opcje zapisania"""
-#
-# # Exec
+"""Opcje zapisania"""
+
 # ExcelApp.DisplayAlerts = False
 #
 # ## Bez zapisania
