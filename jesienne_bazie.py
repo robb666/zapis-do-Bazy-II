@@ -313,7 +313,7 @@ for policy in policies_list['policies']:
     if len(r.get('payment')) > 4:
         V_rata = r.get('payment')[4].get('policy_installment_sum_real', '')
         V_ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[4].get('policy_installment_date_due', ''))
-        nr_raty = '4'
+        nr_raty = '5'
         V_rata_data = data[:-13] + ['', V_ter_platnosci, V_rata, f_platnosci, ilosc_rat, nr_raty, '', '', '', '',
                                      'api', '', tow_ub]
         ExcelApp.row_range_input(V_rata_data)
@@ -321,7 +321,7 @@ for policy in policies_list['policies']:
     if len(r.get('payment')) > 5:
         VI_rata = r.get('payment')[5].get('policy_installment_sum_real', '')
         VI_ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[5].get('policy_installment_date_due', ''))
-        nr_raty = '4'
+        nr_raty = '6'
         VI_rata_data = data[:-13] + ['', VI_ter_platnosci, VI_rata, f_platnosci, ilosc_rat, nr_raty, '', '', '', '',
                                      'api', '', tow_ub]
         ExcelApp.row_range_input(VI_rata_data)
@@ -329,7 +329,7 @@ for policy in policies_list['policies']:
     if len(r.get('payment')) > 6:
         VII_rata = r.get('payment')[6].get('policy_installment_sum_real', '')
         VII_ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[6].get('policy_installment_date_due', ''))
-        nr_raty = '4'
+        nr_raty = '7'
         VII_rata_data = data[:-13] + ['', VII_ter_platnosci, VII_rata, f_platnosci, ilosc_rat, nr_raty, '', '', '', '',
                                      'api', '', tow_ub]
         ExcelApp.row_range_input(VII_rata_data)
@@ -337,7 +337,7 @@ for policy in policies_list['policies']:
     if len(r.get('payment')) > 7:
         VIII_rata = r.get('payment')[7].get('policy_installment_sum_real', '')
         VIII_ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[7].get('policy_installment_date_due', ''))
-        nr_raty = '4'
+        nr_raty = '8'
         VIII_rata_data = data[:-13] + ['', VIII_ter_platnosci, VIII_rata, f_platnosci, ilosc_rat, nr_raty, '', '', '', '',
                                      'api', '', tow_ub]
         ExcelApp.row_range_input(VIII_rata_data)
@@ -345,7 +345,7 @@ for policy in policies_list['policies']:
     if len(r.get('payment')) > 8:
         IX_rata = r.get('payment')[8].get('policy_installment_sum_real', '')
         IX_ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[8].get('policy_installment_date_due', ''))
-        nr_raty = '4'
+        nr_raty = '9'
         IX_rata_data = data[:-13] + ['', IX_ter_platnosci, IX_rata, f_platnosci, ilosc_rat, nr_raty, '', '', '', '',
                                      'api', '', tow_ub]
         ExcelApp.row_range_input(IX_rata_data)
@@ -353,7 +353,7 @@ for policy in policies_list['policies']:
     if len(r.get('payment')) > 9:
         X_rata = r.get('payment')[9].get('policy_installment_sum_real', '')
         X_ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[9].get('policy_installment_date_due', ''))
-        nr_raty = '4'
+        nr_raty = '10'
         X_rata_data = data[:-13] + ['', X_ter_platnosci, X_rata, f_platnosci, ilosc_rat, nr_raty, '', '', '', '',
                                      'api', '', tow_ub]
         ExcelApp.row_range_input(X_rata_data)
@@ -361,15 +361,15 @@ for policy in policies_list['policies']:
     if len(r.get('payment')) > 10:
         XI_rata = r.get('payment')[10].get('policy_installment_sum_real', '')
         XI_ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[10].get('policy_installment_date_due', ''))
-        nr_raty = '4'
+        nr_raty = '11'
         XI_rata_data = data[:-13] + ['', XI_ter_platnosci, XI_rata, f_platnosci, ilosc_rat, nr_raty, '', '', '', '',
                                      'api', '', tow_ub]
         ExcelApp.row_range_input(XI_rata_data)
 
-    if len(r.get('payment')) > 12:
-        XII_rata = r.get('payment')[12].get('policy_installment_sum_real', '')
-        XII_ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[12].get('policy_installment_date_due', ''))
-        nr_raty = '4'
+    if len(r.get('payment')) > 11:
+        XII_rata = r.get('payment')[11].get('policy_installment_sum_real', '')
+        XII_ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[11].get('policy_installment_date_due', ''))
+        nr_raty = '12'
         XII_rata_data = data[:-13] + ['', XII_ter_platnosci, XII_rata, f_platnosci, ilosc_rat, nr_raty, '', '', '', '',
                                      'api', '', tow_ub]
         ExcelApp.row_range_input(XII_rata_data)
