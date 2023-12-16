@@ -212,7 +212,9 @@ for policy in policies_list['policies']:
     nr_polisy = r['policy_no']
     przypis = r['policy_payment_sum']
     ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[0].get('policy_installment_date_due', ''))
-    f_platnosci = 'P' if r.get('policy_first_installment_payment_method') == 3 else ''
+    f_platnosci = 'P' if r.get('policy_first_installment_payment_method') == 3 else \
+                  'G' if r.get('policy_first_installment_payment_method') == 1 \
+                      else ''
     ilosc_rat = r.get('policy_installments', '')
 
     I_rata = r.get('payment')[0].get('policy_installment_sum_real', '')
