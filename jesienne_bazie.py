@@ -95,14 +95,15 @@ class ValidatedAPIRequester:
             return False
 
     def insurer(self, tow):
-        tow = tow.title()
         insurers = {'Allianz': 'ALL', 'AXA': 'AXA', 'Balcia': 'BAL', 'Compensa': 'COM', 'Euroins': 'EIN',
-                    'PZU': 'EPZU', 'Generali': 'GEN', 'HDI': 'HDI', 'Ergo Hestia': 'HES', 'Ergohestialite': 'HES',
-                    'INTER': 'INT', 'LINK 4': 'LIN', 'MTU': 'MTU', 'Proama': 'PRO', 'InterRisk': 'RIS', 'TUW': 'TUW',
-                    'TUZ': 'TUZ', 'Uniqa': 'UNI', 'Warta': 'WAR', 'Wiener': 'WIE', 'You Can Drive': 'YCD',
-                    'Trasti': 'TRA', 'Wefox': 'WEF'}
-        if tow in insurers:
-            return insurers[tow]
+                    'I10001237': 'PZU', 'pzu': 'PZU', 'Generali': 'GEN', 'HDI': 'HDI',
+                    'Ergo Hestia': 'HES', 'Ergohestialite': 'HES', 'INTER': 'INT', 'LINK 4': 'LIN',
+                    'mtu': 'MTU', 'Proama': 'PRO', 'InterRisk': 'RIS', 'tuwtuw': 'TUW',
+                    'tuz': 'TUZ', 'Uniqa': 'UNI', 'Warta': 'WAR', 'Wiener': 'WIE', 'Gothaer': 'WIE',
+                    'You Can Drive': 'YCD', 'Trasti': 'TRA', 'Wefox': 'WEF'}
+        for insurer in insurers:
+            if re.search(tow, insurer, re.I):
+                return insurers[insurer]
         else:
             return ''
 
