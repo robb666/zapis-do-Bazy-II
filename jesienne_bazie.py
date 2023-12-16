@@ -115,15 +115,17 @@ class ValidatedAPIRequester:
         else:
             return ''
 
-    def car_make(self, policy_description):
+    def car_make_model(self, policy_description):
         if policy_description:
             with open('M:\\Agent baza\\marki.txt') as content:
                 makes = content.read().split('\n')
                 for make in makes:
-                    print(make)
                     if re.search(make, policy_description, re.I):
-                        return make
-                    return ''
+                        print('policy_description', policy_description)
+                        model = re.search(rf'{make},?\s([\w\s\d-]+)', policy_description).group(1)
+
+                        return make, model
+                return '', ''
 
 
 pyxl = PyxlExcel(
@@ -204,8 +206,10 @@ for policy in policies_list['policies']:
 
     marka = r.get('objects')[0].get('vehicle_make', '') if len(r['objects']) > 0 else ''
     if marka == '':
-        marka = api_requester.car_make(r.get('policy_description', None))
+        marka = api_requester.car_make_model(r.get('policy_description', None))[0]
     model = r.get('objects', '')[0].get('vehicle_model', '') if len(r['objects']) > 0 else ''
+    if model == '':
+        model = api_requester.car_make_model(r.get('policy_description', None))[1]
     nr_rej = ''
     rok = ''
     if len(r['objects']) > 0:
