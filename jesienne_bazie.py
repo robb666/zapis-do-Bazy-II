@@ -107,7 +107,6 @@ class ValidatedAPIRequester:
         else:
             return ''
 
-    # TODO rozdzielić markę i model (plik w starej wersji)
     def insurance_type(self, rodzaj):
         moto = ('Ubezpieczenie komunikacyjne', 'ubezpieczenie komunikacyjne', 'Motor (w/o calculation)')
         if rodzaj in moto:
@@ -161,8 +160,8 @@ policy_list_payload = {
     "password": in_h,
     "ajax_url": "/api/policy/list",
     "output": "json",
-    "timestamp_from": "15.11.2023", #,  # timestamp_from
-    "timestamp_to": "15.12.2023", #timestamp_to,
+    "timestamp_from": "15.11.2023",  # timestamp_from,
+    "timestamp_to": "15.12.2023",  # timestamp_to,
 }
 
 api_requester = ValidatedAPIRequester(
@@ -197,6 +196,11 @@ for policy in policies_list['policies']:
     imie = r['customer_name'].split()[0] if nazwa_firmy == '' else ''
     p_lub_r = r['customer_idcode'] if pesel else r['customer_idcode'] if regon else ''
     ulica = r['address'][0]['customer_address_street']
+    nr_ulicy = r['address'][0]['customer_address_house']
+    nr_mie = r.get('address', '')[0].get('customer_address_apt', '')
+    adres = f'{ulica} {nr_ulicy}'
+    if nr_mie not in ('None', None):
+        adres = f'{ulica} {nr_ulicy} m {nr_mie}'
     kod_poczt = r['address'][0]['customer_address_zip']
     miasto = r['address'][0]['customer_address_city']
     tel = r['customer_mobile'] if r['customer_mobile'] != '' else r['customer_phone']
@@ -231,8 +235,8 @@ for policy in policies_list['policies']:
     przypis = r['policy_payment_sum']
     ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[0].get('policy_installment_date_due', ''))
     f_platnosci = 'P' if r.get('policy_first_installment_payment_method') == 3 else \
-                  'G' if r.get('policy_first_installment_payment_method') == 1 \
-                      else ''
+        'G' if r.get('policy_first_installment_payment_method') == 1 \
+            else ''
     ilosc_rat = r.get('policy_installments', '')
 
     I_rata = r.get('payment')[0].get('policy_installment_sum_real', '')
@@ -267,7 +271,7 @@ for policy in policies_list['policies']:
         nazwisko,
         imie,
         pesel_lub_regon := 'p' + p_lub_r if len(p_lub_r) == 11 else 'r' + p_lub_r if len(p_lub_r) == 9 else '', '',
-        ulica,
+        adres,
         kod_poczt,
         miasto,
         tel,
