@@ -212,6 +212,8 @@ for policy in policies_list['policies']:
 
     ofwca = api_requester.ofwce(
         r.get('broker_person_oid', '')
+        if r.get('broker_person_oid', '') != ''
+        else r.get('sales_broker_person_oid', '')
     )
     print(r.get('broker_person_oid', ''))
     print(ofwca)
