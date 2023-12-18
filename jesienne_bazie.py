@@ -165,7 +165,8 @@ pyxl = PyxlExcel(
 )
 
 ExcelApp = Win32comExcel(
-    filename='C:\\Users\\PipBoy3000\\Desktop\\2014 BAZA MAGRO.xlsm',
+    # filename='C:\\Users\\PipBoy3000\\Desktop\\2014 BAZA MAGRO.xlsm',
+    filename='M:\\Agent baza\\2014 BAZA MAGRO.xlsm',
     workbook='2014 BAZA MAGRO.xlsm',
     sheet='BAZA 2014',
 )
@@ -192,7 +193,7 @@ policy_list_payload = {
     "password": in_h,
     "ajax_url": "/api/policy/list",
     "output": "json",
-    "timestamp_from": "15.11.2023",  # timestamp_from,
+    "timestamp_from": timestamp_from,
     "timestamp_to": timestamp_to,
 }
 
