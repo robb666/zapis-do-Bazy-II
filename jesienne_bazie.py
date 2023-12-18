@@ -282,11 +282,13 @@ for policy in policies_list['policies']:
     I_rata = r.get('payment')[0].get('policy_installment_sum_real', '')
     nr_raty = '1'
 
-    print('Nazwa firmy: ', nazwa_firmy)
-    print('Nazwisko: ', nazwisko)
-    print('Imię: ', imie)
+    print('-------------')
+    print('  Nazwa firmy: ', nazwa_firmy)
+    print('     Nazwisko: ', nazwisko)
+    print('         Imię: ', imie)
     print('Pesel / Regon: ', pesel_lub_regon)
-    print('------------')
+    print('      Telefon: ', tel)
+    print('        Email: ', email)
 
     data = [
         # od 7 kolumny
