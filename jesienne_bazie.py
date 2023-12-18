@@ -1,6 +1,7 @@
 import requests
 import win32com.client
-from win32com.client import Dispatch
+import win32com.client as win32
+# from win32com.client import Dispatch
 import time
 from openpyxl import load_workbook
 import datetime
@@ -25,6 +26,7 @@ class PyxlExcel:
 
 
 class Win32comExcel:
+
     def __init__(self, filename=None, workbook=None, sheet=None, visible=True):
         try:
             self.ExcelApp = win32com.client.GetActiveObject('Excel.Application')
@@ -35,6 +37,7 @@ class Win32comExcel:
             self.wb = self.ExcelApp.Workbooks.OpenXML(filename)
             self.ws = self.wb.Worksheets(sheet)
         self.ExcelApp.Visible = visible
+
 
     def get_next_row(self, col):
         return self.ws.Cells(self.ws.Rows.Count, col).End(-4162).Row + 1
@@ -48,9 +51,19 @@ class Win32comExcel:
             return datetime.datetime(int(year), int(month), int(day)).strftime('%Y-%m-%d')
         return ''
 
-    def row_range_input(self, data):
+    def row_range_input(self, data, value=False):
         row_to_write = self.get_next_row(col=30)
-        self.ws.Range(self.ws.Cells(row_to_write, 1), self.ws.Cells(row_to_write, len(data))).Value = data
+        if value:
+            row_to_write = self.find_last_row_by_value(column=7)
+            self.ws.Rows(row_to_write).Copy()
+            self.ws.Rows(row_to_write).Insert(Shift=win32.constants.xlDown)
+        self.ws.Range(self.ws.Cells(row_to_write, 'G'), self.ws.Cells(row_to_write, len(data))).Value = data
+
+    def find_last_row_by_value(self, column):
+        last_row = self.ws.Cells(self.ws.Rows.Count, column).End(-4162).Row  # .End(win32com.client.constants.xlUp).Row
+        for row in range(last_row, 0, -1):
+            if self.ws.Cells(row, column).Value in ('MAGRO', 'Wawrzyniak', 'Wołowski', 'Skrzypek', 'Nowakowski', 'Filipiak'):
+                return row + 1
 
 
 class ValidatedAPIRequester:
@@ -162,8 +175,8 @@ in_l = pyxl.get_cell('F21')
 in_h = pyxl.get_cell('G21')
 pyxl.close()
 
-from_date = ExcelApp.get_last_cell(col=30)
 
+from_date = ExcelApp.get_last_cell(col=30)
 
 str_conv = str(from_date)[:10].replace('.', '-')
 year, month, day = str_conv.split('-')
@@ -196,6 +209,7 @@ policies_list = api_requester.post(api_requester['policies list'],
 print(policies_list)
 api_requester.add_endpoint('get policy', 'policy/getpolicy')
 print(policies_list['policies'])
+
 
 for policy in policies_list['policies']:
     policy_oid = policy['policy_oid']
@@ -292,7 +306,7 @@ for policy in policies_list['policies']:
     print('-------------')
 
     data = [
-        '', '', '', '', '', '',
+        # od 7 kolumny
         ofwca['Name'], '', '',
         ofwca['Surname'],
         nazwa_firmy,
@@ -329,7 +343,10 @@ for policy in policies_list['policies']:
         tow_ub
     ]  # data for the row
 
-    ExcelApp.row_range_input(data)
+    if ofwca['Name'] == 'MAGRO':
+        ExcelApp.row_range_input(data, True)
+    else:
+        ExcelApp.row_range_input(data)
 
     """  RATY  """
 
@@ -339,7 +356,11 @@ for policy in policies_list['policies']:
         nr_raty = num + 1
         x_rata_dane = data[:-13] + ['', x_ter_platnosci, x_rata, f_platnosci, ilosc_rat, nr_raty, '', '', '', '',
                                     'api', '', tow_ub]
-        ExcelApp.row_range_input(x_rata_dane)
+
+        if ofwca['Name'] == 'MAGRO':
+            ExcelApp.row_range_input(x_rata_dane, True)
+        else:
+            ExcelApp.row_range_input(x_rata_dane)
 
 
 """Opcje zapisania"""
