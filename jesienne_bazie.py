@@ -207,7 +207,7 @@ policies_list = api_requester.post(api_requester['policies list'],
 
 api_requester.add_endpoint('get policy', 'policy/getpolicy')
 
-
+print('\nPobieranie danych polis z CRM przez API')
 
 for policy in policies_list['policies']:
     policy_oid = policy['policy_oid']
