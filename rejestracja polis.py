@@ -349,6 +349,11 @@ for policy in policies_list['policies']:
             ExcelApp.row_range_input(x_rata_dane)
 
 
+end_time = time.time() - start_time
+print('\n * Czas zapisania: {:.2f} sekund * '.format(end_time))
+time.sleep(15)
+
+
 """Opcje zapisania"""
 
 # ExcelApp.DisplayAlerts = False
