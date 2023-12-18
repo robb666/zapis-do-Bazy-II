@@ -68,6 +68,27 @@ class ValidatedAPIRequester:
     def post(self, endpoint, data):
         return requests.post(self.base_url + endpoint, headers=self.headers, json=data).json()
 
+    def ofwce(self, ofwca_id):
+        ofwce_ids = {
+            10001198: {
+                'Name': 'Robert',
+                'Surname': 'Grzelak'
+            },
+            10001211: {
+                'Name': 'MAGRO',
+                'Surname': 'Grzelak'
+            },
+            'x': {
+                'Name': 'Agnieszka',
+                'Surname': 'Wawrzyniak'
+            },
+        }
+
+        if ofwca_id in ofwce_ids:
+            return ofwce_ids[ofwca_id]
+        else:
+            ''
+
     def regon_checksum(self, r: str):
         if len(r) == 9:
             regon = list(str(r))
@@ -147,7 +168,7 @@ from_date = ExcelApp.get_last_cell(col=30)
 str_conv = str(from_date)[:10].replace('.', '-')
 year, month, day = str_conv.split('-')
 timestamp_from = datetime.datetime(int(year), int(month), int(day)).strftime('%d.%m.%Y')
-timestamp_to = datetime.date.today().strftime('%d.%m.%Y')
+timestamp_to = (datetime.date.today() + datetime.timedelta(days=1)).strftime('%d.%m.%Y')
 
 
 headers = {
@@ -161,7 +182,7 @@ policy_list_payload = {
     "ajax_url": "/api/policy/list",
     "output": "json",
     "timestamp_from": "15.11.2023",  # timestamp_from,
-    "timestamp_to": "15.12.2023",  # timestamp_to,
+    "timestamp_to": timestamp_to,
 }
 
 api_requester = ValidatedAPIRequester(
@@ -189,6 +210,11 @@ for policy in policies_list['policies']:
     r = api_requester.post(api_requester['get policy'], data=payload)
     ic(r)
 
+    ofwca = api_requester.ofwce(
+        r.get('broker_person_oid', '')
+    )
+    print(r.get('broker_person_oid', ''))
+    print(ofwca)
     pesel = api_requester.pesel_checksum(r['customer_idcode'])
     regon = api_requester.regon_checksum(r['customer_idcode'])
     nazwa_firmy = r['customer_name'] if regon else ''
@@ -265,8 +291,8 @@ for policy in policies_list['policies']:
 
     data = [
         '', '', '', '', '', '',
-        'Robert', '', '',
-        'Grzelak',
+        ofwca['Name'], '', '',
+        ofwca['Surname'],
         nazwa_firmy,
         nazwisko,
         imie,
