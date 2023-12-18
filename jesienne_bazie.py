@@ -7,7 +7,7 @@ from openpyxl import load_workbook
 import datetime
 import re
 from creds import key
-from icecream import ic
+# from icecream import ic
 
 
 start_time = time.time()
@@ -38,12 +38,17 @@ class Win32comExcel:
             self.ws = self.wb.Worksheets(sheet)
         self.ExcelApp.Visible = visible
 
+    def get_last_cell_value(self, col):
+        return self.ws.Cells(self.ws.Rows.Count, col).End(-4162)
 
-    def get_next_row(self, col):
+    def _get_next_row(self, col):
         return self.ws.Cells(self.ws.Rows.Count, col).End(-4162).Row + 1
 
-    def get_last_cell(self, col):
-        return self.ws.Cells(self.ws.Rows.Count, col).End(-4162)
+    def _find_last_row_by_value(self, col):
+        last_row = self.ws.Cells(self.ws.Rows.Count, col).End(-4162).Row  # .End(win32com.client.constants.xlUp).Row
+        for row in range(last_row, 0, -1):
+            if self.ws.Cells(row, col).Value in ('MAGRO', 'Wawrzyniak', 'Wołowski', 'Skrzypek', 'Nowakowski', 'Filipiak'):
+                return row + 1
 
     def date_formatter(self, date):
         if date not in ('', None, 'None'):
@@ -52,18 +57,12 @@ class Win32comExcel:
         return ''
 
     def row_range_input(self, data, value=False):
-        row_to_write = self.get_next_row(col=30)
+        row_to_write = self._get_next_row(col=30)
         if value:
-            row_to_write = self.find_last_row_by_value(column=7)
+            row_to_write = self._find_last_row_by_value(col=7)
             self.ws.Rows(row_to_write).Copy()
             self.ws.Rows(row_to_write).Insert(Shift=win32.constants.xlDown)
         self.ws.Range(self.ws.Cells(row_to_write, 'G'), self.ws.Cells(row_to_write, len(data))).Value = data
-
-    def find_last_row_by_value(self, column):
-        last_row = self.ws.Cells(self.ws.Rows.Count, column).End(-4162).Row  # .End(win32com.client.constants.xlUp).Row
-        for row in range(last_row, 0, -1):
-            if self.ws.Cells(row, column).Value in ('MAGRO', 'Wawrzyniak', 'Wołowski', 'Skrzypek', 'Nowakowski', 'Filipiak'):
-                return row + 1
 
 
 class ValidatedAPIRequester:
@@ -176,8 +175,7 @@ in_h = pyxl.get_cell('G21')
 pyxl.close()
 
 
-from_date = ExcelApp.get_last_cell(col=30)
-
+from_date = ExcelApp.get_last_cell_value(col=30)
 str_conv = str(from_date)[:10].replace('.', '-')
 year, month, day = str_conv.split('-')
 timestamp_from = datetime.datetime(int(year), int(month), int(day)).strftime('%d.%m.%Y')
@@ -206,9 +204,9 @@ api_requester = ValidatedAPIRequester(
 api_requester.add_endpoint('policies list', 'policy/list')
 policies_list = api_requester.post(api_requester['policies list'],
                                    data=policy_list_payload)
-print(policies_list)
+
 api_requester.add_endpoint('get policy', 'policy/getpolicy')
-print(policies_list['policies'])
+
 
 
 for policy in policies_list['policies']:
@@ -222,21 +220,21 @@ for policy in policies_list['policies']:
     }
 
     r = api_requester.post(api_requester['get policy'], data=payload)
-    ic(r)
+    # ic(r)
 
     ofwca = api_requester.ofwce(
         r.get('broker_person_oid', '')
         if r.get('broker_person_oid', '') != ''
         else r.get('sales_broker_person_oid', '')
     )
-    print(r.get('broker_person_oid', ''))
-    print(ofwca)
+
     pesel = api_requester.pesel_checksum(r['customer_idcode'])
     regon = api_requester.regon_checksum(r['customer_idcode'])
     nazwa_firmy = r['customer_name'] if regon else ''
     nazwisko = r['customer_name'].split()[-1] if nazwa_firmy == '' else ''
     imie = r['customer_name'].split()[0] if nazwa_firmy == '' else ''
     p_lub_r = r['customer_idcode'] if pesel else r['customer_idcode'] if regon else ''
+    pesel_lub_regon = 'p' + p_lub_r if len(p_lub_r) == 11 else 'r' + p_lub_r if len(p_lub_r) == 9 else ''
     ulica = r['address'][0]['customer_address_street']
     nr_ulicy = r['address'][0]['customer_address_house']
     nr_mie = r.get('address', '')[0].get('customer_address_apt', '')
@@ -284,26 +282,11 @@ for policy in policies_list['policies']:
     I_rata = r.get('payment')[0].get('policy_installment_sum_real', '')
     nr_raty = '1'
 
-
-    print(nazwa_firmy)
-    print(nazwisko)
-    print(imie)
-    print(p_lub_r)
-    print(ulica)
-    print(kod_poczt)
-    print(miasto)
-    print(tel)
-    print(email)
-    print(marka)
-    print(model)
-    print(nr_rej)
-    print(rok)
-    print(data_pocz)
-    print(data_konca)
-    print(tow_ub)
-    print(rodzaj)
-
-    print('-------------')
+    print('Nazwa firmy: ', nazwa_firmy)
+    print('Nazwisko: ', nazwisko)
+    print('Imię: ', imie)
+    print('Pesel / Regon: ', pesel_lub_regon)
+    print('------------')
 
     data = [
         # od 7 kolumny
@@ -312,7 +295,7 @@ for policy in policies_list['policies']:
         nazwa_firmy,
         nazwisko,
         imie,
-        pesel_lub_regon := 'p' + p_lub_r if len(p_lub_r) == 11 else 'r' + p_lub_r if len(p_lub_r) == 9 else '', '',
+        pesel_lub_regon, '',
         adres,
         kod_poczt,
         miasto,
