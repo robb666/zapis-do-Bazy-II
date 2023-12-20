@@ -179,7 +179,9 @@ pyxl.close()
 from_date = ExcelApp.get_last_cell_value(col=30)
 str_conv = str(from_date)[:10].replace('.', '-')
 year, month, day = str_conv.split('-')
-timestamp_from = datetime.datetime(int(year), int(month), int(day)).strftime('%d.%m.%Y')
+timestamp_from = datetime.datetime(int(year), int(month), int(day))
+
+from_next_day = (timestamp_from + datetime.timedelta(days=1)).strftime('%d.%m.%Y')
 timestamp_to = (datetime.date.today() + datetime.timedelta(days=1)).strftime('%d.%m.%Y')
 
 
@@ -193,7 +195,7 @@ policy_list_payload = {
     "password": in_h,
     "ajax_url": "/api/policy/list",
     "output": "json",
-    "timestamp_from": timestamp_from,
+    "timestamp_from": from_next_day,
     "timestamp_to": timestamp_to,
 }
 
@@ -350,8 +352,8 @@ for policy in policies_list['policies']:
 
 
 end_time = time.time() - start_time
-print('\n * Czas zapisania: {:.2f} sekund * '.format(end_time))
-time.sleep(15)
+print('\n    * Czas zapisania: {:.2f} sekund * '.format(end_time))
+time.sleep(30)
 
 
 """Opcje zapisania"""
