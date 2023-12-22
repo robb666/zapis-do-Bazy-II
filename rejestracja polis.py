@@ -62,7 +62,7 @@ class Win32comExcel:
             row_to_write = self._find_last_row_by_value(col=7)
             self.ws.Rows(row_to_write).Copy()
             self.ws.Rows(row_to_write).Insert(Shift=win32.constants.xlDown)
-        self.ws.Range(self.ws.Cells(row_to_write, 'G'), self.ws.Cells(row_to_write, len(data))).Value = data
+        self.ws.Range(self.ws.Cells(row_to_write, 'G'), self.ws.Cells(row_to_write, 'BH')).Value = data
 
 
 class ValidatedAPIRequester:
@@ -294,7 +294,7 @@ for policy in policies_list['policies']:
     print('        Email: ', email)
 
     data = [
-        # od 7 kolumny
+        # od 7 kolumny 'G'
         ofwca['Name'], '', '',
         ofwca['Surname'],
         nazwa_firmy,
@@ -352,7 +352,7 @@ for policy in policies_list['policies']:
 
 
 end_time = time.time() - start_time
-print('\n    * Czas zapisania: {:.2f} sekund * '.format(end_time))
+print('\n\n    * Czas zapisania: {:.2f} sekund * '.format(end_time))
 time.sleep(30)
 
 
