@@ -62,6 +62,9 @@ class Win32comExcel:
             row_to_write = self._find_last_row_by_value(col=7)
             self.ws.Rows(row_to_write).Copy()
             self.ws.Rows(row_to_write).Insert(Shift=win32.constants.xlDown)
+        data[22] = f'=AF{row_to_write}-AE{row_to_write}+1'
+        data[27] = f'=IF(OR(AC{row_to_write}="anulowana",AF{row_to_write}="",AT{row_to_write}=""),"",(IF(AF{row_to_write}+10<NOW(),"po_10",AF{row_to_write})))'
+        data[-4] = f'=AX{row_to_write}-BC{row_to_write}'
         self.ws.Range(self.ws.Cells(row_to_write, 'G'), self.ws.Cells(row_to_write, 'BH')).Value = data
 
 
@@ -305,14 +308,14 @@ for policy in policies_list['policies']:
         kod_poczt,
         miasto,
         tel,
-        email := email.lower() if email else '', '', '',
+        email := email.lower() if email else None, None, None,
         marka if nr_rej != '' else kod_poczt,
         model if nr_rej != '' else miasto,
         nr_rej if nr_rej != '' else ulica,
-        rok, '', '', '',
+        rok, '', '', None,
         datetime.date.today().strftime('%Y-%m-%d'),
         data_pocz,
-        data_konca, '', '', '',
+        data_konca, None, '', '',
         'SPÓŁKA',
         tow_ub,
         tow_ub,
@@ -326,7 +329,7 @@ for policy in policies_list['policies']:
         ilosc_rat,
         nr_raty,
         ter_platnosci,
-        zainkasowana_rata := I_rata if I_rata else przypis, '', '',
+        zainkasowana_rata := I_rata if I_rata else przypis, None, None,
         'api', '',
         tow_ub
     ]  # data for the row
