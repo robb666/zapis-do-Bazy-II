@@ -7,7 +7,7 @@ from openpyxl import load_workbook
 import datetime
 import re
 from creds import key
-# from icecream import ic
+from icecream import ic
 
 
 start_time = time.time()
@@ -225,11 +225,11 @@ for policy in policies_list['policies']:
     r = api_requester.post(api_requester['get policy'], data=payload)
     # ic(r)
 
-    ofwca = api_requester.ofwce(
-        r.get('broker_person_oid', '')
-        if r.get('broker_person_oid', '') != ''
-        else r.get('sales_broker_person_oid', '')
-    )
+    ofwca = api_requester.ofwce(r.get('sales_broker_person_oid', ''))
+    #     r.get('broker_person_oid', '')
+    #     if r.get('broker_person_oid', '') != ''
+    #     else r.get('sales_broker_person_oid', '')
+    # )
 
     pesel = api_requester.pesel_checksum(r['customer_idcode'])
     regon = api_requester.regon_checksum(r['customer_idcode'])
