@@ -63,7 +63,7 @@ class Win32comExcel:
             self.ws.Rows(row_to_write).Copy()
             self.ws.Rows(row_to_write).Insert(Shift=win32.constants.xlDown)
         data[22] = f'=AF{row_to_write}-AE{row_to_write}+1'
-        data[27] = f'=IF(OR(AC{row_to_write}="anulowana",AF{row_to_write}="",AT{row_to_write}=""),"",(IF(AF{row_to_write}+10<NOW(),"po_10",AF{row_to_write})))'
+        data[26] = f'=IF(OR(AC{row_to_write}="anulowana",AF{row_to_write}="",AT{row_to_write}=""),"",(IF(AF{row_to_write}+10<NOW(),"po_10",AF{row_to_write})))'
         data[-4] = f'=AX{row_to_write}-BC{row_to_write}'
         self.ws.Range(self.ws.Cells(row_to_write, 'G'), self.ws.Cells(row_to_write, 'BH')).Value = data
 
