@@ -28,12 +28,12 @@ class PyxlExcel:
 class Win32comExcel:
 
     def __init__(self, filename=None, workbook=None, sheet=None, visible=True):
+        self.ExcelApp = win32com.client.gencache.EnsureDispatch('Excel.Application')
         try:
             self.ExcelApp = win32com.client.GetActiveObject('Excel.Application')
             self.wb = self.ExcelApp.Workbooks(workbook)
             self.ws = self.wb.Worksheets(sheet)
         except:
-            self.ExcelApp = win32com.client.gencache.EnsureDispatch('Excel.Application')
             self.wb = self.ExcelApp.Workbooks.OpenXML(filename)
             self.ws = self.wb.Worksheets(sheet)
         self.ExcelApp.Visible = visible
