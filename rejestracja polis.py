@@ -241,14 +241,14 @@ for policy in policies_list['policies']:
     imie = r['customer_name'].split()[0] if nazwa_firmy == '' else ''
     p_lub_r = r['customer_idcode'] if pesel else r['customer_idcode'] if regon else ''
     pesel_lub_regon = 'p' + p_lub_r if len(p_lub_r) == 11 else 'r' + p_lub_r if len(p_lub_r) == 9 else ''
-    ulica = r['address'][0]['customer_address_street']
-    nr_ulicy = r['address'][0]['customer_address_house']
-    nr_mie = r.get('address', '')[0].get('customer_address_apt', '')
+    ulica = r.get('address', '')[0]['customer_address_street'] if r.get('address') else ''
+    nr_ulicy = r.get('address', '')[0]['customer_address_house'] if r.get('address') else ''
+    nr_mie = r.get('address', '')[0].get('customer_address_apt', '') if r.get('address') else ''
     adres = f'{ulica} {nr_ulicy}'
     if nr_mie not in ('None', None):
         adres = f'{ulica} {nr_ulicy} m {nr_mie}'
-    kod_poczt = r['address'][0]['customer_address_zip']
-    miasto = r['address'][0]['customer_address_city']
+    kod_poczt = r.get('address', '')[0]['customer_address_zip'] if r.get('address') else ''
+    miasto =r.get('address', '')[0]['customer_address_city'] if r.get('address') else ''
     tel = r['customer_mobile'] if r['customer_mobile'] != '' else r['customer_phone']
     tel = tel.lstrip('+48')
     email = r['customer_email']
