@@ -7,7 +7,7 @@ from openpyxl import load_workbook
 import datetime
 import re
 from creds import key
-from icecream import ic
+# from icecream import ic
 
 
 start_time = time.time()
