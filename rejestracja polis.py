@@ -152,7 +152,7 @@ class ValidatedAPIRequester:
 
     def car_make_model(self, policy_description):
         if policy_description:
-            with open('M:\\Agent baza\\marki.txt') as content:
+            with open('D:\\Agent baza\\marki.txt') as content:
                 makes = content.read().split('\n')
                 for make in makes:
                     if re.search(make, policy_description, re.I):
@@ -163,13 +163,13 @@ class ValidatedAPIRequester:
 
 
 pyxl = PyxlExcel(
-    filename='M:/Agent baza/Login_Hasło.xlsm',
+    filename='D:/Agent baza/Login_Hasło.xlsm',
     workbook='Aplikacje',
 )
 
 ExcelApp = Win32comExcel(
     # filename='C:\\Users\\PipBoy3000\\Desktop\\2014 BAZA MAGRO.xlsm',
-    filename='M:\\Agent baza\\2014 BAZA MAGRO.xlsm',
+    filename='D:\\Agent baza\\2014 BAZA MAGRO.xlsm',
     workbook='2014 BAZA MAGRO.xlsm',
     sheet='BAZA 2014',
 )
@@ -364,7 +364,7 @@ time.sleep(30)
 # ExcelApp.DisplayAlerts = False
 #
 # ## Bez zapisania
-# # wb.SaveAs("M:\\Agent baza\\2014 BAZA MAGRO.xlsm")
+# # wb.SaveAs(D:\\Agent baza\\2014 BAZA MAGRO.xlsm")
 #
 # # Testy
 # # wb.SaveAs(path + "\\2014 BAZA MAGRO.xlsm")
