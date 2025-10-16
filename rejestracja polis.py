@@ -7,7 +7,7 @@ from openpyxl import load_workbook
 import datetime
 import re
 from creds import key
-# from icecream import ic
+from icecream import ic
 
 
 start_time = time.time()
@@ -72,13 +72,6 @@ class ValidatedAPIRequester:
     def __init__(self, base_url, headers):
         self.base_url = base_url
         self.headers = headers
-        self.endpoints = {}  # Store endpoints
-
-    def add_endpoint(self, name, endpoint):
-        self.endpoints[name] = endpoint
-
-    def __getitem__(self, key):
-        return self.endpoints.get(key)
 
     def post(self, endpoint, data):
         return requests.post(self.base_url + endpoint, headers=self.headers, json=data).json()
@@ -93,10 +86,10 @@ class ValidatedAPIRequester:
                 'Name': 'MAGRO',
                 'Surname': 'Grzelak'
             },
-            'x': {
-                'Name': 'Agnieszka',
-                'Surname': 'Wawrzyniak'
-            },
+            # 'x': {
+            #     'Name': 'Agnieszka',
+            #     'Surname': 'Wawrzyniak'
+            # },
         }
 
         if ofwca_id in ofwce_ids:
@@ -196,7 +189,7 @@ headers = {
 policy_list_payload = {
     "username": in_l,
     "password": in_h,
-    "ajax_url": "/api/policy/list",
+    # "ajax_url": "/api/policy/list",
     "output": "json",
     "timestamp_from": from_next_day,
     "timestamp_to": timestamp_to,
@@ -206,12 +199,9 @@ api_requester = ValidatedAPIRequester(
         base_url='https://magro2-api.insly.pl/api/',
         headers=headers,
 )
-
-api_requester.add_endpoint('policies list', 'policy/list')
-policies_list = api_requester.post(api_requester['policies list'],
+policies_list = api_requester.post('policy/list',
                                    data=policy_list_payload)
 
-api_requester.add_endpoint('get policy', 'policy/getpolicy')
 
 print('\nPobieranie danych polis z CRM przez API')
 
@@ -219,139 +209,135 @@ for policy in policies_list['policies']:
     policy_oid = policy['policy_oid']
 
     payload = {
-        "ajax_url": "/api/policy/getpolicy",
         "output": "json",
         "policy_oid": policy_oid,
         "return_objects": "1"
     }
 
-    r = api_requester.post(api_requester['get policy'], data=payload)
+    r = api_requester.post('policy/getpolicy', data=payload)
     # ic(r)
+    if r['sales_broker_person_oid'] == 10001198:  # or issue_broker_person_oid (!)
 
-    ofwca = api_requester.ofwce(r.get('sales_broker_person_oid', ''))
-    #     r.get('broker_person_oid', '')
-    #     if r.get('broker_person_oid', '') != ''
-    #     else r.get('sales_broker_person_oid', '')
-    # )
+        ofwca = api_requester.ofwce(r.get('sales_broker_person_oid', ''))
 
-    pesel = api_requester.pesel_checksum(r['customer_idcode'])
-    regon = api_requester.regon_checksum(r['customer_idcode'])
-    nazwa_firmy = r['customer_name'] if regon else ''
-    nazwisko = r['customer_name'].split()[-1] if nazwa_firmy == '' else ''
-    imie = r['customer_name'].split()[0] if nazwa_firmy == '' else ''
-    p_lub_r = r['customer_idcode'] if pesel else r['customer_idcode'] if regon else ''
-    pesel_lub_regon = 'p' + p_lub_r if len(p_lub_r) == 11 else 'r' + p_lub_r if len(p_lub_r) == 9 else ''
-    ulica = r.get('address', '')[0]['customer_address_street'] if r.get('address') else ''
-    nr_ulicy = r.get('address', '')[0]['customer_address_house'] if r.get('address') else ''
-    nr_mie = r.get('address', '')[0].get('customer_address_apt', '') if r.get('address') else ''
-    adres = f'{ulica} {nr_ulicy}'
-    if nr_mie not in ('None', None):
-        adres = f'{ulica} {nr_ulicy} m {nr_mie}'
-    kod_poczt = r.get('address', '')[0]['customer_address_zip'] if r.get('address') else ''
-    miasto =r.get('address', '')[0]['customer_address_city'] if r.get('address') else ''
-    tel = r['customer_mobile'] if r['customer_mobile'] != '' else r['customer_phone']
-    tel = tel.lstrip('+48')
-    email = r['customer_email']
+        pesel = api_requester.pesel_checksum(r['customer_idcode'])
+        regon = api_requester.regon_checksum(r['customer_idcode'])
+        nazwa_firmy = r['customer_name'] if regon else ''
+        nazwisko = r['customer_name'].split()[-1] if nazwa_firmy == '' else ''
+        imie = r['customer_name'].split()[0] if nazwa_firmy == '' else ''
+        p_lub_r = r['customer_idcode'] if pesel else r['customer_idcode'] if regon else ''
+        pesel_lub_regon = 'p' + p_lub_r if len(p_lub_r) == 11 else 'r' + p_lub_r if len(p_lub_r) == 9 else ''
+        ulica = r.get('address', '')[0]['customer_address_street'] if r.get('address') else ''
+        nr_ulicy = r.get('address', '')[0]['customer_address_house'] if r.get('address') else ''
+        nr_mie = r.get('address', '')[0].get('customer_address_apt', '') if r.get('address') else ''
+        adres = f'{ulica} {nr_ulicy}'
+        if nr_mie not in ('None', None):
+            adres = f'{ulica} {nr_ulicy} m {nr_mie}'
+        kod_poczt = r.get('address', '')[0]['customer_address_zip'] if r.get('address') else ''
+        miasto =r.get('address', '')[0]['customer_address_city'] if r.get('address') else ''
+        tel = r['customer_mobile'] if r['customer_mobile'] != '' else r['customer_phone']
+        tel = tel.lstrip('+48')
+        email = r['customer_email']
 
-    marka = r.get('objects')[0].get('vehicle_make', '') if len(r['objects']) > 0 else ''
-    if marka == '':
-        marka = api_requester.car_make_model(r.get('policy_description', None))[0]
-    model = r.get('objects', '')[0].get('vehicle_model', '') if len(r['objects']) > 0 else ''
-    if model == '':
-        model = api_requester.car_make_model(r.get('policy_description', None))[1]
-    nr_rej = ''
-    rok = ''
-    if len(r['objects']) > 0:
-        nr_rej = r.get('objects')[0].get('vehicle_registration_number', '') \
-            if r.get('objects')[0].get('vehicle_registration_number', '') != '' \
-            else r.get('objects')[0].get('vehicle_licenseplate', '')
+        marka = r.get('objects')[0].get('vehicle_make', '') if len(r['objects']) > 0 else ''
+        if marka == '':
+            marka = api_requester.car_make_model(r.get('policy_description', None))[0]
+        model = r.get('objects', '')[0].get('vehicle_model', '') if len(r['objects']) > 0 else ''
+        if model == '':
+            model = api_requester.car_make_model(r.get('policy_description', None))[1]
+        nr_rej = ''
+        rok = ''
+        if len(r['objects']) > 0:
+            nr_rej = r.get('objects')[0].get('vehicle_registration_number', '') \
+                if r.get('objects')[0].get('vehicle_registration_number', '') != '' \
+                else r.get('objects')[0].get('vehicle_licenseplate', '')
 
-        rok = r.get('objects')[0].get('vehicle_first_registration_date', '')[:4] \
-            if r.get('objects')[0].get('vehicle_first_registration_date', '') != '' \
-            else r.get('objects')[0].get('vehicle_registered', '')[:4]
+            rok = r.get('objects')[0].get('vehicle_first_registration_date', '')[:4] \
+                if r.get('objects')[0].get('vehicle_first_registration_date', '') != '' \
+                else r.get('objects')[0].get('vehicle_registered', '')[:4]
 
-    data_pocz = ExcelApp.date_formatter(r.get('policy_date_start', ''))
-    data_konca = ExcelApp.date_formatter(r.get('policy_date_end', ''))
-    tow_ub = api_requester.insurer(r.get('policy_insurer', ''))
-    rodzaj = api_requester.insurance_type(
-        r.get('policy_product_info', '')[0].get('policy_product_displayname', '')
-        if r.get('policy_product_info', '')[0].get('policy_product_displayname', '') != ''
-        else r.get('policy_type', ''))
-    nr_polisy = r['policy_no']
-    przypis = r['policy_payment_sum']
-    ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[0].get('policy_installment_date_due', ''))
-    f_platnosci = 'P' if r.get('policy_first_installment_payment_method') == 3 else \
-        'G' if r.get('policy_first_installment_payment_method') == 1 \
-            else ''
-    ilosc_rat = r.get('policy_installments', '')
+        data_pocz = ExcelApp.date_formatter(r.get('policy_date_start', ''))
+        data_konca = ExcelApp.date_formatter(r.get('policy_date_end', ''))
+        tow_ub = api_requester.insurer(r.get('policy_insurer', ''))
+        rodzaj = api_requester.insurance_type(
+            r.get('policy_product_info', '')[0].get('policy_product_displayname', '')
+            if r.get('policy_product_info', '')[0].get('policy_product_displayname', '') != ''
+            else r.get('policy_type', ''))
+        nr_polisy = r['policy_no']
+        przypis = r['policy_payment_sum']
+        ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[0].get('policy_installment_date_due', ''))
+        f_platnosci = 'P' if r.get('policy_first_installment_payment_method') == 3 else \
+            'G' if r.get('policy_first_installment_payment_method') == 1 \
+                else ''
+        ilosc_rat = r.get('policy_installments', '')
 
-    I_rata = r.get('payment')[0].get('policy_installment_sum_real', '')
-    nr_raty = '1'
+        I_rata = r.get('payment')[0].get('policy_installment_sum_real', '')
+        nr_raty = '1'
 
-    print('-------------')
-    print('  Nazwa firmy: ', nazwa_firmy)
-    print('     Nazwisko: ', nazwisko)
-    print('         Imię: ', imie)
-    print('Pesel / Regon: ', pesel_lub_regon)
-    print('      Telefon: ', tel)
-    print('        Email: ', email)
+        print('-------------')
+        print('  Nazwa firmy: ', nazwa_firmy)
+        print('     Nazwisko: ', nazwisko)
+        print('         Imię: ', imie)
+        print('Pesel / Regon: ', pesel_lub_regon)
+        print('      Telefon: ', tel)
+        print('        Email: ', email)
 
-    data = [
-        # od 7 kolumny 'G'
-        ofwca['Name'], '', '',
-        ofwca['Surname'],
-        nazwa_firmy,
-        nazwisko,
-        imie,
-        pesel_lub_regon, '',
-        adres,
-        kod_poczt,
-        miasto,
-        tel,
-        email := email.lower() if email else None, None, None,
-        marka if nr_rej != '' else kod_poczt,
-        model if nr_rej != '' else miasto,
-        nr_rej if nr_rej != '' else ulica,
-        rok, '', '', None,
-        datetime.date.today().strftime('%Y-%m-%d'),
-        data_pocz,
-        data_konca, None, '', '',
-        'SPÓŁKA',
-        tow_ub,
-        tow_ub,
-        rodzaj,
-        nr_polisy, '', '', '', '', '', '', '',
-        ### logika rat ###
-        przypis,
-        ter_platnosci,
-        I_rata if I_rata else przypis,
-        f_platnosci,
-        ilosc_rat,
-        nr_raty,
-        ter_platnosci,
-        zainkasowana_rata := I_rata if I_rata else przypis, None, None,
-        'api', '',
-        tow_ub
-    ]  # data for the row
-
-    if ofwca['Name'] == 'MAGRO':
-        ExcelApp.row_range_input(data, True)
-    else:
-        ExcelApp.row_range_input(data)
-
-    """  RATY  """
-
-    for num in range(1, len(r.get('payment'))):
-        x_rata = r.get('payment')[num].get('policy_installment_sum_real', '')
-        x_ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[num].get('policy_installment_date_due', ''))
-        nr_raty = num + 1
-        x_rata_dane = data[:-13] + ['', x_ter_platnosci, x_rata, f_platnosci, ilosc_rat, nr_raty, '', '', '', '',
-                                    'api', '', tow_ub]
+        data = [
+            # od 7 kolumny 'G'
+            ofwca['Name'], '', '',
+            ofwca['Surname'],
+            nazwa_firmy,
+            nazwisko,
+            imie,
+            pesel_lub_regon, '',
+            adres,
+            kod_poczt,
+            miasto,
+            tel,
+            email := email.lower() if email else None, None, None,
+            marka if nr_rej != '' else kod_poczt,
+            model if nr_rej != '' else miasto,
+            nr_rej if nr_rej != '' else ulica,
+            rok, '', '', None,
+            datetime.date.today().strftime('%Y-%m-%d'),
+            data_pocz,
+            data_konca, None, '', '',
+            'SPÓŁKA',
+            tow_ub,
+            tow_ub,
+            rodzaj,
+            nr_polisy, '', '', '', '', '', '', '',
+            ### logika rat ###
+            przypis,
+            ter_platnosci,
+            I_rata if I_rata else przypis,
+            f_platnosci,
+            ilosc_rat,
+            nr_raty,
+            ter_platnosci,
+            zainkasowana_rata := I_rata if I_rata else przypis, None, None,
+            'api', '',
+            tow_ub
+        ]  # data for the row
 
         if ofwca['Name'] == 'MAGRO':
-            ExcelApp.row_range_input(x_rata_dane, True)
+            ExcelApp.row_range_input(data, True)
         else:
-            ExcelApp.row_range_input(x_rata_dane)
+            ExcelApp.row_range_input(data)
+
+        """  RATY  """
+
+        for num in range(1, len(r.get('payment'))):
+            x_rata = r.get('payment')[num].get('policy_installment_sum_real', '')
+            x_ter_platnosci = ExcelApp.date_formatter(r.get('payment', '')[num].get('policy_installment_date_due', ''))
+            nr_raty = num + 1
+            x_rata_dane = data[:-13] + ['', x_ter_platnosci, x_rata, f_platnosci, ilosc_rat, nr_raty, '', '', '', '',
+                                        'api', '', tow_ub]
+
+            if ofwca['Name'] == 'MAGRO':
+                ExcelApp.row_range_input(x_rata_dane, True)
+            else:
+                ExcelApp.row_range_input(x_rata_dane)
 
 
 end_time = time.time() - start_time
