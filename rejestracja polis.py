@@ -252,9 +252,9 @@ for policy in policies_list['policies']:
                 if r.get('objects')[0].get('vehicle_registration_number', '') != '' \
                 else r.get('objects')[0].get('vehicle_licenseplate', '')
 
-            rok = r.get('objects')[0].get('vehicle_first_registration_date', '')[:4] \
+            rok = r.get('objects')[0].get('vehicle_first_registration_date'[:4], '') \
                 if r.get('objects')[0].get('vehicle_first_registration_date', '') != '' \
-                else r.get('objects')[0].get('vehicle_registered', '')[:4]
+                else r.get('objects')[0].get('vehicle_registered'[:4], '')
 
         data_pocz = ExcelApp.date_formatter(r.get('policy_date_start', ''))
         data_konca = ExcelApp.date_formatter(r.get('policy_date_end', ''))
