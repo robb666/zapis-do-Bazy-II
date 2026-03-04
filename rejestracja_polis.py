@@ -130,7 +130,7 @@ class ValidatedAPIRequester:
                     'Ergo Hestia': 'HES', 'Ergohestialite': 'HES', 'INTER': 'INT', 'LINK 4': 'LIN',
                     'mtu': 'MTU', 'Proama': 'PRO', 'InterRisk': 'RIS', 'tuwtuw': 'TUW',
                     'tuz': 'TUZ', 'Uniqa': 'UNI', 'Warta': 'WAR', 'Wiener': 'WIE', 'Gothaer': 'WIE',
-                    'You Can Drive': 'YCD', 'Trasti': 'TRA', 'Wefox': 'WEF'}
+                    'You Can Drive': 'YCD', 'Trasti': 'TRA', 'Wefox': 'WEF', 'Ominimo': 'OMI'}
         for insurer in insurers:
             if re.search(tow, insurer, re.I):
                 return insurers[insurer]
