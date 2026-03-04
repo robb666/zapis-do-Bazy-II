@@ -8,7 +8,8 @@ import datetime
 import re
 from creds import key
 from icecream import ic
-
+# import os
+# os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 start_time = time.time()
 
@@ -145,7 +146,7 @@ class ValidatedAPIRequester:
 
     def car_make_model(self, policy_description):
         if policy_description:
-            with open('D:\\Agent baza\\marki.txt') as content:
+            with open('M:\\Agent baza\\marki.txt') as content:
                 makes = content.read().split('\n')
                 for make in makes:
                     if re.search(make, policy_description, re.I):
@@ -156,13 +157,13 @@ class ValidatedAPIRequester:
 
 
 pyxl = PyxlExcel(
-    filename='D:/Agent baza/Login_Hasło.xlsm',
+    filename='M:/Agent baza/Login_Hasło.xlsm',
     workbook='Aplikacje',
 )
 
 ExcelApp = Win32comExcel(
     # filename='C:\\Users\\PipBoy3000\\Desktop\\2014 BAZA MAGRO.xlsm',
-    filename='D:\\Agent baza\\2014 BAZA MAGRO.xlsm',
+    filename='M:\\Agent baza\\2014 BAZA MAGRO.xlsm',
     workbook='2014 BAZA MAGRO.xlsm',
     sheet='BAZA 2014',
 )
