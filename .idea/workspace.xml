@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="96fa23b8-98db-4262-b35b-6b4c8609d4b9" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/rejestracja_polis.py" beforeDir="false" afterPath="$PROJECT_DIR$/rejestracja_polis.py" afterDir="false" />
-    </list>
+    <list default="true" id="96fa23b8-98db-4262-b35b-6b4c8609d4b9" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -87,7 +85,7 @@
       <updated>1774958429118</updated>
       <workItem from="1774958430436" duration="1168000" />
       <workItem from="1779994607934" duration="191000" />
-      <workItem from="1781119554619" duration="856000" />
+      <workItem from="1781119554619" duration="897000" />
     </task>
     <servers />
   </component>
