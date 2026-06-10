@@ -8,8 +8,14 @@ import datetime
 import re
 from creds import key
 from icecream import ic
-# import os
-# os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+
+# === i skasować ===
+import os
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+import win32com
+print(win32com.__gen_path__)
+
 
 start_time = time.time()
 
@@ -30,6 +36,7 @@ class Win32comExcel:
 
     def __init__(self, filename=None, workbook=None, sheet=None, visible=True):
         self.ExcelApp = win32com.client.gencache.EnsureDispatch('Excel.Application')
+        # self.ExcelApp = win32com.client.Dispatch('Excel.Application')
         try:
             self.ExcelApp = win32com.client.GetActiveObject('Excel.Application')
             self.wb = self.ExcelApp.Workbooks(workbook)
