@@ -249,10 +249,14 @@ for policy in policies_list['policies']:
 
         marka = r.get('objects')[0].get('vehicle_make', '') if len(r['objects']) > 0 else ''
         if marka == '':
-            marka = api_requester.car_make_model(r.get('policy_description', None))[0]
+            marka = api_requester.car_make_model(r.get('policy_description', None))
+            if marka:
+                marka = marka[0]
         model = r.get('objects', '')[0].get('vehicle_model', '') if len(r['objects']) > 0 else ''
         if model == '':
-            model = api_requester.car_make_model(r.get('policy_description', None))[1]
+            model = api_requester.car_make_model(r.get('policy_description', None))
+            if model:
+                model = model[0]
         nr_rej = ''
         rok = ''
         if len(r['objects']) > 0:
